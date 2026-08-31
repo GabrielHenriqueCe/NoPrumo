@@ -1,0 +1,6 @@
+@NoPrumo_HostAddress = http://localhost:5262
+
+GET {{NoPrumo_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
