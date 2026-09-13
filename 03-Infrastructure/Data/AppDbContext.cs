@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using Microsoft.EntityFrameworkCore;
-using NoPrumo.Infrastructure.Entities;
+﻿using Microsoft.EntityFrameworkCore;
+using NoPrumo.Domain.Entities;
 
 namespace NoPrumo.Infrastructure.Data;
 

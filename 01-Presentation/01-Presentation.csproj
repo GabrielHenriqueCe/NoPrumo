@@ -5,7 +5,8 @@
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<RootNamespace>NoPrumo</RootNamespace>
-	</PropertyGroup>
+	  <UserSecretsId>d49dc0c7-694c-4e93-9ab0-940743b40311</UserSecretsId>
+  </PropertyGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.30">
