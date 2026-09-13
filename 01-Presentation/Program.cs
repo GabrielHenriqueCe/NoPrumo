@@ -1,10 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
-using NoPrumo.Application.Interfaces;
-using NoPrumo.Application.Services;
-using NoPrumo.Domain.Interfaces;
 using NoPrumo.Infrastructure.Data;
-using NoPrumo.Infrastructure.Repositories;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,9 +14,6 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(
         connectionString,
         ServerVersion.AutoDetect(connectionString)));
-
-builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
-builder.Services.AddScoped<IClienteService, ClienteService>();
 
 builder.Services.AddSwaggerGen(options =>
 {
