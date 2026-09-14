@@ -251,7 +251,7 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.AtivoKey)
                 .HasMaxLength(6)
-                .HasComputedColumnSql("ifnull(`deleted_at`,_cp850'1970-01-01 00:00:00')", true)
+                .HasComputedColumnSql("ifnull(`deleted_at`,'1970-01-01 00:00:00')", true)
                 .HasColumnName("ativo_key");
             entity.Property(e => e.Bairro)
                 .HasMaxLength(100)
@@ -549,7 +549,7 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.AtivoKey)
                 .HasMaxLength(6)
-                .HasComputedColumnSql("ifnull(`deleted_at`,_cp850'1970-01-01 00:00:00')", true)
+                .HasComputedColumnSql("ifnull(`deleted_at`,'1970-01-01 00:00:00')", true)
                 .HasColumnName("ativo_key");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
@@ -862,7 +862,7 @@ public partial class AppDbContext : DbContext
                 .HasColumnName("ativo");
             entity.Property(e => e.AtivoKey)
                 .HasMaxLength(6)
-                .HasComputedColumnSql("ifnull(`deleted_at`,_cp850'1970-01-01 00:00:00')", true)
+                .HasComputedColumnSql("ifnull(`deleted_at`,'1970-01-01 00:00:00')", true)
                 .HasColumnName("ativo_key");
             entity.Property(e => e.Cidade)
                 .HasMaxLength(120)
@@ -1022,7 +1022,7 @@ public partial class AppDbContext : DbContext
                 .HasColumnName("ativo");
             entity.Property(e => e.AtivoKey)
                 .HasMaxLength(6)
-                .HasComputedColumnSql("ifnull(`deleted_at`,_cp850'1970-01-01 00:00:00')", true)
+                .HasComputedColumnSql("ifnull(`deleted_at`,'1970-01-01 00:00:00')", true)
                 .HasColumnName("ativo_key");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
@@ -1159,7 +1159,7 @@ public partial class AppDbContext : DbContext
                 .HasColumnName("ativo");
             entity.Property(e => e.AtivoKey)
                 .HasMaxLength(6)
-                .HasComputedColumnSql("ifnull(`deleted_at`,_cp850'1970-01-01 00:00:00')", true)
+                .HasComputedColumnSql("ifnull(`deleted_at`,'1970-01-01 00:00:00')", true)
                 .HasColumnName("ativo_key");
             entity.Property(e => e.Ca)
                 .HasMaxLength(30)
@@ -1363,7 +1363,7 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.AtivoKey)
                 .HasMaxLength(6)
-                .HasComputedColumnSql("ifnull(`deleted_at`,_cp850'1970-01-01 00:00:00')", true)
+                .HasComputedColumnSql("ifnull(`deleted_at`,'1970-01-01 00:00:00')", true)
                 .HasColumnName("ativo_key");
             entity.Property(e => e.Bairro)
                 .HasMaxLength(100)
