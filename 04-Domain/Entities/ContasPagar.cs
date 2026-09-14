@@ -33,9 +33,9 @@ public partial class ContasPagar
 
     public DateTime UpdatedAt { get; set; }
 
-    public virtual Fornecedores? Fornecedor { get; set; }
+    public virtual Fornecedor? Fornecedor { get; set; }
 
-    public virtual Obras? Obra { get; set; }
+    public virtual Obra? Obra { get; set; }
 
-    public virtual ICollection<Pagamentos> Pagamentos { get; set; } = new List<Pagamentos>();
+    public virtual ICollection<Pagamento> Pagamentos { get; set; } = new List<Pagamento>();
 }

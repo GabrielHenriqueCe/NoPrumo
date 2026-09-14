@@ -27,5 +27,5 @@ public partial class Auditoria
 
     public DateTime CreatedAt { get; set; }
 
-    public virtual Usuarios? Usuario { get; set; }
+    public virtual Usuario? Usuario { get; set; }
 }

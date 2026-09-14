@@ -14,93 +14,73 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<Auditoria> Auditoria { get; set; }
 
-    public virtual DbSet<CategoriasEstoque> CategoriasEstoque { get; set; }
+    public virtual DbSet<CategoriaEstoque> CategoriaEstoque { get; set; }
 
-    public virtual DbSet<Clientes> Clientes { get; set; }
+    public virtual DbSet<Cliente> Cliente { get; set; }
 
     public virtual DbSet<ContasPagar> ContasPagar { get; set; }
 
     public virtual DbSet<ContasReceber> ContasReceber { get; set; }
 
-    public virtual DbSet<ContratosEmpreitada> ContratosEmpreitada { get; set; }
+    public virtual DbSet<ContratoEmpreitada> ContratoEmpreitada { get; set; }
 
-    public virtual DbSet<EquipeObras> EquipeObras { get; set; }
+    public virtual DbSet<EquipeObra> EquipeObra { get; set; }
 
-    public virtual DbSet<Equipes> Equipes { get; set; }
+    public virtual DbSet<Equipe> Equipe { get; set; }
 
-    public virtual DbSet<EstoqueMovimentacoes> EstoqueMovimentacoes { get; set; }
+    public virtual DbSet<EstoqueMovimentacao> EstoqueMovimentacao { get; set; }
 
-    public virtual DbSet<Etapas> Etapas { get; set; }
+    public virtual DbSet<Etapa> Etapa { get; set; }
 
-    public virtual DbSet<FichaItens> FichaItens { get; set; }
+    public virtual DbSet<FichaItem> FichaItem { get; set; }
 
-    public virtual DbSet<Fichas> Fichas { get; set; }
+    public virtual DbSet<Ficha> Ficha { get; set; }
 
-    public virtual DbSet<Fornecedores> Fornecedores { get; set; }
+    public virtual DbSet<Fornecedor> Fornecedor { get; set; }
 
-    public virtual DbSet<FuncionarioCapacitacoes> FuncionarioCapacitacoes { get; set; }
+    public virtual DbSet<FuncionarioCapacitacao> FuncionarioCapacitacao { get; set; }
 
-    public virtual DbSet<FuncionarioEquipes> FuncionarioEquipes { get; set; }
+    public virtual DbSet<FuncionarioEquipe> FuncionarioEquipe { get; set; }
 
-    public virtual DbSet<Funcionarios> Funcionarios { get; set; }
+    public virtual DbSet<Funcionario> Funcionario { get; set; }
 
-    public virtual DbSet<Funcoes> Funcoes { get; set; }
+    public virtual DbSet<Funcao> Funcao { get; set; }
 
-    public virtual DbSet<Grupos> Grupos { get; set; }
+    public virtual DbSet<Grupo> Grupo { get; set; }
 
-    public virtual DbSet<ItensEstoque> ItensEstoque { get; set; }
+    public virtual DbSet<ItemEstoque> ItemEstoque { get; set; }
 
-    public virtual DbSet<MedicoesEmpreitada> MedicoesEmpreitada { get; set; }
+    public virtual DbSet<MedicaoEmpreitada> MedicaoEmpreitada { get; set; }
 
-    public virtual DbSet<ObraAditivos> ObraAditivos { get; set; }
+    public virtual DbSet<ObraAditivo> ObraAditivo { get; set; }
 
-    public virtual DbSet<ObraLinks> ObraLinks { get; set; }
+    public virtual DbSet<ObraLink> ObraLink { get; set; }
 
-    public virtual DbSet<Obras> Obras { get; set; }
+    public virtual DbSet<Obra> Obra { get; set; }
 
-    public virtual DbSet<Pagamentos> Pagamentos { get; set; }
+    public virtual DbSet<Pagamento> Pagamento { get; set; }
 
-    public virtual DbSet<Papeis> Papeis { get; set; }
+    public virtual DbSet<Papel> Papel { get; set; }
 
-    public virtual DbSet<ParametrosEncargos> ParametrosEncargos { get; set; }
+    public virtual DbSet<ParametroEncargo> ParametroEncargo { get; set; }
 
-    public virtual DbSet<Permissoes> Permissoes { get; set; }
+    public virtual DbSet<Permissao> Permissao { get; set; }
 
     public virtual DbSet<Ponto> Ponto { get; set; }
 
-    public virtual DbSet<Regimes> Regimes { get; set; }
+    public virtual DbSet<Regime> Regime { get; set; }
 
-    public virtual DbSet<Setores> Setores { get; set; }
+    public virtual DbSet<Setor> Setor { get; set; }
 
-    public virtual DbSet<SolicitacaoItens> SolicitacaoItens { get; set; }
+    public virtual DbSet<SolicitacaoItem> SolicitacaoItem { get; set; }
 
-    public virtual DbSet<SolicitacoesCompra> SolicitacoesCompra { get; set; }
+    public virtual DbSet<SolicitacaoCompra> SolicitacaoCompra { get; set; }
 
-    public virtual DbSet<TiposCapacitacao> TiposCapacitacao { get; set; }
+    public virtual DbSet<TipoCapacitacao> TipoCapacitacao { get; set; }
 
-    public virtual DbSet<UsuarioObras> UsuarioObras { get; set; }
+    public virtual DbSet<UsuarioObra> UsuarioObra { get; set; }
 
-    public virtual DbSet<Usuarios> Usuarios { get; set; }
-
-    public virtual DbSet<VwCapacitacoesAlerta> VwCapacitacoesAlerta { get; set; }
-
-    public virtual DbSet<VwClientesFinanceiro> VwClientesFinanceiro { get; set; }
-
-    public virtual DbSet<VwEstoqueBaixo> VwEstoqueBaixo { get; set; }
-
-    public virtual DbSet<VwEtapasSituacao> VwEtapasSituacao { get; set; }
-
-    public virtual DbSet<VwObrasCustos> VwObrasCustos { get; set; }
-
-    public virtual DbSet<VwObrasFinanceiro> VwObrasFinanceiro { get; set; }
-
-    public virtual DbSet<VwObrasResultado> VwObrasResultado { get; set; }
-
-    public virtual DbSet<VwObrasSituacao> VwObrasSituacao { get; set; }
-
-    public virtual DbSet<VwSaldoDeposito> VwSaldoDeposito { get; set; }
-
-    public virtual DbSet<VwSaldoObra> VwSaldoObra { get; set; }
+    public virtual DbSet<Usuario> Usuario { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -1940,261 +1920,6 @@ public partial class AppDbContext : DbContext
                 .HasForeignKey(d => d.PapelId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("fk_usuarios_papel");
-        });
-
-        modelBuilder.Entity<VwCapacitacoesAlerta>(entity =>
-        {
-            entity
-                .HasNoKey()
-                .ToView("vw_capacitacoes_alerta");
-
-            entity.Property(e => e.Capacitacao)
-                .HasMaxLength(160)
-                .HasColumnName("capacitacao");
-            entity.Property(e => e.Codigo)
-                .HasMaxLength(30)
-                .HasColumnName("codigo");
-            entity.Property(e => e.DataValidade).HasColumnName("data_validade");
-            entity.Property(e => e.DiasRestantes).HasColumnName("dias_restantes");
-            entity.Property(e => e.FuncionarioId).HasColumnName("funcionario_id");
-            entity.Property(e => e.Nome)
-                .HasMaxLength(160)
-                .HasColumnName("nome");
-            entity.Property(e => e.Situacao)
-                .HasMaxLength(12)
-                .HasDefaultValueSql("''")
-                .HasColumnName("situacao")
-                .UseCollation("cp850_general_ci")
-                .HasCharSet("cp850");
-        });
-
-        modelBuilder.Entity<VwClientesFinanceiro>(entity =>
-        {
-            entity
-                .HasNoKey()
-                .ToView("vw_clientes_financeiro");
-
-            entity.Property(e => e.ClienteId).HasColumnName("cliente_id");
-            entity.Property(e => e.Nome)
-                .HasMaxLength(160)
-                .HasColumnName("nome");
-            entity.Property(e => e.TotalAReceber)
-                .HasPrecision(38, 2)
-                .HasColumnName("total_a_receber");
-        });
-
-        modelBuilder.Entity<VwEstoqueBaixo>(entity =>
-        {
-            entity
-                .HasNoKey()
-                .ToView("vw_estoque_baixo");
-
-            entity.Property(e => e.Escopo)
-                .HasMaxLength(8)
-                .HasDefaultValueSql("''")
-                .HasColumnName("escopo")
-                .UseCollation("cp850_general_ci")
-                .HasCharSet("cp850");
-            entity.Property(e => e.Item)
-                .HasMaxLength(180)
-                .HasDefaultValueSql("''")
-                .HasColumnName("item");
-            entity.Property(e => e.ItemId).HasColumnName("item_id");
-            entity.Property(e => e.Minimo)
-                .HasPrecision(15, 3)
-                .HasColumnName("minimo");
-            entity.Property(e => e.ObraId).HasColumnName("obra_id");
-            entity.Property(e => e.Saldo)
-                .HasPrecision(37, 3)
-                .HasColumnName("saldo");
-            entity.Property(e => e.Unidade)
-                .HasMaxLength(30)
-                .HasDefaultValueSql("''")
-                .HasColumnName("unidade");
-        });
-
-        modelBuilder.Entity<VwEtapasSituacao>(entity =>
-        {
-            entity
-                .HasNoKey()
-                .ToView("vw_etapas_situacao");
-
-            entity.Property(e => e.DataPrevista).HasColumnName("data_prevista");
-            entity.Property(e => e.EtapaId).HasColumnName("etapa_id");
-            entity.Property(e => e.Nome)
-                .HasMaxLength(180)
-                .HasColumnName("nome");
-            entity.Property(e => e.ObraId).HasColumnName("obra_id");
-            entity.Property(e => e.Percentual)
-                .HasPrecision(5, 2)
-                .HasColumnName("percentual");
-            entity.Property(e => e.Situacao)
-                .HasMaxLength(20)
-                .HasDefaultValueSql("''")
-                .HasColumnName("situacao");
-            entity.Property(e => e.Status)
-                .HasMaxLength(20)
-                .HasDefaultValueSql("'prevista'")
-                .HasColumnName("status");
-        });
-
-        modelBuilder.Entity<VwObrasCustos>(entity =>
-        {
-            entity
-                .HasNoKey()
-                .ToView("vw_obras_custos");
-
-            entity.Property(e => e.Codigo)
-                .HasMaxLength(50)
-                .HasColumnName("codigo");
-            entity.Property(e => e.ContratoAtual)
-                .HasPrecision(38, 2)
-                .HasColumnName("contrato_atual");
-            entity.Property(e => e.CustoEmpreitada)
-                .HasPrecision(37, 2)
-                .HasColumnName("custo_empreitada");
-            entity.Property(e => e.CustoMaoObra)
-                .HasPrecision(37, 2)
-                .HasColumnName("custo_mao_obra");
-            entity.Property(e => e.CustoMaterial)
-                .HasPrecision(52, 5)
-                .HasColumnName("custo_material");
-            entity.Property(e => e.Nome)
-                .HasMaxLength(180)
-                .HasColumnName("nome");
-            entity.Property(e => e.ObraId)
-                .HasDefaultValueSql("'0'")
-                .HasColumnName("obra_id");
-        });
-
-        modelBuilder.Entity<VwObrasFinanceiro>(entity =>
-        {
-            entity
-                .HasNoKey()
-                .ToView("vw_obras_financeiro");
-
-            entity.Property(e => e.Codigo)
-                .HasMaxLength(50)
-                .HasColumnName("codigo");
-            entity.Property(e => e.ContratoValor)
-                .HasPrecision(15, 2)
-                .HasColumnName("contrato_valor");
-            entity.Property(e => e.Nome)
-                .HasMaxLength(180)
-                .HasColumnName("nome");
-            entity.Property(e => e.ObraId).HasColumnName("obra_id");
-            entity.Property(e => e.TotalAReceber)
-                .HasPrecision(38, 2)
-                .HasColumnName("total_a_receber");
-        });
-
-        modelBuilder.Entity<VwObrasResultado>(entity =>
-        {
-            entity
-                .HasNoKey()
-                .ToView("vw_obras_resultado");
-
-            entity.Property(e => e.Codigo)
-                .HasMaxLength(50)
-                .HasColumnName("codigo");
-            entity.Property(e => e.ContratoAtual)
-                .HasPrecision(38, 2)
-                .HasColumnName("contrato_atual");
-            entity.Property(e => e.CustoEmpreitada)
-                .HasPrecision(37, 2)
-                .HasColumnName("custo_empreitada");
-            entity.Property(e => e.CustoMaoObra)
-                .HasPrecision(37, 2)
-                .HasColumnName("custo_mao_obra");
-            entity.Property(e => e.CustoMaterial)
-                .HasPrecision(52, 5)
-                .HasColumnName("custo_material");
-            entity.Property(e => e.CustoTotal)
-                .HasPrecision(54, 5)
-                .HasColumnName("custo_total");
-            entity.Property(e => e.Nome)
-                .HasMaxLength(180)
-                .HasColumnName("nome");
-            entity.Property(e => e.ObraId)
-                .HasDefaultValueSql("'0'")
-                .HasColumnName("obra_id");
-            entity.Property(e => e.Resultado)
-                .HasPrecision(55, 5)
-                .HasColumnName("resultado");
-        });
-
-        modelBuilder.Entity<VwObrasSituacao>(entity =>
-        {
-            entity
-                .HasNoKey()
-                .ToView("vw_obras_situacao");
-
-            entity.Property(e => e.Codigo)
-                .HasMaxLength(50)
-                .HasColumnName("codigo");
-            entity.Property(e => e.DataPrevisao).HasColumnName("data_previsao");
-            entity.Property(e => e.EtapasConcluidas).HasColumnName("etapas_concluidas");
-            entity.Property(e => e.FechadaEm)
-                .HasColumnType("datetime")
-                .HasColumnName("fechada_em");
-            entity.Property(e => e.Nome)
-                .HasMaxLength(180)
-                .HasColumnName("nome");
-            entity.Property(e => e.ObraId)
-                .HasDefaultValueSql("'0'")
-                .HasColumnName("obra_id");
-            entity.Property(e => e.Situacao)
-                .HasMaxLength(20)
-                .HasDefaultValueSql("''")
-                .HasColumnName("situacao");
-            entity.Property(e => e.Status)
-                .HasMaxLength(20)
-                .HasDefaultValueSql("'planejamento'")
-                .HasColumnName("status");
-            entity.Property(e => e.TotalEtapas).HasColumnName("total_etapas");
-        });
-
-        modelBuilder.Entity<VwSaldoDeposito>(entity =>
-        {
-            entity
-                .HasNoKey()
-                .ToView("vw_saldo_deposito");
-
-            entity.Property(e => e.Item)
-                .HasMaxLength(180)
-                .HasColumnName("item");
-            entity.Property(e => e.ItemId).HasColumnName("item_id");
-            entity.Property(e => e.Minimo)
-                .HasPrecision(15, 3)
-                .HasColumnName("minimo");
-            entity.Property(e => e.Saldo)
-                .HasPrecision(37, 3)
-                .HasColumnName("saldo");
-            entity.Property(e => e.Unidade)
-                .HasMaxLength(30)
-                .HasColumnName("unidade");
-        });
-
-        modelBuilder.Entity<VwSaldoObra>(entity =>
-        {
-            entity
-                .HasNoKey()
-                .ToView("vw_saldo_obra");
-
-            entity.Property(e => e.Item)
-                .HasMaxLength(180)
-                .HasColumnName("item");
-            entity.Property(e => e.ItemId).HasColumnName("item_id");
-            entity.Property(e => e.Minimo)
-                .HasPrecision(15, 3)
-                .HasColumnName("minimo");
-            entity.Property(e => e.ObraId).HasColumnName("obra_id");
-            entity.Property(e => e.Saldo)
-                .HasPrecision(37, 3)
-                .HasColumnName("saldo");
-            entity.Property(e => e.Unidade)
-                .HasMaxLength(30)
-                .HasColumnName("unidade");
         });
 
         OnModelCreatingPartial(modelBuilder);

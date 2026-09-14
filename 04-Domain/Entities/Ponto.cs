@@ -43,9 +43,9 @@ public partial class Ponto
 
     public DateTime UpdatedAt { get; set; }
 
-    public virtual Funcionarios Funcionario { get; set; } = null!;
+    public virtual Funcionario Funcionario { get; set; } = null!;
 
-    public virtual Obras Obra { get; set; } = null!;
+    public virtual Obra Obra { get; set; } = null!;
 
-    public virtual Usuarios? RegistradoPorNavigation { get; set; }
+    public virtual Usuario? RegistradoPorNavigation { get; set; }
 }
