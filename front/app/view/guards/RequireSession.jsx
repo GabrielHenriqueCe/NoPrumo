@@ -12,8 +12,10 @@ import { useSession } from '../providers/sessionContext'
   This hides screens. It does not protect data — the API is what refuses.
 */
 
+const CHANGE_PASSWORD_PATH = '/change-password'
+
 export function RequireSession({ permission, children }) {
-  const { isRestoring, isAuthenticated, can } = useSession()
+  const { isRestoring, isAuthenticated, can, mustChangePassword } = useSession()
   const location = useLocation()
 
   if (isRestoring) {
@@ -31,6 +33,15 @@ export function RequireSession({ permission, children }) {
   if (!isAuthenticated) {
     // Remembers where they were headed, so signing in finishes the trip.
     return <Navigate to="/login" replace state={{ from: location.pathname }} />
+  }
+
+  /*
+    A provisional password is one an administrator read out loud over the
+    phone — it is shared by construction until the person replaces it. So the
+    account gets exactly one screen until that happens.
+  */
+  if (mustChangePassword && location.pathname !== CHANGE_PASSWORD_PATH) {
+    return <Navigate to={CHANGE_PASSWORD_PATH} replace />
   }
 
   if (permission && !can(permission)) {

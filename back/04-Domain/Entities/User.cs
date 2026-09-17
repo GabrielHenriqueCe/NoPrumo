@@ -21,6 +21,8 @@ public partial class User
 
     public bool? Active { get; set; }
 
+    public bool MustChangePassword { get; set; }
+
     public DateTime? LastLoginAt { get; set; }
 
     public int FailedAttempts { get; set; }

@@ -1420,6 +1420,8 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Active)
                 .IsRequired()
                 .HasDefaultValueSql("'1'");
+            entity.Property(e => e.MustChangePassword)
+                .HasDefaultValue(false);
             entity.Property(e => e.LockedUntil)
                 .HasColumnType("datetime");
             entity.Property(e => e.CreatedAt)

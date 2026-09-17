@@ -8,11 +8,22 @@ import { Brand } from './Brand'
   It is a layout route — the screen renders through <Outlet /> — so the menu
   and the header exist once instead of being rebuilt by each page.
 
-  Menu items are filtered by permission. Only one item exists today; the array
-  is where the rest go as the screens are built.
+  The menu is grouped on purpose, even with a single item inside. The shape of
+  the menu is what tells whoever builds the next screen where it belongs:
+  employees, clients and suppliers are all master data, so they go under the
+  same heading as users instead of piling up loose at the top level.
+
+  Every item declares the permission it needs. A group whose items are all out
+  of reach does not render its heading either — an empty section would only
+  advertise what the person cannot open.
 */
 
-const MENU = [{ to: '/users', label: 'Users', permission: 'manage_users' }]
+const MENU = [
+  {
+    heading: 'Master data',
+    items: [{ to: '/users', label: 'Users', permission: 'manage_users' }],
+  },
+]
 
 export function AppShell() {
   const { user, signOut, can } = useSession()
@@ -23,7 +34,10 @@ export function AppShell() {
     navigate('/login', { replace: true })
   }
 
-  const items = MENU.filter((item) => !item.permission || can(item.permission))
+  const groups = MENU.map((group) => ({
+    ...group,
+    items: group.items.filter((item) => !item.permission || can(item.permission)),
+  })).filter((group) => group.items.length > 0)
 
   return (
     <div className="grid min-h-screen" style={{ gridTemplateColumns: '236px minmax(0,1fr)' }}>
@@ -33,21 +47,30 @@ export function AppShell() {
         </div>
 
         <nav className="flex flex-col">
-          {items.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) =>
-                [
-                  'border-l-2 px-[18px] py-2.5 text-sm transition-colors',
-                  isActive
-                    ? 'border-gold bg-white/8 text-cream'
-                    : 'border-transparent text-[#c6cdd4] hover:bg-white/5 hover:text-cream',
-                ].join(' ')
-              }
-            >
-              {item.label}
-            </NavLink>
+          {groups.map((group) => (
+            <div key={group.heading} className="mb-1">
+              <p className="label px-[18px] pt-3 pb-1.5 text-muted-dark">{group.heading}</p>
+
+              {group.items.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  className={({ isActive }) =>
+                    [
+                      'flex items-center gap-2 border-l-2 py-2.5 pr-[18px] pl-[18px] text-sm transition-colors',
+                      isActive
+                        ? 'border-gold bg-white/8 text-cream'
+                        : 'border-transparent text-[#c6cdd4] hover:bg-white/5 hover:text-cream',
+                    ].join(' ')
+                  }
+                >
+                  <span aria-hidden="true" className="text-[11px] opacity-40">
+                    └
+                  </span>
+                  {item.label}
+                </NavLink>
+              ))}
+            </div>
           ))}
         </nav>
 

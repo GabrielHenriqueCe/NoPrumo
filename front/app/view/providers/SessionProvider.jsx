@@ -39,6 +39,16 @@ export function SessionProvider({ children }) {
     [auth, tokenStorage],
   )
 
+  const changePassword = useCallback(
+    async (currentPassword, newPassword) => {
+      await auth.changePassword({ currentPassword, newPassword })
+      // The token stays valid — what changed is that the password is no longer
+      // the provisional one, so the gate in RequireSession can let go.
+      setUser((current) => (current ? { ...current, mustChangePassword: false } : current))
+    },
+    [auth],
+  )
+
   // A token the API refuses is dead everywhere, not just on the screen that
   // happened to use it. The HTTP client reports it here, once.
   useEffect(() => onSessionExpired(endSession), [onSessionExpired, endSession])
@@ -70,6 +80,9 @@ export function SessionProvider({ children }) {
       isAuthenticated: status === AUTHENTICATED,
       signIn,
       signOut: endSession,
+      changePassword,
+      // True while the account still carries the password an admin handed over.
+      mustChangePassword: Boolean(user?.mustChangePassword),
       /*
         Permission, never role name. The screen asks what someone may do, so
         changing who may do it is a back-end decision — not a hunt through the
@@ -78,7 +91,7 @@ export function SessionProvider({ children }) {
       */
       can: (permission) => Boolean(user?.permissions?.includes(permission)),
     }),
-    [user, status, signIn, endSession],
+    [user, status, signIn, endSession, changePassword],
   )
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>
