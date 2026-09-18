@@ -1,0 +1,68 @@
+@import 'tailwindcss';
+
+/*
+  Palette.
+
+  Graphite and cream come from the screen redesign; bronze and the steel greys
+  were sampled straight out of Logo_NoPrumo.jpeg, so the interface and the logo
+  are the same two materials.
+
+  Type stays on system fonts on purpose: everything here runs on the machine,
+  with no CDN and no webfont download, so the app also works with no internet.
+*/
+@theme {
+  --color-cream: #f3f1ec;
+  --color-cream-soft: #fcfbf8;
+  --color-graphite: #10161c;
+  --color-graphite-soft: #161f29;
+
+  /* bronze sampled from the plumb bob, gold tones for interaction */
+  --color-bronze: #886830;
+  --color-gold: #a8842b;
+  --color-gold-bright: #d9b451;
+  --color-gold-wash: #fbf7ec;
+
+  /* steel greys sampled from the hexagon */
+  --color-steel-900: #404040;
+  --color-steel-700: #606060;
+  --color-steel-500: #808080;
+
+  --color-line: #ddd9d0;
+  --color-line-soft: #e8e5de;
+  --color-line-dark: #232e3a;
+  --color-muted: #6b7480;
+  --color-muted-dark: #6f7a86;
+  --color-danger: #9c3d22;
+  --color-danger-soft: #e1917a;
+  --color-success: #2f6b3f;
+
+  --font-sans: 'Segoe UI Variable Display', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Cascadia Mono', Consolas, ui-monospace, monospace;
+}
+
+body {
+  margin: 0;
+  background: var(--color-cream);
+  color: var(--color-graphite);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Section label: small caps monospace, used above every heading */
+.label {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+/*
+  Focus ring. Declared once, globally, because a keyboard user has to be able
+  to see where they are on every control — and because a per-component ring is
+  the first thing to get forgotten.
+*/
+:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+}

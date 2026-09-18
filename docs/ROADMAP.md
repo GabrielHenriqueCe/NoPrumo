@@ -13,23 +13,29 @@ Legenda: `[x]` feito · `[ ]` a fazer · `[!]` decisão pendente
 - [x] Migration `InitialCreate` gerada **só pelo comando**, sem SQL escrito à mão
 - [x] Credenciais fora do repositório (User Secrets)
 - [x] Estrutura monorepo `back/` + `front/`
+- [x] Seed de permissões, papéis e do primeiro `admin` — sem ele ninguém entrava
+- [x] Autenticação: login com JWT, BCrypt cost 12 e troca obrigatória da senha provisória
+- [x] Front em React 19 + Vite + Tailwind 4, consumindo a API de verdade (sem mock)
+- [x] Telas de login, troca de senha e gestão de usuários
 
 ---
 
 ## 0. O que saiu do banco e virou código
 
 A migration deixou de ter SQL manual. Com isso, três categorias de coisa que o
-banco resolvia sozinho passaram a ser responsabilidade do C# — e nenhuma delas
-está feita. Enquanto não estiverem, o banco sobe vazio e sem trava nenhuma.
+banco resolvia sozinho passaram a ser responsabilidade do C#. O seed já cobre o
+que era preciso para alguém entrar no sistema — permissões, papéis e o primeiro
+`admin`. O resto continua sem trava nenhuma.
 
 - [ ] **Validação** — os 40 CHECK constraints (status válido, `amount > 0`,
       data fim ≥ data início, quantidade positiva) viram validação na entidade
       ou no service
-- [ ] **Seed inicial** — papéis, permissões, tipos de NR/ASO, setores, funções,
-      categorias e grupos de estoque
-- [ ] **Primeiro usuário** — não existe `admin` no banco. Decidir como ele nasce:
-      rotina de seed no start da API ou INSERT manual documentado no README.
-      Sem isso, ninguém entra no sistema
+- [x] **Seed inicial, parte 1** — as 7 permissões e os 6 papéis, em
+      `DatabaseSeeder`. Roda a cada start e só insere o que falta
+- [ ] **Seed inicial, parte 2** — tipos de NR/ASO, setores, funções, categorias
+      e grupos de estoque
+- [x] **Primeiro usuário** — o `admin` nasce pelo seed com senha provisória e
+      `must_change_password`, e é obrigado a trocá-la no primeiro login
 - [ ] **`atrasada`** — calcular comparando a data prevista com hoje, em `project`
       e em `stage`
 - [ ] **Saldo de estoque** — somar `stock_movement`, por obra e por depósito
@@ -101,17 +107,28 @@ material ainda chega 30-60 dias depois da entrega.
 
 ## 2. Autenticação
 
-- [ ] Hash de senha com **BCrypt.Net-Next, cost 12** — nunca SHA256
-- [ ] Endpoint de login + JWT
+- [x] Hash de senha com **BCrypt.Net-Next, cost 12** — nunca SHA256
+- [x] Endpoint de login + JWT (`POST /api/auth/login`, `GET /api/auth/me`)
+- [x] Primeiro acesso obriga troca de senha provisória
+      (`POST /api/auth/change-password`)
+- [x] Criar o usuário `admin` (nasce no seed — ver seção 0)
+- [x] Reset de senha pelo admin — gera uma senha provisória nova e a devolve uma
+      única vez (`POST /api/users/{id}/reset-password`); o banco só guarda o hash
 - [ ] Rate limit no login (`AddRateLimiter` do .NET 8)
-- [ ] Lockout por tentativas (`failed_attempts` e `locked_until` já existem)
-- [ ] Primeiro acesso obriga troca de senha provisória
-- [ ] Criar o usuário `admin` (ver seção 0 — hoje não existe nenhum no banco)
+- [ ] Lockout por tentativas — `failed_attempts` e `locked_until` existem na
+      entidade, mas o login ainda não os lê nem escreve
 
 ### Autorização
 
-- [ ] Policies baseadas em **permissão**, não em nome de perfil
-      — `[Authorize(Policy = "view_finance")]`, não `if (role == "admin")`
+- [x] Policies baseadas em **permissão**, não em nome de perfil
+      — `[Authorize(Policy = "view_finance")]`, não `if (role == "admin")`.
+      Existem as policies `manage_users`, `view_stock` e `manage_stock`; as
+      outras nascem junto com a tela que precisar delas. As permissões vão no
+      token como claim `permission`
+- [x] **Ler e escrever são verbos separados** — `view_stock` abre a tela,
+      `manage_stock` lança movimento. É o que deixa um perfil acompanhar o
+      estoque sem poder mexer nele, sem precisar de papel novo. Repetir o padrão
+      nos próximos módulos, em vez de criar um papel para cada exceção
 - [ ] Handler de recurso para "esta obra é minha?" (escopo via `user_project`)
 - [ ] **404 em vez de 403** quando o mestre pede obra que não é dele
       — 403 confirma que o recurso existe e permite enumerar IDs
@@ -145,9 +162,10 @@ material ainda chega 30-60 dias depois da entrega.
 
 ## 4. API
 
-- [ ] **CORS** — sem isso o front não conversa com a API. Primeiro bloqueio prático
+- [x] **CORS** — policy `front`, liberando `http://localhost:5173`
+- [x] Paginação — `PagedResult<T>` na listagem de usuários; repetir o mesmo
+      formato em `stock_movement` e `time_entry`, que crescem rápido
 - [ ] Middleware global de exceção (`IExceptionHandler`) no lugar de try/catch por action
-- [ ] Paginação nos endpoints de lista — `stock_movement` e `time_entry` crescem rápido
 - [ ] Repositories e services **só para o que tem tela**. Não gerar 37 CRUDs
 - [ ] Mover entidades para o Domain já foi feito; manter Domain sem referência a EF
 
@@ -155,11 +173,18 @@ material ainda chega 30-60 dias depois da entrega.
 
 ## 5. Front
 
-- [ ] Tela de login
-- [ ] Primeiro acesso / troca de senha
-- [ ] Layout base com menu por perfil
+**React 19 + Vite + Tailwind 4**, em `front/app`, separado em `data` (gateways
+HTTP, storage do token) e `view` (telas, guards, providers). Sem mock: o que a
+tela mostra vem da API.
+
+- [x] Tela de login
+- [x] Primeiro acesso / troca de senha
+- [x] Layout base com menu por permissão — cada item declara a permissão que
+      exige, e o grupo some inteiro se nada sobrar
+- [x] Gestão de usuários (admin cria, não existe auto-cadastro)
+- [ ] Menu agrupado: hoje só existe **Cadastros > Usuários**. Cadastro novo entra
+      debaixo de Cadastros, não solto na raiz do menu
 - [ ] Páginas vazias navegáveis (esqueleto antes do conteúdo)
-- [ ] Gestão de usuários (admin cria, não existe auto-cadastro)
 - [ ] Portal do cliente por link (sem login)
 
 ---
@@ -181,7 +206,6 @@ material ainda chega 30-60 dias depois da entrega.
 | FAP da empresa e regime tributário (Simples Anexo IV muda o encargo em ~5,8 p.p.) | contador |
 | Periodicidade real das NRs — as normas mudam | técnico de segurança |
 | Quantos mestres por obra (se for mais de um, escopo sai só de `user_project`) | equipe |
-| Framework do front | equipe |
 
 ---
 
