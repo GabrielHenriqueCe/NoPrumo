@@ -122,8 +122,13 @@ material ainda chega 30-60 dias depois da entrega.
 
 - [x] Policies baseadas em **permissão**, não em nome de perfil
       — `[Authorize(Policy = "view_finance")]`, não `if (role == "admin")`.
-      Existe só a policy `manage_users`; as outras nascem junto com a tela que
-      precisar delas. As permissões vão no token como claim `permission`
+      Existem as policies `manage_users`, `view_stock` e `manage_stock`; as
+      outras nascem junto com a tela que precisar delas. As permissões vão no
+      token como claim `permission`
+- [x] **Ler e escrever são verbos separados** — `view_stock` abre a tela,
+      `manage_stock` lança movimento. É o que deixa um perfil acompanhar o
+      estoque sem poder mexer nele, sem precisar de papel novo. Repetir o padrão
+      nos próximos módulos, em vez de criar um papel para cada exceção
 - [ ] Handler de recurso para "esta obra é minha?" (escopo via `user_project`)
 - [ ] **404 em vez de 403** quando o mestre pede obra que não é dele
       — 403 confirma que o recurso existe e permite enumerar IDs

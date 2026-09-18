@@ -87,6 +87,7 @@ export function ChangePasswordScreen() {
           label="Current password"
           name="currentPassword"
           type="password"
+          placeholder="The password you just signed in with"
           autoComplete="current-password"
           autoFocus
           required
@@ -101,6 +102,7 @@ export function ChangePasswordScreen() {
           label="New password"
           name="newPassword"
           type="password"
+          placeholder={`At least ${MIN_LENGTH} characters`}
           autoComplete="new-password"
           required
           value={form.newPassword}
@@ -115,6 +117,7 @@ export function ChangePasswordScreen() {
           label="Confirm the new password"
           name="confirmation"
           type="password"
+          placeholder="Type the new password again"
           autoComplete="new-password"
           required
           value={form.confirmation}

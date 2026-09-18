@@ -14,7 +14,8 @@ public static class DatabaseSeeder
         ("manage_users",     "Criar e editar usuários do sistema"),
           ("manage_projects",  "Cadastrar obras, etapas e prazos"),
           ("manage_employees", "Cadastrar funcionários e equipes"),
-          ("manage_stock",     "Movimentar estoque, EPI e ferramentas"),
+          ("view_stock",       "Ver saldo e movimentação de estoque"),
+          ("manage_stock",     "Lançar entrada e saída de estoque, EPI e ferramentas"),
           ("manage_purchases", "Cotar, comprar e registrar nota fiscal"),
           ("manage_safety",    "Treinamentos de NR, ASO e fichas de EPI"),
           ("view_finance",     "Ver contrato, custo, salário e margem"),
@@ -29,9 +30,9 @@ public static class DatabaseSeeder
             ("admin",             "Administrador",        all),
               ("engineer",          "Engenheiro",           ["manage_projects", "manage_employees", "view_finance"]),
               // Mestre enxerga quantidade, administração enxerga dinheiro.
-              ("foreman",           "Mestre de obras",      ["manage_stock"]),
+              ("foreman",           "Mestre de obras",      ["view_stock", "manage_stock"]),
               ("safety_technician", "Técnico de segurança", ["manage_safety"]),
-              ("warehouse_keeper",  "Almoxarife",           ["manage_stock"]),
+              ("warehouse_keeper",  "Almoxarife",           ["view_stock", "manage_stock"]),
               ("purchasing",        "Compras",              ["manage_purchases", "view_finance"]),
           ];
     }

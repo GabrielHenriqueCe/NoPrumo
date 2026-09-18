@@ -84,6 +84,7 @@ export function UserFormDialog({ open, user, roles, onClose, onSubmit }) {
         <TextField
           label="Full name"
           name="name"
+          placeholder="e.g. João da Silva"
           required
           value={form.name}
           onChange={update('name')}
@@ -93,6 +94,7 @@ export function UserFormDialog({ open, user, roles, onClose, onSubmit }) {
         <TextField
           label="Username"
           name="username"
+          placeholder="e.g. j.silva"
           required
           disabled={editing}
           value={form.username}
@@ -105,6 +107,7 @@ export function UserFormDialog({ open, user, roles, onClose, onSubmit }) {
           label="Email"
           name="email"
           type="email"
+          placeholder="name@company.com"
           value={form.email}
           onChange={update('email')}
           error={fieldErrors.email}

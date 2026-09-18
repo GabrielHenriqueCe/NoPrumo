@@ -71,6 +71,7 @@ export function LoginScreen() {
           tone="dark"
           label="Username"
           name="username"
+          placeholder="e.g. j.silva"
           autoComplete="username"
           autoFocus
           required
@@ -85,6 +86,7 @@ export function LoginScreen() {
           label="Password"
           name="password"
           type="password"
+          placeholder="Your password"
           autoComplete="current-password"
           required
           value={form.password}

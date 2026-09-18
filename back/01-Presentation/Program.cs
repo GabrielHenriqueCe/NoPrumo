@@ -56,6 +56,12 @@ builder.Services.AddAuthorization(options =>
     // Policy por permissão, não por nome de papel: mudar quem pode gerenciar
     // usuários é mexer no seed, não caçar `if (role == "admin")` no código.
     options.AddPolicy("manage_users", policy => policy.RequireClaim("permission", "manage_users"));
+
+    // Estoque tem dois verbos. A tela inteira pede view_stock; lançar movimento
+    // pede manage_stock. É assim que um perfil acompanha o estoque da obra sem
+    // poder mexer nele — mesma tela, permissões diferentes.
+    options.AddPolicy("view_stock", policy => policy.RequireClaim("permission", "view_stock"));
+    options.AddPolicy("manage_stock", policy => policy.RequireClaim("permission", "manage_stock"));
 });
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
