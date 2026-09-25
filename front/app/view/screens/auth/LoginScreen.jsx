@@ -30,7 +30,7 @@ export function LoginScreen() {
   const [busy, setBusy] = useState(false)
 
   if (isAuthenticated && !isRestoring) {
-    return <Navigate to={location.state?.from ?? '/users'} replace />
+    return <Navigate to={location.state?.from ?? '/'} replace />
   }
 
   const update = (field) => (event) => {
@@ -47,7 +47,7 @@ export function LoginScreen() {
 
     try {
       await signIn({ username: form.username.trim(), password: form.password })
-      navigate(location.state?.from ?? '/users', { replace: true })
+      navigate(location.state?.from ?? '/', { replace: true })
     } catch (error) {
       if (error.isValidation) setFieldErrors(error.fieldErrors)
       else setFormError(error.message ?? 'Could not sign in.')

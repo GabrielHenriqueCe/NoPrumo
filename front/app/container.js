@@ -1,4 +1,16 @@
 import { createAuthGateway } from './data/gateways/authGateway'
+import { createDepartmentGateway } from './data/gateways/departmentGateway'
+import { createEmployeeGateway } from './data/gateways/employeeGateway'
+import { createEmployeeTrainingGateway } from './data/gateways/employeeTrainingGateway'
+import { createEmploymentRegimeGateway } from './data/gateways/employmentRegimeGateway'
+import { createJobRoleGateway } from './data/gateways/jobRoleGateway'
+import { createProjectGateway } from './data/gateways/projectGateway'
+import { createStageGateway } from './data/gateways/stageGateway'
+import { createStockCategoryGateway } from './data/gateways/stockCategoryGateway'
+import { createStockGroupGateway } from './data/gateways/stockGroupGateway'
+import { createStockItemGateway } from './data/gateways/stockItemGateway'
+import { createTeamGateway } from './data/gateways/teamGateway'
+import { createTrainingTypeGateway } from './data/gateways/trainingTypeGateway'
 import { createUserGateway } from './data/gateways/userGateway'
 import { createHttpClient } from './data/http/httpClient'
 import { tokenStorage } from './data/storage/tokenStorage'
@@ -33,6 +45,25 @@ export function createContainer({
   return {
     auth: createAuthGateway(http),
     users: createUserGateway(http),
+
+    departments: createDepartmentGateway(http),
+    jobRoles: createJobRoleGateway(http),
+    employmentRegimes: createEmploymentRegimeGateway(http),
+    employees: createEmployeeGateway(http),
+    teams: createTeamGateway(http),
+
+    // Clients and suppliers: registered by slice 1, whose gateways already exist in its branch.
+
+    stockCategories: createStockCategoryGateway(http),
+    stockGroups: createStockGroupGateway(http),
+    stockItems: createStockItemGateway(http),
+
+    projects: createProjectGateway(http),
+    stages: createStageGateway(http),
+
+    trainingTypes: createTrainingTypeGateway(http),
+    employeeTrainings: createEmployeeTrainingGateway(http),
+
     tokenStorage,
     baseUrl,
 

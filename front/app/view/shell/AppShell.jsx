@@ -1,29 +1,15 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useSession } from '../providers/sessionContext'
 import { Brand } from './Brand'
+import { MENU } from './menu'
 
 /*
   The frame every internal screen sits in: dark sidebar, light working area.
 
   It is a layout route — the screen renders through <Outlet /> — so the menu
-  and the header exist once instead of being rebuilt by each page.
-
-  The menu is grouped on purpose, even with a single item inside. The shape of
-  the menu is what tells whoever builds the next screen where it belongs:
-  employees, clients and suppliers are all master data, so they go under the
-  same heading as users instead of piling up loose at the top level.
-
-  Every item declares the permission it needs. A group whose items are all out
-  of reach does not render its heading either — an empty section would only
-  advertise what the person cannot open.
+  and the header exist once instead of being rebuilt by each page. What goes
+  in the menu, and why it is grouped the way it is, lives in menu.js.
 */
-
-const MENU = [
-  {
-    heading: 'Master data',
-    items: [{ to: '/users', label: 'Users', permission: 'manage_users' }],
-  },
-]
 
 export function AppShell() {
   const { user, signOut, can } = useSession()
