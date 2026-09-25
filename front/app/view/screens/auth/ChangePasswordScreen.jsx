@@ -57,7 +57,7 @@ export function ChangePasswordScreen() {
 
     try {
       await changePassword(form.currentPassword, form.newPassword)
-      navigate('/users', { replace: true })
+      navigate('/', { replace: true })
     } catch (error) {
       if (error.isValidation) setFieldErrors(error.fieldErrors)
       else setFormError(error.message ?? 'Could not change the password.')

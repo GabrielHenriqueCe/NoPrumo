@@ -62,6 +62,14 @@ builder.Services.AddAuthorization(options =>
     // poder mexer nele — mesma tela, permissões diferentes.
     options.AddPolicy("view_stock", policy => policy.RequireClaim("permission", "view_stock"));
     options.AddPolicy("manage_stock", policy => policy.RequireClaim("permission", "manage_stock"));
+
+    options.AddPolicy("manage_projects", policy => policy.RequireClaim("permission", "manage_projects"));
+    options.AddPolicy("manage_employees", policy => policy.RequireClaim("permission", "manage_employees"));
+    options.AddPolicy("manage_purchases", policy => policy.RequireClaim("permission", "manage_purchases"));
+    options.AddPolicy("manage_safety", policy => policy.RequireClaim("permission", "manage_safety"));
+
+    // Dinheiro é permissão à parte: ver contrato, salário, preço e margem.
+    options.AddPolicy("view_finance", policy => policy.RequireClaim("permission", "view_finance"));
 });
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
