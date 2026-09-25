@@ -14,7 +14,7 @@ namespace NoPrumo.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize(Policy = "manage_purchases")]
-public sealed class SuppliersController(AppDbContext db) : ControllerBase
+public sealed class SuppliersController(AppDbContext db, DocumentSettings docSettings) : ControllerBase
 {
     private const int MaxPageSize = 100;
 
@@ -84,7 +84,7 @@ public sealed class SuppliersController(AppDbContext db) : ControllerBase
             }
             else
             {
-                processedDoc = DocumentProcessor.Process(request.Document);
+                processedDoc = DocumentProcessor.Process(request.Document, docSettings.EncryptionKey, docSettings.HmacKey);
                 if (processedDoc.Hash != null && await db.Supplier.AnyAsync(s => s.DocumentHash == processedDoc.Hash && s.DeletedAt == null))
                 {
                     ModelState.AddModelError("document", "This document is already registered.");
@@ -139,7 +139,7 @@ public sealed class SuppliersController(AppDbContext db) : ControllerBase
             }
             else
             {
-                processedDoc = DocumentProcessor.Process(request.Document);
+                processedDoc = DocumentProcessor.Process(request.Document, docSettings.EncryptionKey, docSettings.HmacKey);
                 if (processedDoc.Hash != null && await db.Supplier.AnyAsync(s => s.DocumentHash == processedDoc.Hash && s.Id != id && s.DeletedAt == null))
                 {
                     ModelState.AddModelError("document", "This document is already registered.");

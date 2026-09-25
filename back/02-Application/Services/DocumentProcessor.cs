@@ -11,11 +11,7 @@ public sealed record ProcessedDocument(
 
 public static class DocumentProcessor
 {
-    // Default fallback keys derived deterministically if custom keys are omitted
-    private static readonly byte[] DefaultEncryptionKey = SHA256.HashData(Encoding.UTF8.GetBytes("NoPrumo-DocumentEncryption-Key-2026"));
-    private static readonly byte[] DefaultHmacKey = SHA256.HashData(Encoding.UTF8.GetBytes("NoPrumo-DocumentHmac-Key-2026"));
-
-    public static ProcessedDocument Process(string? rawInput, byte[]? encryptionKey = null, byte[]? hmacKey = null)
+    public static ProcessedDocument Process(string? rawInput, byte[] encryptionKey, byte[] hmacKey)
     {
         if (string.IsNullOrWhiteSpace(rawInput))
         {
@@ -28,11 +24,8 @@ public static class DocumentProcessor
             return new ProcessedDocument(null, null, null);
         }
 
-        var encKey = encryptionKey ?? DefaultEncryptionKey;
-        var hKey = hmacKey ?? DefaultHmacKey;
-
-        var encrypted = EncryptAesGcm(digits, encKey);
-        var hash = ComputeHmacSha256(digits, hKey);
+        var encrypted = EncryptAesGcm(digits, encryptionKey);
+        var hash = ComputeHmacSha256(digits, hmacKey);
         var masked = MaskDocument(digits);
 
         return new ProcessedDocument(encrypted, hash, masked);

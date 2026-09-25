@@ -31,6 +31,19 @@ var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>()
 builder.Services.AddSingleton(jwtSettings);
 builder.Services.AddScoped<TokenService>();
 
+// Chaves de criptografia de documentos (CPF/CNPJ). Vêm de User Secrets em base64 de 32 bytes.
+// Sem elas a API não sobe — nunca usa valor fixo embutido no código.
+var encKeyB64 = builder.Configuration["Documents:EncryptionKey"]
+    ?? throw new InvalidOperationException("Falta Documents:EncryptionKey nos User Secrets. Veja o README para gerar.");
+var hmacKeyB64 = builder.Configuration["Documents:HmacKey"]
+    ?? throw new InvalidOperationException("Falta Documents:HmacKey nos User Secrets. Veja o README para gerar.");
+
+builder.Services.AddSingleton(new DocumentSettings
+{
+    EncryptionKey = Convert.FromBase64String(encKeyB64),
+    HmacKey = Convert.FromBase64String(hmacKeyB64),
+});
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
