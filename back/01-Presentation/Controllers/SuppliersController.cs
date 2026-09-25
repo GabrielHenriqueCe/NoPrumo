@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NoPrumo.Application.DTOs;
+using NoPrumo.Application.Services;
 using NoPrumo.Domain.Entities;
 using NoPrumo.Infrastructure.Data;
 
@@ -72,9 +73,12 @@ public sealed class SuppliersController(AppDbContext db) : ControllerBase
     [HttpPost]
     public async Task<ActionResult<SupplierDto>> Create(CreateSupplierRequest request)
     {
-        if (string.IsNullOrWhiteSpace(request.Name))
+        ValidateSupplierInput(request.Name, request.Email, request.ContactName, request.Phone, request.City, request.State);
+
+        var processedDoc = DocumentProcessor.Process(request.Document);
+        if (processedDoc.Hash != null && await db.Supplier.AnyAsync(s => s.DocumentHash == processedDoc.Hash && s.DeletedAt == null))
         {
-            ModelState.AddModelError("name", "Name is required.");
+            ModelState.AddModelError("document", "This document is already registered.");
         }
 
         if (!ModelState.IsValid)
@@ -85,12 +89,14 @@ public sealed class SuppliersController(AppDbContext db) : ControllerBase
         var supplier = new Supplier
         {
             Name = request.Name.Trim(),
-            DocumentMasked = string.IsNullOrWhiteSpace(request.DocumentMasked) ? null : request.DocumentMasked.Trim(),
+            DocumentEncrypted = processedDoc.Encrypted,
+            DocumentHash = processedDoc.Hash,
+            DocumentMasked = processedDoc.Masked,
             Email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim(),
             ContactName = string.IsNullOrWhiteSpace(request.ContactName) ? null : request.ContactName.Trim(),
             Phone = string.IsNullOrWhiteSpace(request.Phone) ? null : request.Phone.Trim(),
             City = string.IsNullOrWhiteSpace(request.City) ? null : request.City.Trim(),
-            State = string.IsNullOrWhiteSpace(request.State) ? null : request.State.Trim(),
+            State = string.IsNullOrWhiteSpace(request.State) ? null : request.State.Trim().ToUpperInvariant(),
             Notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim(),
             Active = true,
             CreatedAt = DateTime.UtcNow,
@@ -109,9 +115,16 @@ public sealed class SuppliersController(AppDbContext db) : ControllerBase
         var supplier = await db.Supplier.SingleOrDefaultAsync(s => s.Id == id);
         if (supplier is null) return NotFound();
 
-        if (string.IsNullOrWhiteSpace(request.Name))
+        ValidateSupplierInput(request.Name, request.Email, request.ContactName, request.Phone, request.City, request.State);
+
+        ProcessedDocument? processedDoc = null;
+        if (request.Document != null)
         {
-            ModelState.AddModelError("name", "Name is required.");
+            processedDoc = DocumentProcessor.Process(request.Document);
+            if (processedDoc.Hash != null && await db.Supplier.AnyAsync(s => s.DocumentHash == processedDoc.Hash && s.Id != id && s.DeletedAt == null))
+            {
+                ModelState.AddModelError("document", "This document is already registered.");
+            }
         }
 
         if (!ModelState.IsValid)
@@ -120,12 +133,19 @@ public sealed class SuppliersController(AppDbContext db) : ControllerBase
         }
 
         supplier.Name = request.Name.Trim();
-        supplier.DocumentMasked = string.IsNullOrWhiteSpace(request.DocumentMasked) ? null : request.DocumentMasked.Trim();
+
+        if (request.Document != null)
+        {
+            supplier.DocumentEncrypted = processedDoc!.Encrypted;
+            supplier.DocumentHash = processedDoc.Hash;
+            supplier.DocumentMasked = processedDoc.Masked;
+        }
+
         supplier.Email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim();
         supplier.ContactName = string.IsNullOrWhiteSpace(request.ContactName) ? null : request.ContactName.Trim();
         supplier.Phone = string.IsNullOrWhiteSpace(request.Phone) ? null : request.Phone.Trim();
         supplier.City = string.IsNullOrWhiteSpace(request.City) ? null : request.City.Trim();
-        supplier.State = string.IsNullOrWhiteSpace(request.State) ? null : request.State.Trim();
+        supplier.State = string.IsNullOrWhiteSpace(request.State) ? null : request.State.Trim().ToUpperInvariant();
         supplier.Notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim();
         supplier.UpdatedAt = DateTime.UtcNow;
 
@@ -160,5 +180,44 @@ public sealed class SuppliersController(AppDbContext db) : ControllerBase
         await db.SaveChangesAsync();
 
         return NoContent();
+    }
+
+    private void ValidateSupplierInput(
+        string name, string? email, string? contactName,
+        string? phone, string? city, string? state)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            ModelState.AddModelError("name", "Name is required.");
+        }
+        else if (name.Trim().Length > 160)
+        {
+            ModelState.AddModelError("name", "Name cannot exceed 160 characters.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(email) && email.Trim().Length > 160)
+        {
+            ModelState.AddModelError("email", "Email cannot exceed 160 characters.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(contactName) && contactName.Trim().Length > 160)
+        {
+            ModelState.AddModelError("contactName", "Contact name cannot exceed 160 characters.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(phone) && phone.Trim().Length > 30)
+        {
+            ModelState.AddModelError("phone", "Phone cannot exceed 30 characters.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(city) && city.Trim().Length > 120)
+        {
+            ModelState.AddModelError("city", "City cannot exceed 120 characters.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(state) && state.Trim().Length > 2)
+        {
+            ModelState.AddModelError("state", "State must be at most 2 letters (UF).");
+        }
     }
 }

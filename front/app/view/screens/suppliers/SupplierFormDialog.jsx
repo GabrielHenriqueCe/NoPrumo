@@ -5,7 +5,7 @@ import { TextField } from '../../ui/TextField'
 
 const EMPTY = {
   name: '',
-  documentMasked: '',
+  document: '',
   contactName: '',
   phone: '',
   email: '',
@@ -47,7 +47,7 @@ export function SupplierFormDialog({ open, supplier, onClose, onSubmit }) {
       supplier
         ? {
             name: supplier.name ?? '',
-            documentMasked: supplier.documentMasked ?? '',
+            document: supplier.documentMasked ?? '',
             contactName: supplier.contactName ?? '',
             phone: supplier.phone ?? '',
             email: supplier.email ?? '',
@@ -63,7 +63,7 @@ export function SupplierFormDialog({ open, supplier, onClose, onSubmit }) {
 
   const update = (field) => (event) => {
     let value = event.target.value
-    if (field === 'documentMasked') {
+    if (field === 'document') {
       value = formatDocument(value)
     }
     setForm((current) => ({ ...current, [field]: value }))
@@ -79,7 +79,7 @@ export function SupplierFormDialog({ open, supplier, onClose, onSubmit }) {
     try {
       await onSubmit({
         name: form.name.trim(),
-        documentMasked: form.documentMasked.trim(),
+        document: form.document.trim(),
         contactName: form.contactName.trim(),
         phone: form.phone.trim(),
         email: form.email.trim(),
@@ -115,11 +115,11 @@ export function SupplierFormDialog({ open, supplier, onClose, onSubmit }) {
 
         <TextField
           label="Document (CPF / CNPJ)"
-          name="documentMasked"
+          name="document"
           placeholder="00.000.000/0001-00"
-          value={form.documentMasked}
-          onChange={update('documentMasked')}
-          error={fieldErrors.documentMasked}
+          value={form.document}
+          onChange={update('document')}
+          error={fieldErrors.document || fieldErrors.documentMasked}
         />
 
         <div className="grid grid-cols-2 gap-4">

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NoPrumo.Application.DTOs;
+using NoPrumo.Application.Services;
 using NoPrumo.Domain.Entities;
 using NoPrumo.Infrastructure.Data;
 
@@ -72,18 +73,14 @@ public sealed class ClientsController(AppDbContext db) : ControllerBase
     [HttpPost]
     public async Task<ActionResult<ClientDto>> Create(CreateClientRequest request)
     {
-        if (string.IsNullOrWhiteSpace(request.Name))
-        {
-            ModelState.AddModelError("name", "Name is required.");
-        }
+        ValidateClientInput(request.Name, request.PersonType, request.Email, request.ContactName,
+            request.Phone, request.Mobile, request.Street, request.Number, request.Complement,
+            request.District, request.City, request.State, request.PostalCode);
 
-        var personType = string.IsNullOrWhiteSpace(request.PersonType) ? "individual" : request.PersonType.Trim().ToLowerInvariant();
-        if (personType != "individual" && personType != "company")
+        var processedDoc = DocumentProcessor.Process(request.Document);
+        if (processedDoc.Hash != null && await db.Client.AnyAsync(c => c.DocumentHash == processedDoc.Hash && c.DeletedAt == null))
         {
-            // Accept both individual/company and pf/pj for flexibility
-            if (personType == "pf") personType = "individual";
-            else if (personType == "pj") personType = "company";
-            else ModelState.AddModelError("personType", "Person type must be individual (PF) or company (PJ).");
+            ModelState.AddModelError("document", "This document is already registered.");
         }
 
         if (!ModelState.IsValid)
@@ -91,11 +88,15 @@ public sealed class ClientsController(AppDbContext db) : ControllerBase
             return ValidationProblem(ModelState);
         }
 
+        var personType = string.IsNullOrWhiteSpace(request.PersonType) ? "company" : request.PersonType.Trim().ToLowerInvariant();
+
         var client = new Client
         {
             Name = request.Name.Trim(),
             PersonType = personType,
-            DocumentMasked = string.IsNullOrWhiteSpace(request.DocumentMasked) ? null : request.DocumentMasked.Trim(),
+            DocumentEncrypted = processedDoc.Encrypted,
+            DocumentHash = processedDoc.Hash,
+            DocumentMasked = processedDoc.Masked,
             Email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim(),
             ContactName = string.IsNullOrWhiteSpace(request.ContactName) ? null : request.ContactName.Trim(),
             Phone = string.IsNullOrWhiteSpace(request.Phone) ? null : request.Phone.Trim(),
@@ -105,7 +106,7 @@ public sealed class ClientsController(AppDbContext db) : ControllerBase
             Complement = string.IsNullOrWhiteSpace(request.Complement) ? null : request.Complement.Trim(),
             District = string.IsNullOrWhiteSpace(request.District) ? null : request.District.Trim(),
             City = string.IsNullOrWhiteSpace(request.City) ? null : request.City.Trim(),
-            State = string.IsNullOrWhiteSpace(request.State) ? null : request.State.Trim(),
+            State = string.IsNullOrWhiteSpace(request.State) ? null : request.State.Trim().ToUpperInvariant(),
             PostalCode = string.IsNullOrWhiteSpace(request.PostalCode) ? null : request.PostalCode.Trim(),
             Notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim(),
             CreatedAt = DateTime.UtcNow,
@@ -124,17 +125,18 @@ public sealed class ClientsController(AppDbContext db) : ControllerBase
         var client = await db.Client.SingleOrDefaultAsync(c => c.Id == id);
         if (client is null) return NotFound();
 
-        if (string.IsNullOrWhiteSpace(request.Name))
-        {
-            ModelState.AddModelError("name", "Name is required.");
-        }
+        ValidateClientInput(request.Name, request.PersonType, request.Email, request.ContactName,
+            request.Phone, request.Mobile, request.Street, request.Number, request.Complement,
+            request.District, request.City, request.State, request.PostalCode);
 
-        var personType = string.IsNullOrWhiteSpace(request.PersonType) ? "individual" : request.PersonType.Trim().ToLowerInvariant();
-        if (personType != "individual" && personType != "company")
+        ProcessedDocument? processedDoc = null;
+        if (request.Document != null)
         {
-            if (personType == "pf") personType = "individual";
-            else if (personType == "pj") personType = "company";
-            else ModelState.AddModelError("personType", "Person type must be individual (PF) or company (PJ).");
+            processedDoc = DocumentProcessor.Process(request.Document);
+            if (processedDoc.Hash != null && await db.Client.AnyAsync(c => c.DocumentHash == processedDoc.Hash && c.Id != id && c.DeletedAt == null))
+            {
+                ModelState.AddModelError("document", "This document is already registered.");
+            }
         }
 
         if (!ModelState.IsValid)
@@ -142,9 +144,18 @@ public sealed class ClientsController(AppDbContext db) : ControllerBase
             return ValidationProblem(ModelState);
         }
 
+        var personType = string.IsNullOrWhiteSpace(request.PersonType) ? "company" : request.PersonType.Trim().ToLowerInvariant();
+
         client.Name = request.Name.Trim();
         client.PersonType = personType;
-        client.DocumentMasked = string.IsNullOrWhiteSpace(request.DocumentMasked) ? null : request.DocumentMasked.Trim();
+
+        if (request.Document != null)
+        {
+            client.DocumentEncrypted = processedDoc!.Encrypted;
+            client.DocumentHash = processedDoc.Hash;
+            client.DocumentMasked = processedDoc.Masked;
+        }
+
         client.Email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim();
         client.ContactName = string.IsNullOrWhiteSpace(request.ContactName) ? null : request.ContactName.Trim();
         client.Phone = string.IsNullOrWhiteSpace(request.Phone) ? null : request.Phone.Trim();
@@ -154,7 +165,7 @@ public sealed class ClientsController(AppDbContext db) : ControllerBase
         client.Complement = string.IsNullOrWhiteSpace(request.Complement) ? null : request.Complement.Trim();
         client.District = string.IsNullOrWhiteSpace(request.District) ? null : request.District.Trim();
         client.City = string.IsNullOrWhiteSpace(request.City) ? null : request.City.Trim();
-        client.State = string.IsNullOrWhiteSpace(request.State) ? null : request.State.Trim();
+        client.State = string.IsNullOrWhiteSpace(request.State) ? null : request.State.Trim().ToUpperInvariant();
         client.PostalCode = string.IsNullOrWhiteSpace(request.PostalCode) ? null : request.PostalCode.Trim();
         client.Notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim();
         client.UpdatedAt = DateTime.UtcNow;
@@ -188,5 +199,84 @@ public sealed class ClientsController(AppDbContext db) : ControllerBase
         await db.SaveChangesAsync();
 
         return NoContent();
+    }
+
+    private void ValidateClientInput(
+        string name, string? personType, string? email, string? contactName,
+        string? phone, string? mobile, string? street, string? number, string? complement,
+        string? district, string? city, string? state, string? postalCode)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            ModelState.AddModelError("name", "Name is required.");
+        }
+        else if (name.Trim().Length > 160)
+        {
+            ModelState.AddModelError("name", "Name cannot exceed 160 characters.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(personType))
+        {
+            var pType = personType.Trim().ToLowerInvariant();
+            if (pType != "company" && pType != "individual")
+            {
+                ModelState.AddModelError("personType", "Person type must be company or individual.");
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(email) && email.Trim().Length > 160)
+        {
+            ModelState.AddModelError("email", "Email cannot exceed 160 characters.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(contactName) && contactName.Trim().Length > 160)
+        {
+            ModelState.AddModelError("contactName", "Contact name cannot exceed 160 characters.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(phone) && phone.Trim().Length > 30)
+        {
+            ModelState.AddModelError("phone", "Phone cannot exceed 30 characters.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(mobile) && mobile.Trim().Length > 30)
+        {
+            ModelState.AddModelError("mobile", "Mobile cannot exceed 30 characters.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(street) && street.Trim().Length > 255)
+        {
+            ModelState.AddModelError("street", "Street cannot exceed 255 characters.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(number) && number.Trim().Length > 20)
+        {
+            ModelState.AddModelError("number", "Number cannot exceed 20 characters.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(complement) && complement.Trim().Length > 100)
+        {
+            ModelState.AddModelError("complement", "Complement cannot exceed 100 characters.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(district) && district.Trim().Length > 100)
+        {
+            ModelState.AddModelError("district", "District cannot exceed 100 characters.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(city) && city.Trim().Length > 120)
+        {
+            ModelState.AddModelError("city", "City cannot exceed 120 characters.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(state) && state.Trim().Length > 2)
+        {
+            ModelState.AddModelError("state", "State must be at most 2 letters (UF).");
+        }
+
+        if (!string.IsNullOrWhiteSpace(postalCode) && postalCode.Trim().Length > 10)
+        {
+            ModelState.AddModelError("postalCode", "Postal code cannot exceed 10 characters.");
+        }
     }
 }

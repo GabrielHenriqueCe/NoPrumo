@@ -43,8 +43,8 @@ public sealed record ClientDto(
 
 public sealed record CreateClientRequest(
     string Name,
-    string PersonType,
-    string? DocumentMasked,
+    string? PersonType,
+    string? Document,
     string? Email,
     string? ContactName,
     string? Phone,
@@ -60,8 +60,8 @@ public sealed record CreateClientRequest(
 
 public sealed record UpdateClientRequest(
     string Name,
-    string PersonType,
-    string? DocumentMasked,
+    string? PersonType,
+    string? Document,
     string? Email,
     string? ContactName,
     string? Phone,

@@ -1,4 +1,5 @@
 import { createAuthGateway } from './data/gateways/authGateway'
+import { createClientGateway } from './data/gateways/clientGateway'
 import { createDepartmentGateway } from './data/gateways/departmentGateway'
 import { createEmployeeGateway } from './data/gateways/employeeGateway'
 import { createEmployeeTrainingGateway } from './data/gateways/employeeTrainingGateway'
@@ -9,6 +10,7 @@ import { createStageGateway } from './data/gateways/stageGateway'
 import { createStockCategoryGateway } from './data/gateways/stockCategoryGateway'
 import { createStockGroupGateway } from './data/gateways/stockGroupGateway'
 import { createStockItemGateway } from './data/gateways/stockItemGateway'
+import { createSupplierGateway } from './data/gateways/supplierGateway'
 import { createTeamGateway } from './data/gateways/teamGateway'
 import { createTrainingTypeGateway } from './data/gateways/trainingTypeGateway'
 import { createUserGateway } from './data/gateways/userGateway'
@@ -52,7 +54,8 @@ export function createContainer({
     employees: createEmployeeGateway(http),
     teams: createTeamGateway(http),
 
-    // Clients and suppliers: registered by slice 1, whose gateways already exist in its branch.
+    clients: createClientGateway(http),
+    suppliers: createSupplierGateway(http),
 
     stockCategories: createStockCategoryGateway(http),
     stockGroups: createStockGroupGateway(http),

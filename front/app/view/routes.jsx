@@ -3,6 +3,7 @@ import { RequireSession } from './guards/RequireSession'
 import { useSession } from './providers/sessionContext'
 import { ChangePasswordScreen } from './screens/auth/ChangePasswordScreen'
 import { LoginScreen } from './screens/auth/LoginScreen'
+import { ClientsScreen } from './screens/clients/ClientsScreen'
 import { DepartmentsScreen } from './screens/departments/DepartmentsScreen'
 import { EmployeesScreen } from './screens/employees/EmployeesScreen'
 import { EmployeeTrainingsScreen } from './screens/employeeTrainings/EmployeeTrainingsScreen'
@@ -13,12 +14,12 @@ import { StagesScreen } from './screens/stages/StagesScreen'
 import { StockCategoriesScreen } from './screens/stockCategories/StockCategoriesScreen'
 import { StockGroupsScreen } from './screens/stockGroups/StockGroupsScreen'
 import { StockItemsScreen } from './screens/stockItems/StockItemsScreen'
+import { SuppliersScreen } from './screens/suppliers/SuppliersScreen'
 import { TeamsScreen } from './screens/teams/TeamsScreen'
 import { TrainingTypesScreen } from './screens/trainingTypes/TrainingTypesScreen'
 import { UsersScreen } from './screens/users/UsersScreen'
 import { AppShell } from './shell/AppShell'
 import { MENU } from './shell/menu'
-import { ScreenPlaceholder } from './ui/ScreenPlaceholder'
 
 /*
   Every screen in the app, in one readable list.
@@ -44,9 +45,8 @@ const SCREENS = [
   { path: '/employees', permission: 'manage_employees', element: <EmployeesScreen /> },
   { path: '/teams', permission: 'manage_employees', element: <TeamsScreen /> },
 
-  // Slice 1 swaps these two for ClientsScreen and SuppliersScreen, which live in its own branch.
-  { path: '/clients', permission: 'manage_projects', element: <ScreenPlaceholder title="Clients" /> },
-  { path: '/suppliers', permission: 'manage_purchases', element: <ScreenPlaceholder title="Suppliers" /> },
+  { path: '/clients', permission: 'manage_projects', element: <ClientsScreen /> },
+  { path: '/suppliers', permission: 'manage_purchases', element: <SuppliersScreen /> },
 
   { path: '/stock-categories', permission: 'manage_stock', element: <StockCategoriesScreen /> },
   { path: '/stock-groups', permission: 'manage_stock', element: <StockGroupsScreen /> },

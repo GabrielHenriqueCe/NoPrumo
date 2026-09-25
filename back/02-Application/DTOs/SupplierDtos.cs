@@ -29,7 +29,7 @@ public sealed record SupplierDto(
 
 public sealed record CreateSupplierRequest(
     string Name,
-    string? DocumentMasked,
+    string? Document,
     string? ContactName,
     string? Phone,
     string? Email,
@@ -39,7 +39,7 @@ public sealed record CreateSupplierRequest(
 
 public sealed record UpdateSupplierRequest(
     string Name,
-    string? DocumentMasked,
+    string? Document,
     string? ContactName,
     string? Phone,
     string? Email,

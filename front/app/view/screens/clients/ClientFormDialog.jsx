@@ -7,7 +7,7 @@ import { TextField } from '../../ui/TextField'
 const EMPTY = {
   name: '',
   personType: 'company',
-  documentMasked: '',
+  document: '',
   email: '',
   contactName: '',
   phone: '',
@@ -24,7 +24,7 @@ const EMPTY = {
 
 function formatDocument(value, personType) {
   const digits = value.replace(/\D/g, '')
-  if (personType === 'individual' || personType === 'pf') {
+  if (personType === 'individual') {
     // CPF: 000.000.000-00
     const limited = digits.slice(0, 11)
     return limited
@@ -57,7 +57,7 @@ export function ClientFormDialog({ open, client, onClose, onSubmit }) {
         ? {
             name: client.name ?? '',
             personType: client.personType ?? 'company',
-            documentMasked: client.documentMasked ?? '',
+            document: client.documentMasked ?? '',
             email: client.email ?? '',
             contactName: client.contactName ?? '',
             phone: client.phone ?? '',
@@ -79,7 +79,7 @@ export function ClientFormDialog({ open, client, onClose, onSubmit }) {
 
   const update = (field) => (event) => {
     let value = event.target.value
-    if (field === 'documentMasked') {
+    if (field === 'document') {
       value = formatDocument(value, form.personType)
     }
     setForm((current) => ({ ...current, [field]: value }))
@@ -91,9 +91,9 @@ export function ClientFormDialog({ open, client, onClose, onSubmit }) {
     setForm((current) => ({
       ...current,
       personType: newType,
-      documentMasked: formatDocument(current.documentMasked, newType),
+      document: formatDocument(current.document, newType),
     }))
-    setFieldErrors((current) => ({ ...current, personType: undefined, documentMasked: undefined }))
+    setFieldErrors((current) => ({ ...current, personType: undefined, document: undefined }))
   }
 
   const submit = async (event) => {
@@ -106,7 +106,7 @@ export function ClientFormDialog({ open, client, onClose, onSubmit }) {
       await onSubmit({
         name: form.name.trim(),
         personType: form.personType,
-        documentMasked: form.documentMasked.trim(),
+        document: form.document.trim(),
         email: form.email.trim(),
         contactName: form.contactName.trim(),
         phone: form.phone.trim(),
@@ -128,7 +128,7 @@ export function ClientFormDialog({ open, client, onClose, onSubmit }) {
     }
   }
 
-  const isPf = form.personType === 'individual' || form.personType === 'pf'
+  const isIndividual = form.personType === 'individual'
 
   return (
     <Dialog
@@ -163,12 +163,12 @@ export function ClientFormDialog({ open, client, onClose, onSubmit }) {
           />
 
           <TextField
-            label={isPf ? 'CPF' : 'CNPJ'}
-            name="documentMasked"
-            placeholder={isPf ? '000.000.000-00' : '00.000.000/0001-00'}
-            value={form.documentMasked}
-            onChange={update('documentMasked')}
-            error={fieldErrors.documentMasked}
+            label={isIndividual ? 'CPF' : 'CNPJ'}
+            name="document"
+            placeholder={isIndividual ? '000.000.000-00' : '00.000.000/0001-00'}
+            value={form.document}
+            onChange={update('document')}
+            error={fieldErrors.document || fieldErrors.documentMasked}
           />
         </div>
 
