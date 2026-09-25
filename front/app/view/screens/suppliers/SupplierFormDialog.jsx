@@ -17,13 +17,11 @@ const EMPTY = {
 function formatDocument(value) {
   const digits = value.replace(/\D/g, '')
   if (digits.length <= 11) {
-    // CPF: 000.000.000-00
     return digits
       .replace(/(\d{3})(\d)/, '$1.$2')
       .replace(/(\d{3})(\d)/, '$1.$2')
       .replace(/(\d{3})(\d{1,2})$/, '$1-$2')
   } else {
-    // CNPJ: 00.000.000/0001-00
     const limited = digits.slice(0, 14)
     return limited
       .replace(/^(\d{2})(\d)/, '$1.$2')
@@ -47,7 +45,7 @@ export function SupplierFormDialog({ open, supplier, onClose, onSubmit }) {
       supplier
         ? {
             name: supplier.name ?? '',
-            document: supplier.documentMasked ?? '',
+            document: '', // Empty on edit: user leaves blank to keep existing document
             contactName: supplier.contactName ?? '',
             phone: supplier.phone ?? '',
             email: supplier.email ?? '',
@@ -76,10 +74,12 @@ export function SupplierFormDialog({ open, supplier, onClose, onSubmit }) {
     setFieldErrors({})
     setFormError(null)
 
+    const documentToSend = form.document.trim() ? form.document.trim() : null
+
     try {
       await onSubmit({
         name: form.name.trim(),
-        document: form.document.trim(),
+        document: documentToSend,
         contactName: form.contactName.trim(),
         phone: form.phone.trim(),
         email: form.email.trim(),
@@ -94,6 +94,10 @@ export function SupplierFormDialog({ open, supplier, onClose, onSubmit }) {
       setBusy(false)
     }
   }
+
+  const docPlaceholder = editing && supplier?.documentMasked
+    ? `${supplier.documentMasked} — leave blank to keep`
+    : '00.000.000/0001-00'
 
   return (
     <Dialog
@@ -116,10 +120,11 @@ export function SupplierFormDialog({ open, supplier, onClose, onSubmit }) {
         <TextField
           label="Document (CPF / CNPJ)"
           name="document"
-          placeholder="00.000.000/0001-00"
+          placeholder={docPlaceholder}
           value={form.document}
           onChange={update('document')}
           error={fieldErrors.document || fieldErrors.documentMasked}
+          hint={editing ? 'Leave blank to keep the current document.' : undefined}
         />
 
         <div className="grid grid-cols-2 gap-4">

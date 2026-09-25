@@ -25,14 +25,12 @@ const EMPTY = {
 function formatDocument(value, personType) {
   const digits = value.replace(/\D/g, '')
   if (personType === 'individual') {
-    // CPF: 000.000.000-00
     const limited = digits.slice(0, 11)
     return limited
       .replace(/(\d{3})(\d)/, '$1.$2')
       .replace(/(\d{3})(\d)/, '$1.$2')
       .replace(/(\d{3})(\d{1,2})$/, '$1-$2')
   } else {
-    // CNPJ: 00.000.000/0001-00
     const limited = digits.slice(0, 14)
     return limited
       .replace(/^(\d{2})(\d)/, '$1.$2')
@@ -57,7 +55,7 @@ export function ClientFormDialog({ open, client, onClose, onSubmit }) {
         ? {
             name: client.name ?? '',
             personType: client.personType ?? 'company',
-            document: client.documentMasked ?? '',
+            document: '', // Empty on edit: user leaves blank to keep existing document
             email: client.email ?? '',
             contactName: client.contactName ?? '',
             phone: client.phone ?? '',
@@ -102,11 +100,13 @@ export function ClientFormDialog({ open, client, onClose, onSubmit }) {
     setFieldErrors({})
     setFormError(null)
 
+    const documentToSend = form.document.trim() ? form.document.trim() : null
+
     try {
       await onSubmit({
         name: form.name.trim(),
         personType: form.personType,
-        document: form.document.trim(),
+        document: documentToSend,
         email: form.email.trim(),
         contactName: form.contactName.trim(),
         phone: form.phone.trim(),
@@ -129,6 +129,12 @@ export function ClientFormDialog({ open, client, onClose, onSubmit }) {
   }
 
   const isIndividual = form.personType === 'individual'
+
+  const docPlaceholder = editing && client?.documentMasked
+    ? `${client.documentMasked} — leave blank to keep`
+    : isIndividual
+    ? '000.000.000-00'
+    : '00.000.000/0001-00'
 
   return (
     <Dialog
@@ -165,10 +171,11 @@ export function ClientFormDialog({ open, client, onClose, onSubmit }) {
           <TextField
             label={isIndividual ? 'CPF' : 'CNPJ'}
             name="document"
-            placeholder={isIndividual ? '000.000.000-00' : '00.000.000/0001-00'}
+            placeholder={docPlaceholder}
             value={form.document}
             onChange={update('document')}
             error={fieldErrors.document || fieldErrors.documentMasked}
+            hint={editing ? 'Leave blank to keep the current document.' : undefined}
           />
         </div>
 

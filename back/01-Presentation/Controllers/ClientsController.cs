@@ -77,10 +77,21 @@ public sealed class ClientsController(AppDbContext db) : ControllerBase
             request.Phone, request.Mobile, request.Street, request.Number, request.Complement,
             request.District, request.City, request.State, request.PostalCode);
 
-        var processedDoc = DocumentProcessor.Process(request.Document);
-        if (processedDoc.Hash != null && await db.Client.AnyAsync(c => c.DocumentHash == processedDoc.Hash && c.DeletedAt == null))
+        ProcessedDocument? processedDoc = null;
+        if (!string.IsNullOrWhiteSpace(request.Document))
         {
-            ModelState.AddModelError("document", "This document is already registered.");
+            if (!DocumentProcessor.IsValid(request.Document))
+            {
+                ModelState.AddModelError("document", "Invalid CPF or CNPJ format.");
+            }
+            else
+            {
+                processedDoc = DocumentProcessor.Process(request.Document);
+                if (processedDoc.Hash != null && await db.Client.AnyAsync(c => c.DocumentHash == processedDoc.Hash && c.DeletedAt == null))
+                {
+                    ModelState.AddModelError("document", "This document is already registered.");
+                }
+            }
         }
 
         if (!ModelState.IsValid)
@@ -94,9 +105,9 @@ public sealed class ClientsController(AppDbContext db) : ControllerBase
         {
             Name = request.Name.Trim(),
             PersonType = personType,
-            DocumentEncrypted = processedDoc.Encrypted,
-            DocumentHash = processedDoc.Hash,
-            DocumentMasked = processedDoc.Masked,
+            DocumentEncrypted = processedDoc?.Encrypted,
+            DocumentHash = processedDoc?.Hash,
+            DocumentMasked = processedDoc?.Masked,
             Email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim(),
             ContactName = string.IsNullOrWhiteSpace(request.ContactName) ? null : request.ContactName.Trim(),
             Phone = string.IsNullOrWhiteSpace(request.Phone) ? null : request.Phone.Trim(),
@@ -130,12 +141,21 @@ public sealed class ClientsController(AppDbContext db) : ControllerBase
             request.District, request.City, request.State, request.PostalCode);
 
         ProcessedDocument? processedDoc = null;
-        if (request.Document != null)
+        bool hasNewDocument = !string.IsNullOrWhiteSpace(request.Document);
+
+        if (hasNewDocument)
         {
-            processedDoc = DocumentProcessor.Process(request.Document);
-            if (processedDoc.Hash != null && await db.Client.AnyAsync(c => c.DocumentHash == processedDoc.Hash && c.Id != id && c.DeletedAt == null))
+            if (!DocumentProcessor.IsValid(request.Document))
             {
-                ModelState.AddModelError("document", "This document is already registered.");
+                ModelState.AddModelError("document", "Invalid CPF or CNPJ format.");
+            }
+            else
+            {
+                processedDoc = DocumentProcessor.Process(request.Document);
+                if (processedDoc.Hash != null && await db.Client.AnyAsync(c => c.DocumentHash == processedDoc.Hash && c.Id != id && c.DeletedAt == null))
+                {
+                    ModelState.AddModelError("document", "This document is already registered.");
+                }
             }
         }
 
@@ -149,9 +169,9 @@ public sealed class ClientsController(AppDbContext db) : ControllerBase
         client.Name = request.Name.Trim();
         client.PersonType = personType;
 
-        if (request.Document != null)
+        if (hasNewDocument && processedDoc != null)
         {
-            client.DocumentEncrypted = processedDoc!.Encrypted;
+            client.DocumentEncrypted = processedDoc.Encrypted;
             client.DocumentHash = processedDoc.Hash;
             client.DocumentMasked = processedDoc.Masked;
         }

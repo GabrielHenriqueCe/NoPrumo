@@ -75,10 +75,21 @@ public sealed class SuppliersController(AppDbContext db) : ControllerBase
     {
         ValidateSupplierInput(request.Name, request.Email, request.ContactName, request.Phone, request.City, request.State);
 
-        var processedDoc = DocumentProcessor.Process(request.Document);
-        if (processedDoc.Hash != null && await db.Supplier.AnyAsync(s => s.DocumentHash == processedDoc.Hash && s.DeletedAt == null))
+        ProcessedDocument? processedDoc = null;
+        if (!string.IsNullOrWhiteSpace(request.Document))
         {
-            ModelState.AddModelError("document", "This document is already registered.");
+            if (!DocumentProcessor.IsValid(request.Document))
+            {
+                ModelState.AddModelError("document", "Invalid CPF or CNPJ format.");
+            }
+            else
+            {
+                processedDoc = DocumentProcessor.Process(request.Document);
+                if (processedDoc.Hash != null && await db.Supplier.AnyAsync(s => s.DocumentHash == processedDoc.Hash && s.DeletedAt == null))
+                {
+                    ModelState.AddModelError("document", "This document is already registered.");
+                }
+            }
         }
 
         if (!ModelState.IsValid)
@@ -89,9 +100,9 @@ public sealed class SuppliersController(AppDbContext db) : ControllerBase
         var supplier = new Supplier
         {
             Name = request.Name.Trim(),
-            DocumentEncrypted = processedDoc.Encrypted,
-            DocumentHash = processedDoc.Hash,
-            DocumentMasked = processedDoc.Masked,
+            DocumentEncrypted = processedDoc?.Encrypted,
+            DocumentHash = processedDoc?.Hash,
+            DocumentMasked = processedDoc?.Masked,
             Email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim(),
             ContactName = string.IsNullOrWhiteSpace(request.ContactName) ? null : request.ContactName.Trim(),
             Phone = string.IsNullOrWhiteSpace(request.Phone) ? null : request.Phone.Trim(),
@@ -118,12 +129,21 @@ public sealed class SuppliersController(AppDbContext db) : ControllerBase
         ValidateSupplierInput(request.Name, request.Email, request.ContactName, request.Phone, request.City, request.State);
 
         ProcessedDocument? processedDoc = null;
-        if (request.Document != null)
+        bool hasNewDocument = !string.IsNullOrWhiteSpace(request.Document);
+
+        if (hasNewDocument)
         {
-            processedDoc = DocumentProcessor.Process(request.Document);
-            if (processedDoc.Hash != null && await db.Supplier.AnyAsync(s => s.DocumentHash == processedDoc.Hash && s.Id != id && s.DeletedAt == null))
+            if (!DocumentProcessor.IsValid(request.Document))
             {
-                ModelState.AddModelError("document", "This document is already registered.");
+                ModelState.AddModelError("document", "Invalid CPF or CNPJ format.");
+            }
+            else
+            {
+                processedDoc = DocumentProcessor.Process(request.Document);
+                if (processedDoc.Hash != null && await db.Supplier.AnyAsync(s => s.DocumentHash == processedDoc.Hash && s.Id != id && s.DeletedAt == null))
+                {
+                    ModelState.AddModelError("document", "This document is already registered.");
+                }
             }
         }
 
@@ -134,9 +154,9 @@ public sealed class SuppliersController(AppDbContext db) : ControllerBase
 
         supplier.Name = request.Name.Trim();
 
-        if (request.Document != null)
+        if (hasNewDocument && processedDoc != null)
         {
-            supplier.DocumentEncrypted = processedDoc!.Encrypted;
+            supplier.DocumentEncrypted = processedDoc.Encrypted;
             supplier.DocumentHash = processedDoc.Hash;
             supplier.DocumentMasked = processedDoc.Masked;
         }
