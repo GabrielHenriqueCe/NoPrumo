@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import httpClient from '../../../data/http/httpClient';
-import Dialog from '../../ui/Dialog';
-import Button from '../../ui/Button';
-import TextField from '../../ui/TextField';
+import { useContainer } from '../../providers/containerContext';
+import { Dialog } from '../../ui/Dialog';
+import { Button } from '../../ui/Button';
+import { TextField } from '../../ui/TextField';
 
-export default function DepartmentFormDialog({ department, onClose, onSave }) {
+export function DepartmentFormDialog({ department, onClose, onSave }) {
+    const { departmentGateway } = useContainer();
     const [name, setName] = useState(department ? department.name : '');
     const [active, setActive] = useState(department ? department.active : true);
     const [errors, setErrors] = useState(null);
@@ -14,36 +15,41 @@ export default function DepartmentFormDialog({ department, onClose, onSave }) {
         setErrors(null);
         try {
             if (department) {
-                await httpClient.put(`/api/departments/${department.id}`, { name, active });
+                await departmentGateway.update(department.id, { name, active });
             } else {
-                await httpClient.post('/api/departments', { name });
+                await departmentGateway.create({ name });
             }
             onSave();
         } catch (error) {
-            if (error.response && error.response.data && error.response.data.errors) {
-                setErrors(error.response.data.errors);
+            // O tratamento de erro do httpClient (problemDetails) injeta os erros no payload
+            if (error.payload && error.payload.errors) {
+                setErrors(error.payload.errors);
+            } else if (error.errors) {
+                setErrors(error.errors);
             }
         }
     };
 
     return (
         <Dialog title={department ? "Edit Department" : "New Department"} onClose={onClose}>
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                 <TextField 
                     label="Name" 
                     value={name} 
                     onChange={e => setName(e.target.value)} 
-                    error={errors?.Name}
+                    error={errors?.Name?.join(', ')}
                 />
+                
                 {department && (
-                    <label>
+                    <label className="flex items-center gap-2">
                         <input type="checkbox" checked={active} onChange={e => setActive(e.target.checked)} />
                         Active
                     </label>
                 )}
-                <div>
+                
+                <div className="flex gap-2 mt-4 justify-end">
+                    <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
                     <Button type="submit">Save</Button>
-                    <Button type="button" onClick={onClose}>Cancel</Button>
                 </div>
             </form>
         </Dialog>
