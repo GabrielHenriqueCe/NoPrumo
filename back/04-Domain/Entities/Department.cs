@@ -9,6 +9,8 @@ public partial class Department
 
     public string Name { get; set; } = null!;
 
+    public bool Active {get; set;} = true;
+
     public DateTime CreatedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; }

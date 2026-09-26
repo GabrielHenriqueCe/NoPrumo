@@ -43,14 +43,7 @@ public class DepartmentsController : ControllerBase
             })
             .ToListAsync();
 
-        return Ok(new PagedResult<DepartmentDto>
-        {
-            Items = items,
-            Page = page,
-            Size = size,
-            Total = total,
-            TotalPages = totalPages
-        });
+        return Ok(new PagedResult<DepartmentDto>(items, page, size, total, totalPages));
     }
 
     [HttpPost]
@@ -61,7 +54,6 @@ public class DepartmentsController : ControllerBase
 
         var department = new Department
         {
-            Id = Guid.NewGuid(),
             Name = request.Name,
             Active = true
         };
@@ -73,7 +65,7 @@ public class DepartmentsController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateDepartmentRequest request)
+    public async Task<IActionResult> Update(long id, [FromBody] UpdateDepartmentRequest request)
     {
         var department = await _context.Departments.FindAsync(id);
         if (department == null) return NotFound();
@@ -89,12 +81,11 @@ public class DepartmentsController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(Guid id)
+    public async Task<IActionResult> Delete(long id)
     {
         var department = await _context.Departments.FindAsync(id);
         if (department == null) return NotFound();
 
-        // Soft delete conforme a regra do guia
         department.Active = false; 
         
         await _context.SaveChangesAsync();

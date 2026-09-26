@@ -82,6 +82,8 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<User> User { get; set; }
 
+    public DbSet<Department> Departments { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder
