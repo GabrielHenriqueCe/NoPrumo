@@ -44,7 +44,7 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<Employee> Employee { get; set; }
 
-    public virtual DbSet<JobRole> JobRole { get; set; }
+    public virtual DbSet<JobRole> JobRoles { get; set; }
 
     public virtual DbSet<StockGroup> StockGroup { get; set; }
 
