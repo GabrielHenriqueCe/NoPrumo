@@ -7,7 +7,7 @@ import { DepartmentFormDialog } from './DepartmentFormDialog';
 
 export function DepartmentsScreen() {
     // Acedemos ao gateway através do contentor de injeção de dependências
-    const { departmentGateway } = useContainer();
+    const { departments: departmentGateway } = useContainer();
     
     const [departments, setDepartments] = useState([]);
     const [page, setPage] = useState(1);

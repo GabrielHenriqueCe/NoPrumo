@@ -5,7 +5,7 @@ import { Button } from '../../ui/Button';
 import { TextField } from '../../ui/TextField';
 
 export function DepartmentFormDialog({ department, onClose, onSave }) {
-    const { departmentGateway } = useContainer();
+    const { departments: departmentGateway } = useContainer();
     const [name, setName] = useState(department ? department.name : '');
     const [active, setActive] = useState(department ? department.active : true);
     const [errors, setErrors] = useState(null);
@@ -31,7 +31,7 @@ export function DepartmentFormDialog({ department, onClose, onSave }) {
     };
 
     return (
-        <Dialog title={department ? "Edit Department" : "New Department"} onClose={onClose}>
+        <Dialog open={true} title={department ? "Edit Department" : "New Department"} onClose={onClose}>
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                 <TextField 
                     label="Name" 
