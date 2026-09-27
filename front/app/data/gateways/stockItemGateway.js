@@ -5,52 +5,50 @@
   from whoever holds `view_finance`. The foreman and the warehouse keeper
   manage stock by quantity and never see the price.
 
-  Proposed contract — the controller does not exist yet. Whoever writes it
-  may change this; if so, update this comment together.
+  Contract (confirmed against StockItemsController.cs):
 
-    GET    /stockitems?page&size&search
+    GET    /stockitems?page&size&search&stockGroupId
       200 { items, page, size, total, totalPages }
-
-    GET    /stockitems/{id}
-      200 item
+      Each item includes `referencePrice` only for accounts with view_finance.
 
     POST   /stockitems                { stockGroupId, code, name, unit, minQuantity,
                                    referencePrice*, ca, caExpiryDate }
-                                   * only with view_finance
+                                   * only applied for accounts with view_finance;
+                                     ignored otherwise, even if sent
       201 item
       400 ProblemDetails with `errors` per field
 
-    PUT    /stockitems/{id}           { stockGroupId, code, name, unit, minQuantity,
-                                   referencePrice*, ca, caExpiryDate }
-                                   * only with view_finance
+    PUT    /stockitems/{id}           same body as POST
       200 item
 
     PATCH  /stockitems/{id}/activate
     PATCH  /stockitems/{id}/deactivate
       204 no content
+
+  There is no GET /{id}: the controller does not expose it, same as the other
+  stock screens and users.
 */
 
 export function createStockItemGateway(http) {
-  return {
-    list({ page = 1, size = 10, search = '' } = {}, { signal } = {}) {
-      return http.get('/stockitems', { params: { page, size, search }, signal })
-    },
+    return {
+        list({ page = 1, size = 10, search = '', stockGroupId = null } = {}, { signal } = {}) {
+            return http.get('/stockitems', {
+                params: { page, size, search, stockGroupId: stockGroupId ?? undefined },
+                signal,
+            })
+        },
 
-    getById(id, { signal } = {}) {
-      return http.get(`/stockitems/${id}`, { signal })
-    },
+        create(item, { signal } = {}) {
+            return http.post('/stockitems', item, { signal })
+        },
 
-    create(item, { signal } = {}) {
-      return http.post('/stockitems', item, { signal })
-    },
+        update(id, item, { signal } = {}) {
+            return http.put(`/stockitems/${id}`, item, { signal })
+        },
 
-    update(id, item, { signal } = {}) {
-      return http.put(`/stockitems/${id}`, item, { signal })
-    },
-
-    /** Switched off, never deleted: the history has to stay. */
-    setActive(id, active, { signal } = {}) {
-      return http.patch(`/stockitems/${id}/${active ? 'activate' : 'deactivate'}`, null, { signal })
-    },
-  }
+        /** Switched off, never deleted: the history has to stay. */
+        setActive(id, active, { signal } = {}) {
+            return http.patch(`/stockitems/${id}/${active ? 'activate' : 'deactivate'}`, null, { signal })
+        },
+    }
 }

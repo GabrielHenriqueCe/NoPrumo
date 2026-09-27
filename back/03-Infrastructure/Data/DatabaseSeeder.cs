@@ -37,10 +37,45 @@ public static class DatabaseSeeder
           ];
     }
 
+    /// <summary>
+    /// As três categorias que definem os fluxos do sistema inteiro. As duas flags
+    /// dizem qual é qual: consumo tem saldo por obra, EPI vai do depósito para o
+    /// funcionário, ferramenta vai e volta.
+    /// </summary>
+    private static readonly (string Name, bool TracksProjectBalance, bool RequiresReturn)[] StockCategoryCatalog =
+    [
+        ("Consumable material", true,  false),
+    ("PPE",                 false, false),
+    ("Tool",                false, true),
+];
+
+    private static async Task SeedStockCategoriesAsync(AppDbContext db)
+    {
+        var existing = await db.StockCategory.Select(c => c.Name).ToListAsync();
+
+        // Só o que falta: comparar sem diferenciar maiúscula, para "ppe" e "PPE"
+        // não virarem duas categorias.
+        var missing = StockCategoryCatalog
+            .Where(item => !existing.Contains(item.Name, StringComparer.OrdinalIgnoreCase))
+            .Select(item => new StockCategory
+            {
+                Name = item.Name,
+                TracksProjectBalance = item.TracksProjectBalance,
+                RequiresReturn = item.RequiresReturn,
+            })
+            .ToList();
+
+        if (missing.Count == 0) return;
+
+        db.StockCategory.AddRange(missing);
+        await db.SaveChangesAsync();
+    }
+
     public static async Task SeedAsync(AppDbContext db)
     {
         await SeedPermissionsAsync(db);
         await SeedRolesAsync(db);
+        await SeedStockCategoriesAsync(db);
         await SeedFirstAdminAsync(db);
     }
 
