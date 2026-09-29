@@ -15,6 +15,8 @@ public partial class EmploymentRegime
 
     public string? Description { get; set; }
 
+    public bool Active {get;set;} = true;
+
     public DateTime CreatedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; }

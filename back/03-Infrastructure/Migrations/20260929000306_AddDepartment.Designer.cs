@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NoPrumo.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using NoPrumo.Infrastructure.Data;
 namespace NoPrumo.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260929000306_AddDepartment")]
+    partial class AddDepartment
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -801,10 +804,6 @@ namespace NoPrumo.Infrastructure.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<bool>("Active")
-                        .HasColumnType("tinyint(1)")
-                        .HasColumnName("active");
-
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime")
@@ -846,9 +845,9 @@ namespace NoPrumo.Infrastructure.Migrations
 
                     b.HasIndex("Label")
                         .IsUnique()
-                        .HasDatabaseName("ix_employment_regimes_label");
+                        .HasDatabaseName("ix_employment_regime_label");
 
-                    b.ToTable("employment_regimes", (string)null);
+                    b.ToTable("employment_regime", (string)null);
                 });
 
             modelBuilder.Entity("NoPrumo.Domain.Entities.JobRole", b =>
@@ -859,10 +858,6 @@ namespace NoPrumo.Infrastructure.Migrations
                         .HasColumnName("id");
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<bool>("Active")
-                        .HasColumnType("tinyint(1)")
-                        .HasColumnName("active");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -892,13 +887,13 @@ namespace NoPrumo.Infrastructure.Migrations
                         .HasName("PRIMARY");
 
                     b.HasIndex("DepartmentId")
-                        .HasDatabaseName("ix_job_roles_department_id");
+                        .HasDatabaseName("ix_job_role_department_id");
 
                     b.HasIndex("Name", "DepartmentId")
                         .IsUnique()
-                        .HasDatabaseName("ix_job_roles_name_department_id");
+                        .HasDatabaseName("ix_job_role_name_department_id");
 
-                    b.ToTable("job_roles", (string)null);
+                    b.ToTable("job_role", (string)null);
                 });
 
             modelBuilder.Entity("NoPrumo.Domain.Entities.Payment", b =>

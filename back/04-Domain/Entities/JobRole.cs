@@ -11,6 +11,8 @@ public partial class JobRole
 
     public long DepartmentId { get; set; }
 
+    public bool Active { get; set; } = true;
+
     public DateTime CreatedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; }
