@@ -68,7 +68,7 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<TimeEntry> TimeEntry { get; set; }
 
-    public virtual DbSet<EmploymentRegime> EmploymentRegime { get; set; }
+    public virtual DbSet<EmploymentRegime> EmploymentRegimes { get; set; }
 
     public virtual DbSet<Department> Department { get; set; }
 
