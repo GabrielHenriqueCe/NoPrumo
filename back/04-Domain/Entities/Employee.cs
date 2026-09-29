@@ -31,7 +31,7 @@ public partial class Employee
 
     public string? DocumentMasked { get; set; }
 
-    public bool? Active { get; set; }
+    public bool? Active { get; set; } = true;
 
     public DateTime? AnonymizedAt { get; set; }
 

@@ -42,7 +42,7 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<EmployeeTeam> EmployeeTeam { get; set; }
 
-    public virtual DbSet<Employee> Employee { get; set; }
+    public virtual DbSet<Employee> Employees { get; set; }
 
     public virtual DbSet<JobRole> JobRoles { get; set; }
 
@@ -804,6 +804,7 @@ public partial class AppDbContext : DbContext
                 .HasForeignKey(d => d.EmploymentRegimeId)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("fk_employee_regime");
+            entity.ToTable("employee");
         });
 
         modelBuilder.Entity<JobRole>(entity =>
