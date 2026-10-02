@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace NoPrumo.Domain.Entities;
 
-public partial class ProjectLink
+public class ProjectLink
 {
     public long Id { get; set; }
 
