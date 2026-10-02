@@ -6,13 +6,17 @@ using Microsoft.OpenApi.Models;
 using NoPrumo.Application.Services;
 using NoPrumo.Infrastructure.Data;
 using System.IdentityModel.Tokens.Jwt;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 // Sem isso o ASP.NET renomeia a claim "sub" para uma URL gigante do WS-Federation.
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(
+        new JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseLower)));
 builder.Services.AddEndpointsApiExplorer();
 
 // Libera o front (Vite, porta 5173) a chamar esta API.
