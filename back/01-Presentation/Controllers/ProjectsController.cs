@@ -3,8 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using NoPrumo.Application.DTOs;
 using NoPrumo.Application.DTOs.Projects;
 using NoPrumo.Application.Interfaces;
-using NoPrumo.Application.Interfaces;
-using NoPrumo.Infrastructure.Repositories;
 
 namespace NoPrumo.Controllers;
 
