@@ -2,6 +2,8 @@
 using NoPrumo.Application.Extensions;
 using NoPrumo.Application.Interfaces;
 using NoPrumo.Domain.Entities;
+using NoPrumo.Application.Requests;
+using NoPrumo.Application.Results;
 
 namespace NoPrumo.Application.Services;
 
@@ -28,6 +30,73 @@ public sealed class StageService(IStageRepository stageRepository, TimeProvider 
     {
         var stage = await stageRepository.GetByIdAsync(id, cancellationToken);
         return stage is null ? null : ToDto(stage, timeProvider.Today());
+    }
+
+    public async Task<SaveStageResult> CreateAsync(SaveStageRequest request, CancellationToken cancellationToken)
+    {
+        var stage = new Stage();
+        Apply(request, stage);
+
+        var errors = await ValidateAsync(stage, cancellationToken);
+        if (errors.Count > 0)
+        {
+            return new SaveStageResult(null, errors);
+        }
+
+        stageRepository.Add(stage);
+        await stageRepository.SaveChangesAsync(cancellationToken);
+
+        return new SaveStageResult(await GetByIdAsync(stage.Id, cancellationToken), errors);
+    }
+
+    public async Task<SaveStageResult?> UpdateAsync(long id, SaveStageRequest request, CancellationToken cancellationToken)
+    {
+        var stage = await stageRepository.GetForUpdateAsync(id, cancellationToken);
+        if (stage is null)
+        {
+            return null;
+        }
+
+        Apply(request, stage);
+
+        var errors = await ValidateAsync(stage, cancellationToken);
+        if (errors.Count > 0)
+        {
+            return new SaveStageResult(null, errors);
+        }
+
+        await stageRepository.SaveChangesAsync(cancellationToken);
+
+        return new SaveStageResult(await GetByIdAsync(id, cancellationToken), errors);
+    }
+
+    private async Task<Dictionary<string, string>> ValidateAsync(Stage stage, CancellationToken cancellationToken)
+    {
+        var errors = new Dictionary<string, string>();
+
+        if (!await stageRepository.ActiveProjectExistsAsync(stage.ProjectId, cancellationToken))
+        {
+            errors["projectId"] = "Pick an active project.";
+        }
+
+        if (stage.IsCompletedWithPartialProgress())
+        {
+            errors["percentage"] = "A completed stage must be at 100%.";
+        }
+
+        return errors;
+    }
+
+    private static void Apply(SaveStageRequest request, Stage stage)
+    {
+        stage.ProjectId = request.ProjectId;
+        stage.Name = request.Name.Trim();
+        stage.SortOrder = request.SortOrder;
+        stage.TeamId = request.TeamId;
+        stage.SupervisorId = request.SupervisorId;
+        stage.PlannedDate = request.PlannedDate;
+        stage.Percentage = request.Percentage;
+        stage.Status = request.Status;
     }
 
     private static StageDto ToDto(Stage stage, DateOnly today) => new()
