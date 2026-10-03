@@ -1,9 +1,8 @@
-using System;
-using System.Collections.Generic;
+using NoPrumo.Domain.Enums;
 
 namespace NoPrumo.Domain.Entities;
 
-public partial class Project
+public class Project
 {
     public long Id { get; set; }
 
@@ -33,7 +32,7 @@ public partial class Project
 
     public decimal ContractAmount { get; set; }
 
-    public string Status { get; set; } = null!;
+    public ProjectStatus Status { get; set; }
 
     public long? SupervisorId { get; set; }
 
@@ -92,4 +91,15 @@ public partial class Project
     public virtual ICollection<PurchaseRequest> PurchaseRequests { get; set; } = new List<PurchaseRequest>();
 
     public virtual ICollection<UserProject> UserProjects { get; set; } = new List<UserProject>();
+
+    public bool IsLate(DateOnly today) =>
+    ForecastDate < today
+    && CompletionDate is null
+    && Status is not (ProjectStatus.Completed or ProjectStatus.Cancelled);
+
+    public bool IsForecastBeforeStart() => ForecastDate < StartDate;
+
+    public void Deactivate(DateTime now) => DeletedAt ??= now;
+
+    public void Activate() => DeletedAt = null;
 }

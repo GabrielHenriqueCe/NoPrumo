@@ -1,4 +1,4 @@
-﻿namespace NoPrumo.Application.Services;
+﻿namespace NoPrumo.Application.Settings;
 
 /// <summary>Configuração do token, preenchida a partir de User Secrets.</summary>
 public sealed class JwtSettings

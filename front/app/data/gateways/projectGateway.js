@@ -11,6 +11,16 @@
     GET    /projects?page&size&search
       200 { items, page, size, total, totalPages }
 
+    item   { id, code, name, description, clientId, clientName, cno,
+             street, number, complement, district, city, state, postalCode,
+             status, supervisorId, supervisorName, technicalManager, creaRt,
+             startDate, forecastDate, completionDate, notes,
+             late, active,
+             contractAmount* }                  * only with view_finance
+
+    status planning · in_progress · on_hold · completed · cancelled
+    late   calculated by the API: forecastDate < today and not completed/cancelled
+
     GET    /projects/{id}
       200 item
 
