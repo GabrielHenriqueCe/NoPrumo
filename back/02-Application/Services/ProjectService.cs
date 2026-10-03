@@ -1,9 +1,10 @@
 ﻿using NoPrumo.Application.DTOs;
 using NoPrumo.Application.DTOs.Projects;
+using NoPrumo.Application.Extensions;
 using NoPrumo.Application.Interfaces;
-using NoPrumo.Domain.Entities;
 using NoPrumo.Application.Requests.Projects;
 using NoPrumo.Application.Results.Projects;
+using NoPrumo.Domain.Entities;
 
 namespace NoPrumo.Application.Services;
 
@@ -17,7 +18,7 @@ public sealed class ProjectService(IProjectRepository projectRepository, TimePro
         size = Math.Clamp(size, 1, MaxPageSize);
 
         var projectPage = await projectRepository.ListAsync(page, size, search, cancellationToken);
-        var today = Today();
+        var today = timeProvider.Today();
 
         var items = projectPage.Items
             .Select(project => ToDto(project, today, canViewFinance))
@@ -29,7 +30,7 @@ public sealed class ProjectService(IProjectRepository projectRepository, TimePro
     public async Task<ProjectDto?> GetByIdAsync(long id, bool canViewFinance, CancellationToken cancellationToken)
     {
         var project = await projectRepository.GetByIdAsync(id, cancellationToken);
-        return project is null ? null : ToDto(project, Today(), canViewFinance);
+        return project is null ? null : ToDto(project, timeProvider.Today(), canViewFinance);
     }
 
     public async Task<SaveProjectResult> CreateAsync(SaveProjectRequest request, bool canViewFinance, CancellationToken cancellationToken)
@@ -92,7 +93,7 @@ public sealed class ProjectService(IProjectRepository projectRepository, TimePro
             return false;
         }
 
-        project.Deactivate(timeProvider.GetUtcNow().UtcDateTime);
+        project.Deactivate(timeProvider.Now());
         await projectRepository.SaveChangesAsync(cancellationToken);
 
         return true;
@@ -140,10 +141,6 @@ public sealed class ProjectService(IProjectRepository projectRepository, TimePro
             project.ContractAmount = contractAmount;
         }
     }
-
-    // Data local, não UTC: depois das 21h em Brasília o UTC já virou o dia
-    // e a obra apareceria atrasada um dia antes.
-    private DateOnly Today() => DateOnly.FromDateTime(timeProvider.GetLocalNow().DateTime);
 
     private static ProjectDto ToDto(Project project, DateOnly today, bool canViewFinance)
     {
