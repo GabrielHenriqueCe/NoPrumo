@@ -8,6 +8,8 @@ using NoPrumo.Infrastructure.Data;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using NoPrumo.Application.Interfaces;
+using NoPrumo.Infrastructure.Repositories;
 
 // Sem isso o ASP.NET renomeia a claim "sub" para uma URL gigante do WS-Federation.
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
@@ -34,6 +36,10 @@ var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>()
 
 builder.Services.AddSingleton(jwtSettings);
 builder.Services.AddScoped<TokenService>();
+
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
+builder.Services.AddScoped<IProjectService, ProjectService>();
 
 // Chaves de criptografia de documentos (CPF/CNPJ). Vêm de User Secrets em base64 de 32 bytes.
 // Sem elas a API não sobe — nunca usa valor fixo embutido no código.
