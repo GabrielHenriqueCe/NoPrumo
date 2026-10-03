@@ -1,19 +1,24 @@
 /*
-  Training types (NR-35, NR-10, ASO...). The defaults come from the seed;
-  the screen only adds more.
+  Training types (NR-35, NR-10, ASO...). The defaults are meant to come from
+  the seed; the screen only adds more.
   No activate/deactivate: the table has no `active` nor `deleted_at` column.
 
-  Proposed contract — the controller does not exist yet. Whoever writes it
-  may change this; if so, update this comment together.
+  `validityMonths` is what the API uses to set the expiry date of every
+  training recorded from then on; changing it does not move the expiry of
+  trainings already saved. Null means the certificate never expires.
+
+  Contract (confirmed against TrainingTypesController.cs):
 
     GET    /trainingtypes?page&size&search
       200 { items, page, size, total, totalPages }
+      item = { id, code, name, validityMonths, minWorkloadHours, requiresInPerson }
+      search matches code or name; ordered by code
 
     GET    /trainingtypes/{id}
       200 item
 
     POST   /trainingtypes                { code, name, validityMonths, minWorkloadHours, requiresInPerson }
-      201 item
+      201 item — the code comes back trimmed and upper-cased
       400 ProblemDetails with `errors` per field
 
     PUT    /trainingtypes/{id}           { code, name, validityMonths, minWorkloadHours, requiresInPerson }
