@@ -2,6 +2,8 @@
 using NoPrumo.Application.DTOs.Projects;
 using NoPrumo.Application.Interfaces;
 using NoPrumo.Domain.Entities;
+using NoPrumo.Application.Requests.Projects;
+using NoPrumo.Application.Results.Projects;
 
 namespace NoPrumo.Application.Services;
 
@@ -28,6 +30,87 @@ public sealed class ProjectService(IProjectRepository projectRepository, TimePro
     {
         var project = await projectRepository.GetByIdAsync(id, cancellationToken);
         return project is null ? null : ToDto(project, Today(), canViewFinance);
+    }
+
+    public async Task<SaveProjectResult> CreateAsync(SaveProjectRequest request, bool canViewFinance, CancellationToken cancellationToken)
+    {
+        var project = new Project();
+        Apply(request, project, canViewFinance);
+
+        var errors = await ValidateAsync(project, null, cancellationToken);
+        if (errors.Count > 0)
+        {
+            return new SaveProjectResult(null, errors);
+        }
+
+        projectRepository.Add(project);
+        await projectRepository.SaveChangesAsync(cancellationToken);
+
+        return new SaveProjectResult(await GetByIdAsync(project.Id, canViewFinance, cancellationToken), errors);
+    }
+
+    public async Task<SaveProjectResult?> UpdateAsync(long id, SaveProjectRequest request, bool canViewFinance, CancellationToken cancellationToken)
+    {
+        var project = await projectRepository.GetForUpdateAsync(id, cancellationToken);
+        if (project is null)
+        {
+            return null;
+        }
+
+        Apply(request, project, canViewFinance);
+
+        var errors = await ValidateAsync(project, id, cancellationToken);
+        if (errors.Count > 0)
+        {
+            return new SaveProjectResult(null, errors);
+        }
+
+        await projectRepository.SaveChangesAsync(cancellationToken);
+
+        return new SaveProjectResult(await GetByIdAsync(id, canViewFinance, cancellationToken), errors);
+    }
+
+    private async Task<Dictionary<string, string>> ValidateAsync(Project project, long? ignoredProjectId, CancellationToken cancellationToken)
+    {
+        var errors = new Dictionary<string, string>();
+
+        if (await projectRepository.CodeExistsAsync(project.Code, ignoredProjectId, cancellationToken))
+        {
+            errors["code"] = "Another active project already uses this code.";
+        }
+
+        if (project.IsForecastBeforeStart())
+        {
+            errors["forecastDate"] = "The forecast date cannot be before the start date.";
+        }
+
+        return errors;
+    }
+
+    private static void Apply(SaveProjectRequest request, Project project, bool canViewFinance)
+    {
+        project.Code = request.Code.Trim();
+        project.Name = request.Name.Trim();
+        project.ClientId = request.ClientId;
+        project.Status = request.Status;
+        project.SupervisorId = request.SupervisorId;
+        project.Cno = request.Cno;
+        project.TechnicalManager = request.TechnicalManager;
+        project.CreaRt = request.CreaRt;
+        project.StartDate = request.StartDate;
+        project.ForecastDate = request.ForecastDate;
+        project.Street = request.Street;
+        project.Number = request.Number;
+        project.Complement = request.Complement;
+        project.District = request.District;
+        project.City = request.City;
+        project.State = request.State?.ToUpperInvariant();
+        project.PostalCode = request.PostalCode;
+
+        if (canViewFinance && request.ContractAmount is decimal contractAmount)
+        {
+            project.ContractAmount = contractAmount;
+        }
     }
 
     // Data local, não UTC: depois das 21h em Brasília o UTC já virou o dia
