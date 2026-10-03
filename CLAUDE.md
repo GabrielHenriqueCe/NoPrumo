@@ -94,6 +94,10 @@ destas regras vai para a refatoração; o que é escrito agora já nasce certo.
 - **DTO só carrega dado** e é imutável. Entrada (`CreateProjectRequest`)
   separada da saída (`ProjectDto`).
 - **"Hoje" entra por parâmetro** na regra, nunca `DateTime.Now` dentro dela.
+- **Código que se explica sozinho.** Nome bom no lugar de comentário. Comentário
+  só onde o código não diz o porquê — uma regra, uma decisão não óbvia, uma
+  armadilha — ou onde quem mexer depois provavelmente travaria. Explicação
+  didática vai na conversa, não no arquivo.
 - Dependência pelo construtor · leitura com `AsNoTracking()` · `async` até o
   banco · erro de validação como `ValidationProblem` com o campo certo.
 - **Hoje os controllers acessam o `AppDbContext` direto** — em Clean
