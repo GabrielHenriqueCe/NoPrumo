@@ -15,7 +15,7 @@ public interface IProjectService
 
     Task<SaveProjectResult?> UpdateAsync(long id, SaveProjectRequest request, bool canViewFinance, CancellationToken cancellationToken);
 
-    Task<ProjectActivationResult> ActivateAsync(long id, CancellationToken cancellationToken);
+    Task<bool> ActivateAsync(long id, CancellationToken cancellationToken);
 
     Task<bool> DeactivateAsync(long id, CancellationToken cancellationToken);
 }

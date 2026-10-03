@@ -46,12 +46,9 @@ public class ProjectRepository(AppDbContext appDbContext) : IProjectRepository
     public Task<Project?> GetForUpdateAsync(long id, CancellationToken cancellationToken) =>
     appDbContext.Project.FirstOrDefaultAsync(project => project.Id == id, cancellationToken);
 
-    // Só obra ativa conta: o índice único é (code, active_key), então o
-    // código de uma obra desativada pode ser reaproveitado.
     public Task<bool> CodeExistsAsync(string code, long? ignoredProjectId, CancellationToken cancellationToken) =>
         appDbContext.Project.AnyAsync(project =>
             project.Code == code &&
-            project.DeletedAt == null &&
             project.Id != ignoredProjectId,
             cancellationToken);
 

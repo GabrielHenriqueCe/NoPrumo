@@ -70,23 +70,18 @@ public sealed class ProjectService(IProjectRepository projectRepository, TimePro
         return new SaveProjectResult(await GetByIdAsync(id, canViewFinance, cancellationToken), errors);
     }
 
-    public async Task<ProjectActivationResult> ActivateAsync(long id, CancellationToken cancellationToken)
+    public async Task<bool> ActivateAsync(long id, CancellationToken cancellationToken)
     {
         var project = await projectRepository.GetForUpdateAsync(id, cancellationToken);
         if (project is null)
         {
-            return ProjectActivationResult.NotFound;
-        }
-
-        if (await projectRepository.CodeExistsAsync(project.Code, id, cancellationToken))
-        {
-            return ProjectActivationResult.CodeInUse;
+            return false;
         }
 
         project.Activate();
         await projectRepository.SaveChangesAsync(cancellationToken);
 
-        return ProjectActivationResult.Activated;
+        return true;
     }
 
     public async Task<bool> DeactivateAsync(long id, CancellationToken cancellationToken)
@@ -109,7 +104,7 @@ public sealed class ProjectService(IProjectRepository projectRepository, TimePro
 
         if (await projectRepository.CodeExistsAsync(project.Code, ignoredProjectId, cancellationToken))
         {
-            errors["code"] = "Another active project already uses this code.";
+            errors["code"] = "Another project already uses this code.";
         }
 
         if (project.IsForecastBeforeStart())
