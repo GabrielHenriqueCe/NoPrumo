@@ -40,6 +40,8 @@ builder.Services.AddScoped<TokenService>();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
 builder.Services.AddScoped<IProjectService, ProjectService>();
+builder.Services.AddScoped<IStageRepository, StageRepository>();
+builder.Services.AddScoped<IStageService, StageService>();
 
 // Chaves de criptografia de documentos (CPF/CNPJ). Vêm de User Secrets em base64 de 32 bytes.
 // Sem elas a API não sobe — nunca usa valor fixo embutido no código.
