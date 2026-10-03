@@ -528,7 +528,8 @@ public class AppDbContext : DbContext
                 .HasPrecision(5, 2);
             entity.Property(e => e.Status)
                 .HasMaxLength(20)
-                .HasDefaultValueSql("'planned'");
+                .HasDefaultValueSql("'planned'")
+                .HasConversion<SnakeCaseEnumConverter<StageStatus>>();
             entity.Property(e => e.UpdatedAt)
                 .ValueGeneratedOnAddOrUpdate()
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
