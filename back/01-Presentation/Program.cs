@@ -1,3 +1,4 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -5,9 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using NoPrumo.Application.Services;
 using NoPrumo.Infrastructure.Data;
-using System.IdentityModel.Tokens.Jwt;
 
-// Sem isso o ASP.NET renomeia a claim "sub" para uma URL gigante do WS-Federation.
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,7 +14,6 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
-// Libera o front (Vite, porta 5173) a chamar esta API.
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("front", policy =>
@@ -24,30 +22,41 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod());
 });
 
-// Vem de User Secrets. Falhar aqui é melhor do que subir sem assinatura válida.
 var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>()
     ?? throw new InvalidOperationException("Faltam as chaves Jwt:* em User Secrets.");
 
 builder.Services.AddSingleton(jwtSettings);
 builder.Services.AddScoped<TokenService>();
 
-// Chaves de criptografia de documentos (CPF/CNPJ). Vêm de User Secrets em base64 de 32 bytes.
-// Sem elas a API não sobe — nunca usa valor fixo embutido no código.
-var encKeyB64 = builder.Configuration["Documents:EncryptionKey"]
+var encryptionKeyBase64 = builder.Configuration["Documents:EncryptionKey"]
     ?? throw new InvalidOperationException("Falta Documents:EncryptionKey nos User Secrets. Veja o README para gerar.");
-var hmacKeyB64 = builder.Configuration["Documents:HmacKey"]
+var hmacKeyBase64 = builder.Configuration["Documents:HmacKey"]
     ?? throw new InvalidOperationException("Falta Documents:HmacKey nos User Secrets. Veja o README para gerar.");
 
-builder.Services.AddSingleton(new DocumentSettings
+var encryptionKey = Convert.FromBase64String(encryptionKeyBase64);
+if (encryptionKey.Length != 32)
 {
-    EncryptionKey = Convert.FromBase64String(encKeyB64),
-    HmacKey = Convert.FromBase64String(hmacKeyB64),
-});
+    throw new InvalidOperationException("Documents:EncryptionKey deve ter 32 bytes (256 bits).");
+}
+
+var hmacKey = Convert.FromBase64String(hmacKeyBase64);
+if (hmacKey.Length != 32)
+{
+    throw new InvalidOperationException("Documents:HmacKey deve ter 32 bytes (256 bits).");
+}
+
+var documentSettings = new DocumentSettings
+{
+    EncryptionKey = encryptionKey,
+    HmacKey = hmacKey,
+};
+
+builder.Services.AddSingleton(documentSettings);
+builder.Services.AddSingleton<DocumentProcessor>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        // Desliga a tradução de claims nos dois handlers, novo e antigo.
         options.MapInboundClaims = false;
 
         options.TokenValidationParameters = new TokenValidationParameters
@@ -59,29 +68,19 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidIssuer = jwtSettings.Issuer,
             ValidAudience = jwtSettings.Audience,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key)),
-            // O padrão são 5 minutos de tolerância; 1 basta.
             ClockSkew = TimeSpan.FromMinutes(1),
         };
     });
 
 builder.Services.AddAuthorization(options =>
 {
-    // Policy por permissão, não por nome de papel: mudar quem pode gerenciar
-    // usuários é mexer no seed, não caçar `if (role == "admin")` no código.
     options.AddPolicy("manage_users", policy => policy.RequireClaim("permission", "manage_users"));
-
-    // Estoque tem dois verbos. A tela inteira pede view_stock; lançar movimento
-    // pede manage_stock. É assim que um perfil acompanha o estoque da obra sem
-    // poder mexer nele — mesma tela, permissões diferentes.
     options.AddPolicy("view_stock", policy => policy.RequireClaim("permission", "view_stock"));
     options.AddPolicy("manage_stock", policy => policy.RequireClaim("permission", "manage_stock"));
-
     options.AddPolicy("manage_projects", policy => policy.RequireClaim("permission", "manage_projects"));
     options.AddPolicy("manage_employees", policy => policy.RequireClaim("permission", "manage_employees"));
     options.AddPolicy("manage_purchases", policy => policy.RequireClaim("permission", "manage_purchases"));
     options.AddPolicy("manage_safety", policy => policy.RequireClaim("permission", "manage_safety"));
-
-    // Dinheiro é permissão à parte: ver contrato, salário, preço e margem.
     options.AddPolicy("view_finance", policy => policy.RequireClaim("permission", "view_finance"));
 });
 
@@ -99,10 +98,9 @@ builder.Services.AddSwaggerGen(options =>
     {
         Title = "NoPrumo API",
         Version = "v1",
-        Description = "Gestão de clientes e obras para pequenas empresas de construção."
+        Description = "Sistema de gestão de obras para construtoras de médio e grande porte."
     });
 
-    // Botão "Authorize" do Swagger, para testar endpoint protegido.
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -114,26 +112,24 @@ builder.Services.AddSwaggerGen(options =>
     });
 
     options.AddSecurityRequirement(new OpenApiSecurityRequirement
-      {
-          {
-              new OpenApiSecurityScheme
-              {
-                  Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
-              },
-              Array.Empty<string>()
-          }
-      });
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+            },
+            Array.Empty<string>()
+        }
+    });
 });
 
 var app = builder.Build();
 
-// Papéis, permissões e o primeiro admin. Roda a cada start e só insere o que falta.
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await DatabaseSeeder.SeedAsync(db);
+    var appDbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await DatabaseSeeder.SeedAsync(appDbContext);
 }
-
 
 if (app.Environment.IsDevelopment())
 {

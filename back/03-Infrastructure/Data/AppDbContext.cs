@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using NoPrumo.Domain.Entities;
 
 namespace NoPrumo.Infrastructure.Data;
@@ -237,7 +237,10 @@ public partial class AppDbContext : DbContext
                 .HasMaxLength(30);
             entity.Property(e => e.PersonType)
                 .HasMaxLength(10)
-                .HasDefaultValueSql("'company'");
+                .HasDefaultValueSql("'company'")
+                .HasConversion(
+                    p => p.ToString().ToLowerInvariant(),
+                    p => Enum.Parse<NoPrumo.Domain.Enums.PersonType>(p, true));
             entity.Property(e => e.UpdatedAt)
                 .ValueGeneratedOnAddOrUpdate()
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")

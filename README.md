@@ -1,6 +1,6 @@
 # NoPrumo
 
-Sistema de Gestão de Obras para Pequenas Empresas de Construção.
+Sistema de gestão de obras para construtoras de médio e grande porte.
 
 ## Configuração do Ambiente de Desenvolvimento
 
@@ -15,11 +15,11 @@ Execute os comandos a seguir no terminal (PowerShell) a partir da raiz do projet
 cd back/01-Presentation
 
 # 1. Gerar e configurar a chave de criptografia de documentos (32 bytes em Base64)
-$encKey = [Convert]::ToBase64String((1..32 | ForEach-Object { [byte](Get-Random -Max 256) }))
+$encKey = [Convert]::ToBase64String([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
 dotnet user-secrets set "Documents:EncryptionKey" $encKey
 
 # 2. Gerar e configurar a chave HMAC de documentos (32 bytes em Base64)
-$hmacKey = [Convert]::ToBase64String((1..32 | ForEach-Object { [byte](Get-Random -Max 256) }))
+$hmacKey = [Convert]::ToBase64String([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
 dotnet user-secrets set "Documents:HmacKey" $hmacKey
 ```
 

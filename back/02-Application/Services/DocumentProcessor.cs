@@ -1,44 +1,45 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
+using NoPrumo.Application.DTOs;
 
 namespace NoPrumo.Application.Services;
 
-public sealed record ProcessedDocument(
-    byte[]? Encrypted,
-    string? Hash,
-    string? Masked);
-
-public static class DocumentProcessor
+public class DocumentProcessor(DocumentSettings documentSettings)
 {
-    public static ProcessedDocument Process(string? rawInput, byte[] encryptionKey, byte[] hmacKey)
+    public ProcessedDocument Process(string? rawInput)
     {
         if (string.IsNullOrWhiteSpace(rawInput))
         {
             return new ProcessedDocument(null, null, null);
         }
 
-        var digits = Regex.Replace(rawInput, @"\D", "");
-        if (string.IsNullOrEmpty(digits))
+        var cleaned = CleanDocument(rawInput);
+        if (string.IsNullOrEmpty(cleaned))
         {
             return new ProcessedDocument(null, null, null);
         }
 
-        var encrypted = EncryptAesGcm(digits, encryptionKey);
-        var hash = ComputeHmacSha256(digits, hmacKey);
-        var masked = MaskDocument(digits);
+        var encrypted = EncryptAesGcm(cleaned, documentSettings.EncryptionKey);
+        var hash = ComputeHmacSha256(cleaned, documentSettings.HmacKey);
+        var masked = MaskDocument(cleaned);
 
         return new ProcessedDocument(encrypted, hash, masked);
+    }
+
+    public static string CleanDocument(string rawInput)
+    {
+        return Regex.Replace(rawInput, @"[^a-zA-Z0-9]", "").ToUpperInvariant();
     }
 
     public static bool IsValid(string? rawInput)
     {
         if (string.IsNullOrWhiteSpace(rawInput)) return true;
-        var digits = Regex.Replace(rawInput, @"\D", "");
-        if (string.IsNullOrEmpty(digits)) return true;
+        var cleaned = CleanDocument(rawInput);
+        if (string.IsNullOrEmpty(cleaned)) return true;
 
-        if (digits.Length == 11) return IsValidCpf(digits);
-        if (digits.Length == 14) return IsValidCnpj(digits);
+        if (cleaned.Length == 11) return IsValidCpf(cleaned);
+        if (cleaned.Length == 14) return IsValidCnpj(cleaned);
 
         return false;
     }
@@ -46,28 +47,29 @@ public static class DocumentProcessor
     public static bool IsValidCpf(string cpf)
     {
         if (cpf.Length != 11) return false;
+        if (!Regex.IsMatch(cpf, @"^\d{11}$")) return false;
         if (new string(cpf[0], 11) == cpf) return false;
 
-        int[] mult1 = [10, 9, 8, 7, 6, 5, 4, 3, 2];
-        int[] mult2 = [11, 10, 9, 8, 7, 6, 5, 4, 3, 2];
+        int[] multiplierFirstDigit = [10, 9, 8, 7, 6, 5, 4, 3, 2];
+        int[] multiplierSecondDigit = [11, 10, 9, 8, 7, 6, 5, 4, 3, 2];
 
         string tempCpf = cpf.Substring(0, 9);
         int sum = 0;
         for (int i = 0; i < 9; i++)
-            sum += (tempCpf[i] - '0') * mult1[i];
+            sum += (tempCpf[i] - '0') * multiplierFirstDigit[i];
 
-        int rem = sum % 11;
-        int d1 = rem < 2 ? 0 : 11 - rem;
+        int remainder = sum % 11;
+        int firstDigit = remainder < 2 ? 0 : 11 - remainder;
 
-        tempCpf += d1;
+        tempCpf += firstDigit;
         sum = 0;
         for (int i = 0; i < 10; i++)
-            sum += (tempCpf[i] - '0') * mult2[i];
+            sum += (tempCpf[i] - '0') * multiplierSecondDigit[i];
 
-        rem = sum % 11;
-        int d2 = rem < 2 ? 0 : 11 - rem;
+        remainder = sum % 11;
+        int secondDigit = remainder < 2 ? 0 : 11 - remainder;
 
-        return cpf.EndsWith($"{d1}{d2}");
+        return cpf.EndsWith($"{firstDigit}{secondDigit}");
     }
 
     public static bool IsValidCnpj(string cnpj)
@@ -75,26 +77,34 @@ public static class DocumentProcessor
         if (cnpj.Length != 14) return false;
         if (new string(cnpj[0], 14) == cnpj) return false;
 
-        int[] mult1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
-        int[] mult2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+        int[] multiplierFirstDigit = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+        int[] multiplierSecondDigit = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
 
         string tempCnpj = cnpj.Substring(0, 12);
         int sum = 0;
         for (int i = 0; i < 12; i++)
-            sum += (tempCnpj[i] - '0') * mult1[i];
+        {
+            char charVal = tempCnpj[i];
+            int charAsciiValue = charVal - '0';
+            sum += charAsciiValue * multiplierFirstDigit[i];
+        }
 
-        int rem = sum % 11;
-        int d1 = rem < 2 ? 0 : 11 - rem;
+        int remainder = sum % 11;
+        int firstDigit = remainder < 2 ? 0 : 11 - remainder;
 
-        tempCnpj += d1;
+        tempCnpj += firstDigit;
         sum = 0;
         for (int i = 0; i < 13; i++)
-            sum += (tempCnpj[i] - '0') * mult2[i];
+        {
+            char charVal = tempCnpj[i];
+            int charAsciiValue = charVal - '0';
+            sum += charAsciiValue * multiplierSecondDigit[i];
+        }
 
-        rem = sum % 11;
-        int d2 = rem < 2 ? 0 : 11 - rem;
+        remainder = sum % 11;
+        int secondDigit = remainder < 2 ? 0 : 11 - remainder;
 
-        return cnpj.EndsWith($"{d1}{d2}");
+        return cnpj.EndsWith($"{firstDigit}{secondDigit}");
     }
 
     public static byte[] EncryptAesGcm(string plainText, byte[] key)
@@ -144,26 +154,26 @@ public static class DocumentProcessor
         return Convert.ToHexString(hashBytes);
     }
 
-    public static string MaskDocument(string digits)
+    public static string MaskDocument(string cleanedDocument)
     {
-        if (digits.Length == 11)
+        if (cleanedDocument.Length == 11)
         {
             // CPF: ***.456.789-**
-            return $"***.{digits.Substring(3, 3)}.{digits.Substring(6, 3)}-**";
+            return $"***.{cleanedDocument.Substring(3, 3)}.{cleanedDocument.Substring(6, 3)}-**";
         }
 
-        if (digits.Length == 14)
+        if (cleanedDocument.Length == 14)
         {
             // CNPJ: **.345.678/0001-**
-            return $"**.{digits.Substring(2, 3)}.{digits.Substring(5, 3)}/{digits.Substring(8, 4)}-**";
+            return $"**.{cleanedDocument.Substring(2, 3)}.{cleanedDocument.Substring(5, 3)}/{cleanedDocument.Substring(8, 4)}-**";
         }
 
-        if (digits.Length > 4)
+        if (cleanedDocument.Length > 4)
         {
-            var len = digits.Length;
-            return $"{new string('*', len - 4)}{digits.Substring(len - 4)}";
+            var len = cleanedDocument.Length;
+            return $"{new string('*', len - 4)}{cleanedDocument.Substring(len - 4)}";
         }
 
-        return new string('*', digits.Length);
+        return new string('*', cleanedDocument.Length);
     }
 }
