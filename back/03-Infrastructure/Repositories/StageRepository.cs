@@ -50,4 +50,19 @@ public class StageRepository(AppDbContext appDbContext) : IStageRepository
             .Include(stage => stage.Team)
             .Include(stage => stage.Supervisor)
             .FirstOrDefaultAsync(stage => stage.Id == id, cancellationToken);
+
+    public Task<Stage?> GetForUpdateAsync(long id, CancellationToken cancellationToken) =>
+    appDbContext.Stage.FirstOrDefaultAsync(stage => stage.Id == id, cancellationToken);
+
+    public Task<bool> ActiveProjectExistsAsync(long projectId, CancellationToken cancellationToken) =>
+        appDbContext.Project.AnyAsync(project =>
+            project.Id == projectId &&
+            project.DeletedAt == null,
+            cancellationToken);
+
+    public void Add(Stage stage) => appDbContext.Stage.Add(stage);
+
+    public Task SaveChangesAsync(CancellationToken cancellationToken) =>
+        appDbContext.SaveChangesAsync(cancellationToken);
+
 }
