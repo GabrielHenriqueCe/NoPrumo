@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using NoPrumo.Application.DTOs;
 using NoPrumo.Application.DTOs.Projects;
 using NoPrumo.Application.Interfaces;
+using NoPrumo.Application.Requests.Projects;
 
 namespace NoPrumo.Controllers;
 
@@ -26,5 +27,44 @@ public sealed class ProjectsController(IProjectService projectService) : Control
     {
         var project = await projectService.GetByIdAsync(id, CanViewFinance, cancellationToken);
         return project is null ? NotFound() : Ok(project);
+    }
+
+    [HttpPost]
+    public async Task<ActionResult<ProjectDto>> Create(SaveProjectRequest request, CancellationToken cancellationToken)
+    {
+        var result = await projectService.CreateAsync(request, CanViewFinance, cancellationToken);
+        if (!result.Succeeded)
+        {
+            return ValidationProblemFrom(result.Errors);
+        }
+
+        return CreatedAtAction(nameof(GetById), new { id = result.Project!.Id }, result.Project);
+    }
+
+    [HttpPut("{id:long}")]
+    public async Task<ActionResult<ProjectDto>> Update(long id, SaveProjectRequest request, CancellationToken cancellationToken)
+    {
+        var result = await projectService.UpdateAsync(id, request, CanViewFinance, cancellationToken);
+        if (result is null)
+        {
+            return NotFound();
+        }
+
+        if (!result.Succeeded)
+        {
+            return ValidationProblemFrom(result.Errors);
+        }
+
+        return Ok(result.Project);
+    }
+
+    private ActionResult ValidationProblemFrom(IReadOnlyDictionary<string, string> errors)
+    {
+        foreach (var (field, message) in errors)
+        {
+            ModelState.AddModelError(field, message);
+        }
+
+        return ValidationProblem(ModelState);
     }
 }
