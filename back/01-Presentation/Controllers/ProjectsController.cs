@@ -4,6 +4,7 @@ using NoPrumo.Application.DTOs;
 using NoPrumo.Application.DTOs.Projects;
 using NoPrumo.Application.Interfaces;
 using NoPrumo.Application.Requests.Projects;
+using NoPrumo.Application.Results.Projects;
 
 namespace NoPrumo.Controllers;
 
@@ -57,6 +58,21 @@ public sealed class ProjectsController(IProjectService projectService) : Control
 
         return Ok(result.Project);
     }
+
+    [HttpPatch("{id:long}/activate")]
+    public async Task<IActionResult> Activate(long id, CancellationToken cancellationToken) =>
+    await projectService.ActivateAsync(id, cancellationToken) switch
+    {
+        ProjectActivationResult.NotFound => NotFound(),
+        ProjectActivationResult.CodeInUse => Problem(
+            statusCode: StatusCodes.Status409Conflict,
+            detail: "Another active project already uses this code. Change one of the codes before activating."),
+        _ => NoContent()
+    };
+
+    [HttpPatch("{id:long}/deactivate")]
+    public async Task<IActionResult> Deactivate(long id, CancellationToken cancellationToken) =>
+        await projectService.DeactivateAsync(id, cancellationToken) ? NoContent() : NotFound();
 
     private ActionResult ValidationProblemFrom(IReadOnlyDictionary<string, string> errors)
     {
