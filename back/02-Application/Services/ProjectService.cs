@@ -70,6 +70,39 @@ public sealed class ProjectService(IProjectRepository projectRepository, TimePro
         return new SaveProjectResult(await GetByIdAsync(id, canViewFinance, cancellationToken), errors);
     }
 
+    public async Task<ProjectActivationResult> ActivateAsync(long id, CancellationToken cancellationToken)
+    {
+        var project = await projectRepository.GetForUpdateAsync(id, cancellationToken);
+        if (project is null)
+        {
+            return ProjectActivationResult.NotFound;
+        }
+
+        if (await projectRepository.CodeExistsAsync(project.Code, id, cancellationToken))
+        {
+            return ProjectActivationResult.CodeInUse;
+        }
+
+        project.Activate();
+        await projectRepository.SaveChangesAsync(cancellationToken);
+
+        return ProjectActivationResult.Activated;
+    }
+
+    public async Task<bool> DeactivateAsync(long id, CancellationToken cancellationToken)
+    {
+        var project = await projectRepository.GetForUpdateAsync(id, cancellationToken);
+        if (project is null)
+        {
+            return false;
+        }
+
+        project.Deactivate(timeProvider.GetUtcNow().UtcDateTime);
+        await projectRepository.SaveChangesAsync(cancellationToken);
+
+        return true;
+    }
+
     private async Task<Dictionary<string, string>> ValidateAsync(Project project, long? ignoredProjectId, CancellationToken cancellationToken)
     {
         var errors = new Dictionary<string, string>();
