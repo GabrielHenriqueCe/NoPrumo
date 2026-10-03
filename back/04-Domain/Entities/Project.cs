@@ -96,4 +96,6 @@ public class Project
     ForecastDate < today
     && CompletionDate is null
     && Status is not (ProjectStatus.Completed or ProjectStatus.Cancelled);
+
+    public bool IsForecastBeforeStart() => ForecastDate < StartDate;
 }
