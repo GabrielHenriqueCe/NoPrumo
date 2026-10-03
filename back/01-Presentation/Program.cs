@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using NoPrumo.Application.Services;
+using NoPrumo.Application.Settings;
 using NoPrumo.Infrastructure.Data;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text.Json;

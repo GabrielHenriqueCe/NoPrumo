@@ -1,7 +1,7 @@
 ﻿using System.Text.Json.Serialization;
 using NoPrumo.Domain.Enums;
 
-namespace NoPrumo.Application.DTOs.Projects;
+namespace NoPrumo.Application.DTOs;
 
 /// <summary>
 /// Obra como todo perfil enxerga: sem nenhum valor em dinheiro.

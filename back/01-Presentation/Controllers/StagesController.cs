@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NoPrumo.Application.DTOs;
-using NoPrumo.Application.DTOs.Stages;
 using NoPrumo.Application.Interfaces;
 
 namespace NoPrumo.Controllers;

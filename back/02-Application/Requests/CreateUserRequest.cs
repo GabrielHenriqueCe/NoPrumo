@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace NoPrumo.Application.DTOs;
+namespace NoPrumo.Application.Requests;
 
 public sealed class CreateUserRequest
 {

@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using NoPrumo.Domain.Enums;
 
-namespace NoPrumo.Application.Requests.Projects;
+namespace NoPrumo.Application.Requests;
 
 public sealed record SaveProjectRequest
 {

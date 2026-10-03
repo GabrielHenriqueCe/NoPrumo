@@ -1,7 +1,6 @@
 ﻿using NoPrumo.Application.DTOs;
-using NoPrumo.Application.DTOs.Projects;
-using NoPrumo.Application.Requests.Projects;
-using NoPrumo.Application.Results.Projects;
+using NoPrumo.Application.Requests;
+using NoPrumo.Application.Results;
 
 namespace NoPrumo.Application.Interfaces;
 

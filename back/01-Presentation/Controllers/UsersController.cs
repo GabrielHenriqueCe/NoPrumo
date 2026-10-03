@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NoPrumo.Application.DTOs;
+using NoPrumo.Application.Requests;
+using NoPrumo.Application.Responses;
 using NoPrumo.Application.Services;
 using NoPrumo.Domain.Entities;
 using NoPrumo.Infrastructure.Data;

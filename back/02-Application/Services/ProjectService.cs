@@ -1,9 +1,8 @@
 ﻿using NoPrumo.Application.DTOs;
-using NoPrumo.Application.DTOs.Projects;
 using NoPrumo.Application.Extensions;
 using NoPrumo.Application.Interfaces;
-using NoPrumo.Application.Requests.Projects;
-using NoPrumo.Application.Results.Projects;
+using NoPrumo.Application.Requests;
+using NoPrumo.Application.Results;
 using NoPrumo.Domain.Entities;
 
 namespace NoPrumo.Application.Services;

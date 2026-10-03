@@ -1,5 +1,4 @@
 ﻿using NoPrumo.Application.DTOs;
-using NoPrumo.Application.DTOs.Stages;
 
 namespace NoPrumo.Application.Interfaces;
 

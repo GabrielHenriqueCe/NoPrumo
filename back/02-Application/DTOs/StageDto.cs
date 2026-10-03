@@ -1,6 +1,6 @@
 ﻿using NoPrumo.Domain.Enums;
 
-namespace NoPrumo.Application.DTOs.Stages;
+namespace NoPrumo.Application.DTOs;
 
 public sealed record StageDto
 {

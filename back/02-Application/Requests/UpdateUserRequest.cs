@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace NoPrumo.Application.DTOs;
+namespace NoPrumo.Application.Requests;
 
 /// <summary>
 /// O username não está aqui de propósito: ele identifica quem assinou cada

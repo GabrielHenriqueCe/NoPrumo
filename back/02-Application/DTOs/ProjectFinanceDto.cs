@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 
-namespace NoPrumo.Application.DTOs.Projects;
+namespace NoPrumo.Application.DTOs;
 
 /// <summary>
 /// Obra para quem tem view_finance: tudo do ProjectDto mais o valor do contrato.

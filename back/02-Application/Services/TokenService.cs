@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using NoPrumo.Application.DTOs;
+using NoPrumo.Application.Settings;
 
 namespace NoPrumo.Application.Services;
 
