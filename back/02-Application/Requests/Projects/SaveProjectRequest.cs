@@ -53,6 +53,6 @@ public sealed record SaveProjectRequest
     [MaxLength(10)]
     public string? PostalCode { get; init; }
 
-    [Range(typeof(decimal), "0", "9999999999999.99", ErrorMessage = "Enter an amount of zero or more.")]
+    [Range(typeof(decimal), "0", "9999999999999.99", ParseLimitsInInvariantCulture = true, ErrorMessage = "Enter an amount of zero or more.")]
     public decimal? ContractAmount { get; init; }
 }
