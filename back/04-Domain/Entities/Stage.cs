@@ -50,4 +50,7 @@ public class Stage
     PlannedDate < today
     && CompletionDate is null
     && Status is not StageStatus.Completed;
+
+    public bool IsCompletedWithPartialProgress() =>
+    Status is StageStatus.Completed && Percentage < 100;
 }
