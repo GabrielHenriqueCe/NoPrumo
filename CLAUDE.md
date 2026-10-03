@@ -94,6 +94,10 @@ destas regras vai para a refatoração; o que é escrito agora já nasce certo.
 - **DTO só carrega dado** e é imutável. Entrada (`CreateProjectRequest`)
   separada da saída (`ProjectDto`).
 - **"Hoje" entra por parâmetro** na regra, nunca `DateTime.Now` dentro dela.
+- **Nome diz o que é.** Nada de letra solta, sigla ou abreviação: `project =>`,
+  não `p =>`; `appDbContext`, não `db`; `HeaderCell`, não `Th`. Vale para
+  parâmetro de lambda, variável, campo e componente. Exceção: `_` para o que
+  não é usado.
 - **Código que se explica sozinho.** Nome bom no lugar de comentário. Comentário
   só onde o código não diz o porquê — uma regra, uma decisão não óbvia, uma
   armadilha — ou onde quem mexer depois provavelmente travaria. Explicação
