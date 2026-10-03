@@ -98,4 +98,8 @@ public class Project
     && Status is not (ProjectStatus.Completed or ProjectStatus.Cancelled);
 
     public bool IsForecastBeforeStart() => ForecastDate < StartDate;
+
+    public void Deactivate(DateTime now) => DeletedAt ??= now;
+
+    public void Activate() => DeletedAt = null;
 }
