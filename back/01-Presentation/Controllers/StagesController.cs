@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using NoPrumo.Application.DTOs;
 using NoPrumo.Application.Interfaces;
+using NoPrumo.Application.Requests;
 
 namespace NoPrumo.Controllers;
 
@@ -24,5 +25,44 @@ public sealed class StagesController(IStageService stageService) : ControllerBas
     {
         var stage = await stageService.GetByIdAsync(id, cancellationToken);
         return stage is null ? NotFound() : Ok(stage);
+    }
+
+    [HttpPost]
+    public async Task<ActionResult<StageDto>> Create(SaveStageRequest request, CancellationToken cancellationToken)
+    {
+        var result = await stageService.CreateAsync(request, cancellationToken);
+        if (!result.Succeeded)
+        {
+            return ValidationProblemFrom(result.Errors);
+        }
+
+        return CreatedAtAction(nameof(GetById), new { id = result.Stage!.Id }, result.Stage);
+    }
+
+    [HttpPut("{id:long}")]
+    public async Task<ActionResult<StageDto>> Update(long id, SaveStageRequest request, CancellationToken cancellationToken)
+    {
+        var result = await stageService.UpdateAsync(id, request, cancellationToken);
+        if (result is null)
+        {
+            return NotFound();
+        }
+
+        if (!result.Succeeded)
+        {
+            return ValidationProblemFrom(result.Errors);
+        }
+
+        return Ok(result.Stage);
+    }
+
+    private ActionResult ValidationProblemFrom(IReadOnlyDictionary<string, string> errors)
+    {
+        foreach (var (field, message) in errors)
+        {
+            ModelState.AddModelError(field, message);
+        }
+
+        return ValidationProblem(ModelState);
     }
 }
