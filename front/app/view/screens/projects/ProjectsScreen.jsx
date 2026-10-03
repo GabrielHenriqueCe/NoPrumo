@@ -206,12 +206,12 @@ export function ProjectsScreen() {
               <caption className="sr-only">Registered projects</caption>
               <thead>
                 <tr className="border-b border-line bg-cream-soft text-left">
-                  <Th>Project</Th>
-                  <Th>Client</Th>
-                  <Th>Supervisor</Th>
-                  <Th>Forecast</Th>
-                  {canSeeAmount && <Th>Contract</Th>}
-                  <Th>Status</Th>
+                  <HeaderCell>Project</HeaderCell>
+                  <HeaderCell>Client</HeaderCell>
+                  <HeaderCell>Supervisor</HeaderCell>
+                  <HeaderCell>Forecast</HeaderCell>
+                  {canSeeAmount && <HeaderCell>Contract</HeaderCell>}
+                  <HeaderCell>Status</HeaderCell>
                   <th className="px-4 py-3" />
                 </tr>
               </thead>
@@ -314,7 +314,7 @@ export function ProjectsScreen() {
   )
 }
 
-function Th({ children }) {
+function HeaderCell({ children }) {
   return <th className="label px-4 py-3 font-normal">{children}</th>
 }
 
