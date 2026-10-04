@@ -75,6 +75,7 @@ public class DocumentProcessor(DocumentSettings documentSettings)
     public static bool IsValidCnpj(string cnpj)
     {
         if (cnpj.Length != 14) return false;
+        if (!Regex.IsMatch(cnpj, @"^[A-Z0-9]{12}\d{2}$")) return false;
         if (new string(cnpj[0], 14) == cnpj) return false;
 
         int[] multiplierFirstDigit = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
