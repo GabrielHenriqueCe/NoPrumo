@@ -62,7 +62,7 @@ public sealed class ClientsController(AppDbContext appDbContext, DocumentProcess
     {
         var client = await appDbContext.Client
             .AsNoTracking()
-            .FirstOrDefaultAsync(c => c.Id == id);
+            .FirstOrDefaultAsync(client => client.Id == id);
 
         if (client is null) return NotFound();
 
@@ -132,7 +132,7 @@ public sealed class ClientsController(AppDbContext appDbContext, DocumentProcess
     [HttpPut("{id:long}")]
     public async Task<ActionResult<ClientDto>> Update(long id, UpdateClientRequest request)
     {
-        var client = await appDbContext.Client.SingleOrDefaultAsync(c => c.Id == id);
+        var client = await appDbContext.Client.SingleOrDefaultAsync(client => client.Id == id);
         if (client is null) return NotFound();
 
         ValidateClientInput(request.Name, request.PersonType, request.Email, request.ContactName,
@@ -151,7 +151,7 @@ public sealed class ClientsController(AppDbContext appDbContext, DocumentProcess
             else
             {
                 processedDocument = documentProcessor.Process(request.Document);
-                if (processedDocument.Hash != null && await appDbContext.Client.AnyAsync(c => c.DocumentHash == processedDocument.Hash && c.Id != id && c.DeletedAt == null))
+                if (processedDocument.Hash != null && await appDbContext.Client.AnyAsync(client => client.DocumentHash == processedDocument.Hash && client.Id != id && client.DeletedAt == null))
                 {
                     ModelState.AddModelError("document", "This document is already registered.");
                 }
@@ -198,7 +198,7 @@ public sealed class ClientsController(AppDbContext appDbContext, DocumentProcess
     [HttpPatch("{id:long}/activate")]
     public async Task<IActionResult> Activate(long id)
     {
-        var client = await appDbContext.Client.SingleOrDefaultAsync(c => c.Id == id);
+        var client = await appDbContext.Client.SingleOrDefaultAsync(client => client.Id == id);
         if (client is null) return NotFound();
 
         client.DeletedAt = null;
@@ -210,7 +210,7 @@ public sealed class ClientsController(AppDbContext appDbContext, DocumentProcess
     [HttpPatch("{id:long}/deactivate")]
     public async Task<IActionResult> Deactivate(long id)
     {
-        var client = await appDbContext.Client.SingleOrDefaultAsync(c => c.Id == id);
+        var client = await appDbContext.Client.SingleOrDefaultAsync(client => client.Id == id);
         if (client is null) return NotFound();
 
         client.DeletedAt = DateTime.UtcNow;

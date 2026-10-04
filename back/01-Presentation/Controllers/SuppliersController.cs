@@ -61,7 +61,7 @@ public sealed class SuppliersController(AppDbContext appDbContext, DocumentProce
     {
         var supplier = await appDbContext.Supplier
             .AsNoTracking()
-            .FirstOrDefaultAsync(s => s.Id == id);
+            .FirstOrDefaultAsync(supplier => supplier.Id == id);
 
         if (supplier is null) return NotFound();
 
@@ -119,7 +119,7 @@ public sealed class SuppliersController(AppDbContext appDbContext, DocumentProce
     [HttpPut("{id:long}")]
     public async Task<ActionResult<SupplierDto>> Update(long id, UpdateSupplierRequest request)
     {
-        var supplier = await appDbContext.Supplier.SingleOrDefaultAsync(s => s.Id == id);
+        var supplier = await appDbContext.Supplier.SingleOrDefaultAsync(supplier => supplier.Id == id);
         if (supplier is null) return NotFound();
 
         ValidateSupplierInput(request.Name, request.Email, request.ContactName, request.Phone, request.City, request.State);
@@ -136,7 +136,7 @@ public sealed class SuppliersController(AppDbContext appDbContext, DocumentProce
             else
             {
                 processedDocument = documentProcessor.Process(request.Document);
-                if (processedDocument.Hash != null && await appDbContext.Supplier.AnyAsync(s => s.DocumentHash == processedDocument.Hash && s.Id != id && s.DeletedAt == null))
+                if (processedDocument.Hash != null && await appDbContext.Supplier.AnyAsync(supplier => supplier.DocumentHash == processedDocument.Hash && supplier.Id != id && supplier.DeletedAt == null))
                 {
                     ModelState.AddModelError("document", "This document is already registered.");
                 }
@@ -172,7 +172,7 @@ public sealed class SuppliersController(AppDbContext appDbContext, DocumentProce
     [HttpPatch("{id:long}/activate")]
     public async Task<IActionResult> Activate(long id)
     {
-        var supplier = await appDbContext.Supplier.SingleOrDefaultAsync(s => s.Id == id);
+        var supplier = await appDbContext.Supplier.SingleOrDefaultAsync(supplier => supplier.Id == id);
         if (supplier is null) return NotFound();
 
         supplier.Active = true;
@@ -185,7 +185,7 @@ public sealed class SuppliersController(AppDbContext appDbContext, DocumentProce
     [HttpPatch("{id:long}/deactivate")]
     public async Task<IActionResult> Deactivate(long id)
     {
-        var supplier = await appDbContext.Supplier.SingleOrDefaultAsync(s => s.Id == id);
+        var supplier = await appDbContext.Supplier.SingleOrDefaultAsync(supplier => supplier.Id == id);
         if (supplier is null) return NotFound();
 
         supplier.Active = false;
