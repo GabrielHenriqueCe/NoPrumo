@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace NoPrumo.Domain.Entities;
 
-public partial class StockMovement
+public class StockMovement
 {
     public long Id { get; set; }
 

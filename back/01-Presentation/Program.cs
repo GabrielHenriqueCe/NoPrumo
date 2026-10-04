@@ -1,17 +1,24 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using NoPrumo.Application.Interfaces;
 using NoPrumo.Application.Services;
+using NoPrumo.Application.Settings;
 using NoPrumo.Infrastructure.Data;
+using NoPrumo.Infrastructure.Repositories;
 
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(
+        new JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseLower)));
 builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddCors(options =>
@@ -27,6 +34,12 @@ var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>()
 
 builder.Services.AddSingleton(jwtSettings);
 builder.Services.AddScoped<TokenService>();
+
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
+builder.Services.AddScoped<IProjectService, ProjectService>();
+builder.Services.AddScoped<IStageRepository, StageRepository>();
+builder.Services.AddScoped<IStageService, StageService>();
 
 var encryptionKeyBase64 = builder.Configuration["Documents:EncryptionKey"]
     ?? throw new InvalidOperationException("Falta Documents:EncryptionKey nos User Secrets. Veja o README para gerar.");

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace NoPrumo.Domain.Entities;
 
-public partial class TeamProject
+public class TeamProject
 {
     public long TeamId { get; set; }
 

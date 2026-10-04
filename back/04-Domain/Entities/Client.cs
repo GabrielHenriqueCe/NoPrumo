@@ -5,7 +5,7 @@ using NoPrumo.Domain.Enums;
 
 namespace NoPrumo.Domain.Entities;
 
-public partial class Client
+public class Client
 {
     public long Id { get; set; }
 
