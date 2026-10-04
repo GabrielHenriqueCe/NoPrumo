@@ -1,9 +1,8 @@
-using System;
-using System.Collections.Generic;
+using NoPrumo.Domain.Enums;
 
 namespace NoPrumo.Domain.Entities;
 
-public partial class Stage
+public class Stage
 {
     public long Id { get; set; }
 
@@ -25,7 +24,7 @@ public partial class Stage
 
     public decimal Percentage { get; set; }
 
-    public string Status { get; set; } = null!;
+    public StageStatus Status { get; set; }
 
     public string? Notes { get; set; }
 
@@ -46,4 +45,12 @@ public partial class Stage
     public virtual Project Project { get; set; } = null!;
 
     public virtual Employee? Supervisor { get; set; }
+
+    public bool IsLate(DateOnly today) =>
+    PlannedDate < today
+    && CompletionDate is null
+    && Status is not StageStatus.Completed;
+
+    public bool IsCompletedWithPartialProgress() =>
+    Status is StageStatus.Completed && Percentage < 100;
 }

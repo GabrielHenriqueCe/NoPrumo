@@ -3,11 +3,16 @@
   "Late" is calculated from `plannedDate`, never stored in `status`.
   No activate/deactivate: the table has no `active` nor `deleted_at` column.
 
-  Proposed contract — the controller does not exist yet. Whoever writes it
-  may change this; if so, update this comment together.
+  Contract (confirmed against StagesController.cs):
 
-    GET    /stages?page&size&search
+    GET    /stages?page&size&search&projectId
       200 { items, page, size, total, totalPages }
+
+    item   { id, projectId, projectName, name, sortOrder, teamId, teamName,
+             supervisorId, supervisorName, plannedDate, startDate,
+             completionDate, percentage, status, notes, late }
+
+    status planned · in_progress · completed
 
     GET    /stages/{id}
       200 item
@@ -16,16 +21,17 @@
                                    plannedDate, percentage, status }
       201 item
       400 ProblemDetails with `errors` per field
+          (projectId must be an active project; completed requires 100%)
 
-    PUT    /stages/{id}           { projectId, name, sortOrder, teamId, supervisorId,
-                                   plannedDate, percentage, status }
+    PUT    /stages/{id}           same body as POST
       200 item
 */
 
 export function createStageGateway(http) {
   return {
-    list({ page = 1, size = 10, search = '' } = {}, { signal } = {}) {
-      return http.get('/stages', { params: { page, size, search }, signal })
+    list({ page = 1, size = 10, search = '', projectId } = {}, { signal } = {}) {
+      const params = projectId ? { page, size, search, projectId } : { page, size, search }
+      return http.get('/stages', { params, signal })
     },
 
     getById(id, { signal } = {}) {

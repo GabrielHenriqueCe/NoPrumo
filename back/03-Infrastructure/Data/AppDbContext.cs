@@ -1,9 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using NoPrumo.Domain.Entities;
+using NoPrumo.Domain.Enums;
+using NoPrumo.Infrastructure.Data.Converters;
 
 namespace NoPrumo.Infrastructure.Data;
 
-public partial class AppDbContext : DbContext
+public class AppDbContext : DbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options)
         : base(options)
@@ -526,7 +528,8 @@ public partial class AppDbContext : DbContext
                 .HasPrecision(5, 2);
             entity.Property(e => e.Status)
                 .HasMaxLength(20)
-                .HasDefaultValueSql("'planned'");
+                .HasDefaultValueSql("'planned'")
+                .HasConversion<SnakeCaseEnumConverter<StageStatus>>();
             entity.Property(e => e.UpdatedAt)
                 .ValueGeneratedOnAddOrUpdate()
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
@@ -1067,7 +1070,8 @@ public partial class AppDbContext : DbContext
                 .HasMaxLength(160);
             entity.Property(e => e.Status)
                 .HasMaxLength(20)
-                .HasDefaultValueSql("'planning'");
+                .HasDefaultValueSql("'planning'")
+                .HasConversion<SnakeCaseEnumConverter<ProjectStatus>>();
             entity.Property(e => e.UpdatedAt)
                 .ValueGeneratedOnAddOrUpdate()
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
@@ -1455,9 +1459,5 @@ public partial class AppDbContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("fk_user_role");
         });
-
-        OnModelCreatingPartial(modelBuilder);
     }
-
-    partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
 }
