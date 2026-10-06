@@ -9,7 +9,7 @@ namespace NoPrumo.Presentation.Controllers;
 
 [ApiController]
 [Route("api/employees")]
-[Authorize]
+[Authorize(Policy = "manage_employees")]
 public class EmployeesController : ControllerBase
 {
     private readonly AppDbContext _context;

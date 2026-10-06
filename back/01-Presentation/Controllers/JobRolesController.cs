@@ -9,7 +9,7 @@ namespace NoPrumo.Presentation.Controllers;
 
 [ApiController]
 [Route("api/job-roles")] // <-- Rota fixa com hífen
-[Authorize]
+[Authorize(Policy = "manage_employees")]
 public class JobRolesController : ControllerBase
 {
     private readonly AppDbContext _context;
