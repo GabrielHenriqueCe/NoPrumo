@@ -101,7 +101,40 @@ public class EmployeesController : ControllerBase
         _context.Employees.Add(employee);
         await _context.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(Get), new { id = employee.Id }, employee);
+        bool canViewFinance = User.Claims.Any(c => c.Value == "view_finance" || c.Value == "admin");
+
+        if (canViewFinance)
+        {
+            var financialDto = new EmployeeFinancialDto
+            {
+                Id = employee.Id,
+                RegistrationNumber = employee.RegistrationNumber,
+                Name = employee.Name,
+                JobRoleId = employee.JobRoleId,
+                EmploymentRegimeId = employee.EmploymentRegimeId,
+                HireDate = employee.HireDate,
+                Phone = employee.Phone,
+                DocumentMasked = employee.DocumentMasked,
+                Active = employee.Active ?? false,
+                PayRate = employee.PayRate,
+                AdditionalPercentage = employee.AdditionalPercentage
+            };
+            return CreatedAtAction(nameof(Get), new { id = employee.Id }, financialDto);
+        }
+
+        var dto = new EmployeeDto
+        {
+            Id = employee.Id,
+            RegistrationNumber = employee.RegistrationNumber,
+            Name = employee.Name,
+            JobRoleId = employee.JobRoleId,
+            EmploymentRegimeId = employee.EmploymentRegimeId,
+            HireDate = employee.HireDate,
+            Phone = employee.Phone,
+            DocumentMasked = employee.DocumentMasked,
+            Active = employee.Active ?? false
+        };
+        return CreatedAtAction(nameof(Get), new { id = employee.Id }, dto);
     }
 
     [HttpPut("{id}")]
