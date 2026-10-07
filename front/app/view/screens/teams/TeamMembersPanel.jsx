@@ -3,7 +3,7 @@ import { useContainer } from '../../providers/containerContext'
 import { Button } from '../../ui/Button'
 import { SelectField } from '../../ui/SelectField'
 import { TextField } from '../../ui/TextField'
-import { formatDate, todayIso } from './format'
+import { formatDate, todayIso } from '../../format/dates'
 
 /*
   The members tab: who is on the team now, and who was before.

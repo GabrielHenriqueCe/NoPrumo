@@ -5,7 +5,8 @@ import { Button } from '../../ui/Button'
 import { Pagination } from '../../ui/Pagination'
 import { SelectField } from '../../ui/SelectField'
 import { EmployeeTrainingFormDialog } from './EmployeeTrainingFormDialog'
-import { formatDate, modalityLabel, statusBadge } from './format'
+import { formatDate } from '../../format/dates'
+import { modalityLabel, statusBadge } from './trainingLabels'
 
 /*
   Trainings: the certificate record of each employee — NR courses, the ASO

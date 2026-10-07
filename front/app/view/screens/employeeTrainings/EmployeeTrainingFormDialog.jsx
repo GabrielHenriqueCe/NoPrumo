@@ -3,7 +3,8 @@ import { Button } from '../../ui/Button'
 import { Dialog } from '../../ui/Dialog'
 import { SelectField } from '../../ui/SelectField'
 import { TextField } from '../../ui/TextField'
-import { MODALITIES, formatDate, todayIso } from './format'
+import { formatDate, todayIso } from '../../format/dates'
+import { MODALITIES } from './trainingLabels'
 
 /*
   Record or correct a training.

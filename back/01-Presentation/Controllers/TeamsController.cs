@@ -367,10 +367,9 @@ public sealed class TeamsController(AppDbContext db) : ControllerBase
         }
     }
 
-    // Mesmo formato de data da tela ("02 Oct 2026"), para a mensagem não
-    // misturar dois jeitos de escrever a mesma coisa.
+    // Mesmo formato do formatDate do front (dd/mm/aaaa).
     private static string Format(DateOnly date) =>
-        date.ToString("dd MMM yyyy", CultureInfo.InvariantCulture);
+        date.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
 
     // Exige Employee carregado.
     private static TeamMemberDto ToMemberDto(EmployeeTeam membership) => new()
