@@ -275,6 +275,7 @@ export function UsersScreen() {
 
         {!loading && !loadError && (
           <Pagination
+            noun="user"
             page={data.page}
             totalPages={data.totalPages}
             total={data.total}
