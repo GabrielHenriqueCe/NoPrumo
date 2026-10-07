@@ -8,12 +8,13 @@ using NoPrumo.Application.Requests;
 using NoPrumo.Application.Responses;
 using NoPrumo.Application.Services;
 using NoPrumo.Infrastructure.Data;
+using NoPrumo.Application.Extensions;
 
 namespace NoPrumo.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public sealed class AuthController(AppDbContext db, TokenService tokens) : ControllerBase
+public sealed class AuthController(AppDbContext db, TokenService tokens, TimeProvider timeProvider) : ControllerBase
 {
     [HttpPost("login")]
     public async Task<ActionResult<LoginResponse>> Login(LoginRequest request)
@@ -32,7 +33,7 @@ public sealed class AuthController(AppDbContext db, TokenService tokens) : Contr
             return Problem(statusCode: 403, detail: "This account is inactive. Talk to the administration.");
         }
 
-        user.LastLoginAt = DateTime.UtcNow;
+        user.LastLoginAt = timeProvider.Now();
         await db.SaveChangesAsync();
 
         var dto = UserDto.FromEntity(user);
