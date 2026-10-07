@@ -54,7 +54,7 @@ public sealed class TrainingTypesController(AppDbContext db) : ControllerBase
             .ToListAsync();
 
         return Ok(new PagedResult<TrainingTypeDto>(
-            items.Select(TrainingTypeDto.FromEntity).ToArray(),
+            items.Select(ToDto).ToArray(),
             page,
             size,
             total,
@@ -68,7 +68,7 @@ public sealed class TrainingTypesController(AppDbContext db) : ControllerBase
 
         if (type is null) return NotFound();
 
-        return Ok(TrainingTypeDto.FromEntity(type));
+        return Ok(ToDto(type));
     }
 
     [HttpPost]
@@ -92,7 +92,7 @@ public sealed class TrainingTypesController(AppDbContext db) : ControllerBase
         db.TrainingType.Add(type);
         await db.SaveChangesAsync();
 
-        return StatusCode(StatusCodes.Status201Created, TrainingTypeDto.FromEntity(type));
+        return StatusCode(StatusCodes.Status201Created, ToDto(type));
     }
 
     [HttpPut("{id:long}")]
@@ -116,7 +116,7 @@ public sealed class TrainingTypesController(AppDbContext db) : ControllerBase
 
         await db.SaveChangesAsync();
 
-        return Ok(TrainingTypeDto.FromEntity(type));
+        return Ok(ToDto(type));
     }
 
     // Código de norma se escreve em maiúscula (NR-35, ASO). Normalizar aqui
@@ -169,4 +169,14 @@ public sealed class TrainingTypesController(AppDbContext db) : ControllerBase
                 $"Use 1 to {MaxWorkloadHours} hours, or leave it blank if there is no minimum.");
         }
     }
+
+    private static TrainingTypeDto ToDto(TrainingType trainingType) => new()
+    {
+        Id = trainingType.Id,
+        Code = trainingType.Code,
+        Name = trainingType.Name,
+        ValidityMonths = trainingType.ValidityMonths,
+        MinWorkloadHours = trainingType.MinWorkloadHours,
+        RequiresInPerson = trainingType.RequiresInPerson,
+    };
 }

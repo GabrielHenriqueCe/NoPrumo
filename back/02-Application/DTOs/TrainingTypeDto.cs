@@ -1,25 +1,12 @@
-using NoPrumo.Domain.Entities;
-
 namespace NoPrumo.Application.DTOs;
 
-/// <summary>
-/// O tipo de treinamento como o front o recebe (NR-35, NR-10, ASO...).
-/// ValidityMonths nulo quer dizer que o certificado não vence;
-/// MinWorkloadHours nulo, que não há carga mínima.
-/// </summary>
-public sealed record TrainingTypeDto(
-    long Id,
-    string Code,
-    string Name,
-    int? ValidityMonths,
-    int? MinWorkloadHours,
-    bool RequiresInPerson)
+// ValidityMonths nulo: o certificado não vence. MinWorkloadHours nulo: não há carga mínima.
+public sealed record TrainingTypeDto
 {
-    public static TrainingTypeDto FromEntity(TrainingType t) => new(
-        t.Id,
-        t.Code,
-        t.Name,
-        t.ValidityMonths,
-        t.MinWorkloadHours,
-        t.RequiresInPerson);
+    public required long Id { get; init; }
+    public required string Code { get; init; }
+    public required string Name { get; init; }
+    public required int? ValidityMonths { get; init; }
+    public required int? MinWorkloadHours { get; init; }
+    public required bool RequiresInPerson { get; init; }
 }

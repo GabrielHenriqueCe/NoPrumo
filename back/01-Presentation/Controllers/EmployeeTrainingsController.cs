@@ -80,7 +80,7 @@ public sealed class EmployeeTrainingsController(AppDbContext db, TimeProvider ti
         var today = timeProvider.Today();
 
         return Ok(new PagedResult<EmployeeTrainingDto>(
-            items.Select(t => EmployeeTrainingDto.FromEntity(t, today)).ToArray(),
+            items.Select(training => ToDto(training, today)).ToArray(),
             page,
             size,
             total,
@@ -98,7 +98,7 @@ public sealed class EmployeeTrainingsController(AppDbContext db, TimeProvider ti
 
         if (training is null) return NotFound();
 
-        return Ok(EmployeeTrainingDto.FromEntity(training, timeProvider.Today()));
+        return Ok(ToDto(training, timeProvider.Today()));
     }
 
     [HttpPost]
@@ -136,7 +136,7 @@ public sealed class EmployeeTrainingsController(AppDbContext db, TimeProvider ti
         db.EmployeeTraining.Add(training);
         await db.SaveChangesAsync();
 
-        return StatusCode(StatusCodes.Status201Created, EmployeeTrainingDto.FromEntity(training, timeProvider.Today()));
+        return StatusCode(StatusCodes.Status201Created, ToDto(training, timeProvider.Today()));
     }
 
     [HttpPut("{id:long}")]
@@ -184,7 +184,7 @@ public sealed class EmployeeTrainingsController(AppDbContext db, TimeProvider ti
 
         await db.SaveChangesAsync();
 
-        return Ok(EmployeeTrainingDto.FromEntity(training, timeProvider.Today()));
+        return Ok(ToDto(training, timeProvider.Today()));
     }
 
     // Valida os campos e devolve o funcionário e o tipo (ou null, já com os
@@ -280,4 +280,22 @@ public sealed class EmployeeTrainingsController(AppDbContext db, TimeProvider ti
 
         return (employee, type);
     }
+
+    // Exige Employee e TrainingType carregados.
+    private static EmployeeTrainingDto ToDto(EmployeeTraining training, DateOnly today) => new()
+    {
+        Id = training.Id,
+        EmployeeId = training.EmployeeId,
+        EmployeeName = training.Employee.Name,
+        RegistrationNumber = training.Employee.RegistrationNumber,
+        TrainingTypeId = training.TrainingTypeId,
+        TrainingTypeCode = training.TrainingType.Code,
+        TrainingTypeName = training.TrainingType.Name,
+        IssueDate = training.IssueDate,
+        ExpiryDate = training.ExpiryDate,
+        Status = training.StatusOn(today),
+        WorkloadHours = training.WorkloadHours,
+        Modality = training.Modality,
+        Instructor = training.Instructor,
+    };
 }

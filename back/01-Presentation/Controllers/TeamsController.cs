@@ -32,13 +32,15 @@ public sealed class TeamsController(AppDbContext db) : ControllerBase
     // Uma projeção só para a lista, o detalhe e as respostas de criar e
     // editar. A contagem de membros vira subconsulta no SQL, sem trazer as
     // passagens para a memória.
-    private static readonly Expression<Func<Team, TeamDto>> ToDto = t => new TeamDto(
-        t.Id,
-        t.Name,
-        t.DepartmentId,
-        t.Department.Name,
-        t.DeletedAt == null,
-        t.EmployeeTeams.Count(m => m.EndDate == null));
+    private static readonly Expression<Func<Team, TeamDto>> ToDto = team => new TeamDto
+    {
+        Id = team.Id,
+        Name = team.Name,
+        DepartmentId = team.DepartmentId,
+        DepartmentName = team.Department.Name,
+        Active = team.DeletedAt == null,
+        MemberCount = team.EmployeeTeams.Count(membership => membership.EndDate == null),
+    };
 
     [HttpGet]
     public async Task<ActionResult<PagedResult<TeamDto>>> List(
@@ -203,7 +205,7 @@ public sealed class TeamsController(AppDbContext db) : ControllerBase
             .ThenBy(m => m.Employee.Name)
             .ToListAsync();
 
-        return Ok(members.Select(TeamMemberDto.FromEntity).ToArray());
+        return Ok(members.Select(ToMemberDto).ToArray());
     }
 
     [HttpPost("{id:long}/members")]
@@ -275,7 +277,7 @@ public sealed class TeamsController(AppDbContext db) : ControllerBase
         db.EmployeeTeam.Add(member);
         await db.SaveChangesAsync();
 
-        return StatusCode(StatusCodes.Status201Created, TeamMemberDto.FromEntity(member));
+        return StatusCode(StatusCodes.Status201Created, ToMemberDto(member));
     }
 
     [HttpPatch("{id:long}/members/{employeeId:long}/end")]
@@ -313,7 +315,7 @@ public sealed class TeamsController(AppDbContext db) : ControllerBase
         member.EndDate = request.EndDate;
         await db.SaveChangesAsync();
 
-        return Ok(TeamMemberDto.FromEntity(member));
+        return Ok(ToMemberDto(member));
     }
 
     private Task<TeamDto?> LoadDtoAsync(long id) =>
@@ -369,4 +371,14 @@ public sealed class TeamsController(AppDbContext db) : ControllerBase
     // misturar dois jeitos de escrever a mesma coisa.
     private static string Format(DateOnly date) =>
         date.ToString("dd MMM yyyy", CultureInfo.InvariantCulture);
+
+    // Exige Employee carregado.
+    private static TeamMemberDto ToMemberDto(EmployeeTeam membership) => new()
+    {
+        EmployeeId = membership.EmployeeId,
+        EmployeeName = membership.Employee.Name,
+        RegistrationNumber = membership.Employee.RegistrationNumber,
+        StartDate = membership.StartDate,
+        EndDate = membership.EndDate,
+    };
 }
