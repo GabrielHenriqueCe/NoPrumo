@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NoPrumo.Application.DTOs;
+using NoPrumo.Application.Extensions;
 using NoPrumo.Domain.Entities;
 using NoPrumo.Infrastructure.Data;
 
@@ -18,7 +19,7 @@ namespace NoPrumo.Controllers;
 [ApiController]
 [Route("api/[controller]")] // vira /api/employeetrainings
 [Authorize(Policy = "manage_safety")]
-public sealed class EmployeeTrainingsController(AppDbContext db) : ControllerBase
+public sealed class EmployeeTrainingsController(AppDbContext db, TimeProvider timeProvider) : ControllerBase
 {
     private const int MaxPageSize = 100;
     private const int MaxWorkloadHours = 1000;
@@ -74,7 +75,7 @@ public sealed class EmployeeTrainingsController(AppDbContext db) : ControllerBas
             .Take(size)
             .ToListAsync();
 
-        var today = Today();
+        var today = timeProvider.Today();
 
         return Ok(new PagedResult<EmployeeTrainingDto>(
             items.Select(t => EmployeeTrainingDto.FromEntity(t, today)).ToArray(),
@@ -95,7 +96,7 @@ public sealed class EmployeeTrainingsController(AppDbContext db) : ControllerBas
 
         if (training is null) return NotFound();
 
-        return Ok(EmployeeTrainingDto.FromEntity(training, Today()));
+        return Ok(EmployeeTrainingDto.FromEntity(training, timeProvider.Today()));
     }
 
     [HttpPost]
@@ -133,7 +134,7 @@ public sealed class EmployeeTrainingsController(AppDbContext db) : ControllerBas
         db.EmployeeTraining.Add(training);
         await db.SaveChangesAsync();
 
-        return StatusCode(StatusCodes.Status201Created, EmployeeTrainingDto.FromEntity(training, Today()));
+        return StatusCode(StatusCodes.Status201Created, EmployeeTrainingDto.FromEntity(training, timeProvider.Today()));
     }
 
     [HttpPut("{id:long}")]
@@ -181,7 +182,7 @@ public sealed class EmployeeTrainingsController(AppDbContext db) : ControllerBas
 
         await db.SaveChangesAsync();
 
-        return Ok(EmployeeTrainingDto.FromEntity(training, Today()));
+        return Ok(EmployeeTrainingDto.FromEntity(training, timeProvider.Today()));
     }
 
     // Valida os campos e devolve o funcionário e o tipo (ou null, já com os
@@ -225,7 +226,7 @@ public sealed class EmployeeTrainingsController(AppDbContext db) : ControllerBas
         {
             ModelState.AddModelError("issueDate", "Issue date is required.");
         }
-        else if (issueDate > Today())
+        else if (issueDate > timeProvider.Today())
         {
             ModelState.AddModelError("issueDate", "The issue date cannot be in the future.");
         }
@@ -289,8 +290,4 @@ public sealed class EmployeeTrainingsController(AppDbContext db) : ControllerBas
 
     private static string? NormalizeModality(string? modality) =>
         string.IsNullOrWhiteSpace(modality) ? null : modality.Trim().ToLowerInvariant();
-
-    // O "hoje" do servidor, como o CURDATE() da antiga view de alerta. A API
-    // roda na própria construtora, então o fuso local é o certo.
-    private static DateOnly Today() => DateOnly.FromDateTime(DateTime.Now);
 }
