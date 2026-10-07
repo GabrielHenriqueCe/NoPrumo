@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NoPrumo.Application.DTOs;
+using NoPrumo.Application.Requests;
 using NoPrumo.Application.Extensions;
 using NoPrumo.Domain.Entities;
 using NoPrumo.Domain.Enums;
@@ -101,7 +102,7 @@ public sealed class EmployeeTrainingsController(AppDbContext db, TimeProvider ti
     }
 
     [HttpPost]
-    public async Task<ActionResult<EmployeeTrainingDto>> Create(CreateEmployeeTrainingRequest request)
+    public async Task<ActionResult<EmployeeTrainingDto>> Create(SaveEmployeeTrainingRequest request)
     {
         var modality = request.Modality;
         var instructor = string.IsNullOrWhiteSpace(request.Instructor) ? null : request.Instructor.Trim();
@@ -139,7 +140,7 @@ public sealed class EmployeeTrainingsController(AppDbContext db, TimeProvider ti
     }
 
     [HttpPut("{id:long}")]
-    public async Task<ActionResult<EmployeeTrainingDto>> Update(long id, UpdateEmployeeTrainingRequest request)
+    public async Task<ActionResult<EmployeeTrainingDto>> Update(long id, SaveEmployeeTrainingRequest request)
     {
         var training = await db.EmployeeTraining
             .Include(t => t.Employee)

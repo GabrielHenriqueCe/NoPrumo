@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NoPrumo.Application.DTOs;
+using NoPrumo.Application.Requests;
 using NoPrumo.Domain.Entities;
 using NoPrumo.Infrastructure.Data;
 
@@ -91,7 +92,7 @@ public sealed class TeamsController(AppDbContext db) : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<TeamDto>> Create(CreateTeamRequest request)
+    public async Task<ActionResult<TeamDto>> Create(SaveTeamRequest request)
     {
         var name = request.Name?.Trim() ?? string.Empty;
 
@@ -111,7 +112,7 @@ public sealed class TeamsController(AppDbContext db) : ControllerBase
     }
 
     [HttpPut("{id:long}")]
-    public async Task<ActionResult<TeamDto>> Update(long id, UpdateTeamRequest request)
+    public async Task<ActionResult<TeamDto>> Update(long id, SaveTeamRequest request)
     {
         var team = await db.Team.SingleOrDefaultAsync(t => t.Id == id);
 

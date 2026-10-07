@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NoPrumo.Application.DTOs;
+using NoPrumo.Application.Requests;
 using NoPrumo.Domain.Entities;
 using NoPrumo.Infrastructure.Data;
 
@@ -71,7 +72,7 @@ public sealed class TrainingTypesController(AppDbContext db) : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<TrainingTypeDto>> Create(CreateTrainingTypeRequest request)
+    public async Task<ActionResult<TrainingTypeDto>> Create(SaveTrainingTypeRequest request)
     {
         var code = NormalizeCode(request.Code);
         var name = request.Name?.Trim() ?? string.Empty;
@@ -95,7 +96,7 @@ public sealed class TrainingTypesController(AppDbContext db) : ControllerBase
     }
 
     [HttpPut("{id:long}")]
-    public async Task<ActionResult<TrainingTypeDto>> Update(long id, UpdateTrainingTypeRequest request)
+    public async Task<ActionResult<TrainingTypeDto>> Update(long id, SaveTrainingTypeRequest request)
     {
         var type = await db.TrainingType.SingleOrDefaultAsync(t => t.Id == id);
 

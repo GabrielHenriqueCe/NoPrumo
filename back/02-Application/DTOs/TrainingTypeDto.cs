@@ -23,20 +23,3 @@ public sealed record TrainingTypeDto(
         t.MinWorkloadHours,
         t.RequiresInPerson);
 }
-
-// Texto chega como string? para a validação ser do controller, com a
-// mensagem no campo certo — senão o [ApiController] responde antes, com o
-// texto padrão do .NET.
-public sealed record CreateTrainingTypeRequest(
-    string? Code,
-    string? Name,
-    int? ValidityMonths,
-    int? MinWorkloadHours,
-    bool RequiresInPerson);
-
-public sealed record UpdateTrainingTypeRequest(
-    string? Code,
-    string? Name,
-    int? ValidityMonths,
-    int? MinWorkloadHours,
-    bool RequiresInPerson);

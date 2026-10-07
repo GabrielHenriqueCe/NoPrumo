@@ -12,9 +12,3 @@ public sealed record TeamDto(
     string DepartmentName,
     bool Active,
     int MemberCount);
-
-// Texto e id chegam anuláveis para a validação ser do controller, com a
-// mensagem no campo certo.
-public sealed record CreateTeamRequest(string? Name, long? DepartmentId);
-
-public sealed record UpdateTeamRequest(string? Name, long? DepartmentId);

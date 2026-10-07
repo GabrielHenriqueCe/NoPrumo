@@ -25,9 +25,3 @@ public sealed record TeamMemberDto(
         m.StartDate,
         m.EndDate);
 }
-
-public sealed record AddTeamMemberRequest(long? EmployeeId, DateOnly? StartDate);
-
-// Membro sai da equipe com data, nunca apagando a linha: apagar destruiria o
-// histórico de quem estava onde.
-public sealed record EndTeamMemberRequest(DateOnly? EndDate);

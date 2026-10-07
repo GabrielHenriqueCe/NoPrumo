@@ -44,22 +44,3 @@ public sealed record EmployeeTrainingDto(
         t.Modality,
         t.Instructor);
 }
-
-// ExpiryDate não existe no request: o vencimento é conta da API. Ids e datas
-// chegam anuláveis para a validação ser do controller, com a mensagem no
-// campo certo.
-public sealed record CreateEmployeeTrainingRequest(
-    long? EmployeeId,
-    long? TrainingTypeId,
-    DateOnly? IssueDate,
-    int? WorkloadHours,
-    TrainingModality? Modality,
-    string? Instructor);
-
-public sealed record UpdateEmployeeTrainingRequest(
-    long? EmployeeId,
-    long? TrainingTypeId,
-    DateOnly? IssueDate,
-    int? WorkloadHours,
-    TrainingModality? Modality,
-    string? Instructor);
