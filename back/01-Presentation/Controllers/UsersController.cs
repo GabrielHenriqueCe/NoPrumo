@@ -19,7 +19,7 @@ namespace NoPrumo.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize(Policy = "manage_users")]
-public sealed class UsersController(AppDbContext db) : ControllerBase
+public sealed class UsersController(AppDbContext db, PasswordGenerator passwordGenerator) : ControllerBase
 {
     private const int MaxPageSize = 100;
 
@@ -93,7 +93,7 @@ public sealed class UsersController(AppDbContext db) : ControllerBase
 
         // Quem cria não escolhe a senha: escolher significaria conhecê-la, e a
         // conta deixaria de ser só da pessoa dona dela.
-        var temporaryPassword = PasswordGenerator.Create();
+        var temporaryPassword = passwordGenerator.Create();
 
         var user = new User
         {
@@ -174,7 +174,7 @@ public sealed class UsersController(AppDbContext db) : ControllerBase
 
         if (user is null) return NotFound();
 
-        var temporaryPassword = PasswordGenerator.Create();
+        var temporaryPassword = passwordGenerator.Create();
 
         user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(temporaryPassword, workFactor: 12);
         user.MustChangePassword = true;

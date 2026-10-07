@@ -37,6 +37,7 @@ var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>()
 
 builder.Services.AddSingleton(jwtSettings);
 builder.Services.AddScoped<TokenService>();
+builder.Services.AddSingleton<PasswordGenerator>();
 
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
