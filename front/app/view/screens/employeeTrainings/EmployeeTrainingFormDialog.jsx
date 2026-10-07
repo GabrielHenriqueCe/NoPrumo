@@ -57,7 +57,7 @@ export function EmployeeTrainingFormDialog({ open, training, employees, training
     () =>
       employees
         .filter((employee) => employee.active || employee.id === training?.employeeId)
-        .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
+        .sort((first, second) => first.name.localeCompare(second.name, 'pt-BR'))
         .map((employee) => ({ value: employee.id, label: describeEmployee(employee) })),
     [employees, training],
   )

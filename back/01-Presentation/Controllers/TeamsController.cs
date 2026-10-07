@@ -24,7 +24,7 @@ namespace NoPrumo.Controllers;
 [ApiController]
 [Route("api/[controller]")] // vira /api/teams
 [Authorize(Policy = "manage_employees")]
-public sealed class TeamsController(AppDbContext db) : ControllerBase
+public sealed class TeamsController(AppDbContext appDbContext) : ControllerBase
 {
     private const int MaxPageSize = 100;
     private const int MaxNameLength = 120;
@@ -52,24 +52,24 @@ public sealed class TeamsController(AppDbContext db) : ControllerBase
         page = Math.Max(1, page);
         size = Math.Clamp(size, 1, MaxPageSize);
 
-        var query = db.Team.AsNoTracking().AsQueryable();
+        var query = appDbContext.Team.AsNoTracking().AsQueryable();
 
         if (departmentId is not null)
         {
-            query = query.Where(t => t.DepartmentId == departmentId);
+            query = query.Where(team => team.DepartmentId == departmentId);
         }
 
         if (!string.IsNullOrWhiteSpace(search))
         {
             var term = search.Trim();
-            query = query.Where(t => t.Name.Contains(term) || t.Department.Name.Contains(term));
+            query = query.Where(team => team.Name.Contains(term) || team.Department.Name.Contains(term));
         }
 
         var total = await query.CountAsync();
 
         var items = await query
-            .OrderBy(t => t.Name)
-            .ThenBy(t => t.Id)
+            .OrderBy(team => team.Name)
+            .ThenBy(team => team.Id)
             .Skip((page - 1) * size)
             .Take(size)
             .Select(ToDto)
@@ -107,8 +107,8 @@ public sealed class TeamsController(AppDbContext db) : ControllerBase
             DepartmentId = request.DepartmentId!.Value,
         };
 
-        db.Team.Add(team);
-        await db.SaveChangesAsync();
+        appDbContext.Team.Add(team);
+        await appDbContext.SaveChangesAsync();
 
         return StatusCode(StatusCodes.Status201Created, await LoadDtoAsync(team.Id));
     }
@@ -116,7 +116,7 @@ public sealed class TeamsController(AppDbContext db) : ControllerBase
     [HttpPut("{id:long}")]
     public async Task<ActionResult<TeamDto>> Update(long id, SaveTeamRequest request)
     {
-        var team = await db.Team.SingleOrDefaultAsync(t => t.Id == id);
+        var team = await appDbContext.Team.SingleOrDefaultAsync(team => team.Id == id);
 
         if (team is null) return NotFound();
 
@@ -128,7 +128,7 @@ public sealed class TeamsController(AppDbContext db) : ControllerBase
         team.Name = name;
         team.DepartmentId = request.DepartmentId!.Value;
 
-        await db.SaveChangesAsync();
+        await appDbContext.SaveChangesAsync();
 
         return Ok(await LoadDtoAsync(id));
     }
@@ -136,18 +136,18 @@ public sealed class TeamsController(AppDbContext db) : ControllerBase
     [HttpPatch("{id:long}/activate")]
     public async Task<IActionResult> Activate(long id)
     {
-        var team = await db.Team.SingleOrDefaultAsync(t => t.Id == id);
+        var team = await appDbContext.Team.SingleOrDefaultAsync(team => team.Id == id);
 
         if (team is null) return NotFound();
         if (team.DeletedAt is null) return NoContent();
 
         // Reativar devolve a equipe ao índice único de nome por setor. Se outra
         // equipe ativa já usa o nome, o banco recusaria — com erro 500.
-        if (await db.Team.AnyAsync(t =>
-                t.Id != id &&
-                t.Name == team.Name &&
-                t.DepartmentId == team.DepartmentId &&
-                t.DeletedAt == null))
+        if (await appDbContext.Team.AnyAsync(otherTeam =>
+                otherTeam.Id != id &&
+                otherTeam.Name == team.Name &&
+                otherTeam.DepartmentId == team.DepartmentId &&
+                otherTeam.DeletedAt == null))
         {
             return Problem(
                 statusCode: StatusCodes.Status409Conflict,
@@ -155,7 +155,7 @@ public sealed class TeamsController(AppDbContext db) : ControllerBase
         }
 
         team.DeletedAt = null;
-        await db.SaveChangesAsync();
+        await appDbContext.SaveChangesAsync();
 
         return NoContent();
     }
@@ -163,7 +163,7 @@ public sealed class TeamsController(AppDbContext db) : ControllerBase
     [HttpPatch("{id:long}/deactivate")]
     public async Task<IActionResult> Deactivate(long id)
     {
-        var team = await db.Team.SingleOrDefaultAsync(t => t.Id == id);
+        var team = await appDbContext.Team.SingleOrDefaultAsync(team => team.Id == id);
 
         if (team is null) return NotFound();
         if (team.DeletedAt is not null) return NoContent();
@@ -172,7 +172,7 @@ public sealed class TeamsController(AppDbContext db) : ControllerBase
         // não existe mais. Cada saída tem a sua data, e só quem conhece a
         // equipe sabe qual é — por isso o encerramento fica explícito, membro
         // a membro, em vez de a API inventar a data de hoje para todos.
-        var current = await db.EmployeeTeam.CountAsync(m => m.TeamId == id && m.EndDate == null);
+        var current = await appDbContext.EmployeeTeam.CountAsync(membership => membership.TeamId == id && membership.EndDate == null);
 
         if (current > 0)
         {
@@ -184,7 +184,7 @@ public sealed class TeamsController(AppDbContext db) : ControllerBase
         }
 
         team.DeletedAt = DateTime.UtcNow;
-        await db.SaveChangesAsync();
+        await appDbContext.SaveChangesAsync();
 
         return NoContent();
     }
@@ -192,17 +192,17 @@ public sealed class TeamsController(AppDbContext db) : ControllerBase
     [HttpGet("{id:long}/members")]
     public async Task<ActionResult<IReadOnlyList<TeamMemberDto>>> ListMembers(long id)
     {
-        if (!await db.Team.AnyAsync(t => t.Id == id)) return NotFound();
+        if (!await appDbContext.Team.AnyAsync(team => team.Id == id)) return NotFound();
 
         // Quem está na equipe vem primeiro, em ordem alfabética; depois o
         // histórico, da saída mais recente para a mais antiga.
-        var members = await db.EmployeeTeam
+        var members = await appDbContext.EmployeeTeam
             .AsNoTracking()
-            .Include(m => m.Employee)
-            .Where(m => m.TeamId == id)
-            .OrderBy(m => m.EndDate != null)
-            .ThenByDescending(m => m.EndDate)
-            .ThenBy(m => m.Employee.Name)
+            .Include(membership => membership.Employee)
+            .Where(membership => membership.TeamId == id)
+            .OrderBy(membership => membership.EndDate != null)
+            .ThenByDescending(membership => membership.EndDate)
+            .ThenBy(membership => membership.Employee.Name)
             .ToListAsync();
 
         return Ok(members.Select(ToMemberDto).ToArray());
@@ -211,7 +211,7 @@ public sealed class TeamsController(AppDbContext db) : ControllerBase
     [HttpPost("{id:long}/members")]
     public async Task<ActionResult<TeamMemberDto>> AddMember(long id, AddTeamMemberRequest request)
     {
-        var team = await db.Team.AsNoTracking().SingleOrDefaultAsync(t => t.Id == id);
+        var team = await appDbContext.Team.AsNoTracking().SingleOrDefaultAsync(team => team.Id == id);
 
         if (team is null) return NotFound();
 
@@ -231,7 +231,7 @@ public sealed class TeamsController(AppDbContext db) : ControllerBase
         // funcionário não rastreado faria o EF tentar inseri-lo de novo.
         var employee = request.EmployeeId is null
             ? null
-            : await db.Employees.SingleOrDefaultAsync(e => e.Id == request.EmployeeId);
+            : await appDbContext.Employees.SingleOrDefaultAsync(employee => employee.Id == request.EmployeeId);
 
         if (employee is null)
         {
@@ -246,10 +246,10 @@ public sealed class TeamsController(AppDbContext db) : ControllerBase
             // Uma passagem nova não pode cruzar outra do mesmo funcionário na
             // mesma equipe: a aberta ainda não terminou, e uma fechada que
             // termina no dia da nova entrada (ou depois) se sobrepõe a ela.
-            var endDates = await db.EmployeeTeam
+            var endDates = await appDbContext.EmployeeTeam
                 .AsNoTracking()
-                .Where(m => m.TeamId == id && m.EmployeeId == employee.Id)
-                .Select(m => m.EndDate)
+                .Where(membership => membership.TeamId == id && membership.EmployeeId == employee.Id)
+                .Select(membership => membership.EndDate)
                 .ToListAsync();
 
             if (endDates.Any(endDate => endDate is null))
@@ -274,8 +274,8 @@ public sealed class TeamsController(AppDbContext db) : ControllerBase
             StartDate = request.StartDate!.Value,
         };
 
-        db.EmployeeTeam.Add(member);
-        await db.SaveChangesAsync();
+        appDbContext.EmployeeTeam.Add(member);
+        await appDbContext.SaveChangesAsync();
 
         return StatusCode(StatusCodes.Status201Created, ToMemberDto(member));
     }
@@ -284,10 +284,10 @@ public sealed class TeamsController(AppDbContext db) : ControllerBase
     public async Task<ActionResult<TeamMemberDto>> EndMember(long id, long employeeId, EndTeamMemberRequest request)
     {
         // Só a passagem aberta se encerra por aqui; as fechadas são histórico.
-        var member = await db.EmployeeTeam
-            .Include(m => m.Employee)
-            .Where(m => m.TeamId == id && m.EmployeeId == employeeId && m.EndDate == null)
-            .OrderByDescending(m => m.StartDate)
+        var member = await appDbContext.EmployeeTeam
+            .Include(membership => membership.Employee)
+            .Where(membership => membership.TeamId == id && membership.EmployeeId == employeeId && membership.EndDate == null)
+            .OrderByDescending(membership => membership.StartDate)
             .FirstOrDefaultAsync();
 
         if (member is null)
@@ -313,13 +313,13 @@ public sealed class TeamsController(AppDbContext db) : ControllerBase
         if (!ModelState.IsValid) return ValidationProblem(ModelState);
 
         member.EndDate = request.EndDate;
-        await db.SaveChangesAsync();
+        await appDbContext.SaveChangesAsync();
 
         return Ok(ToMemberDto(member));
     }
 
     private Task<TeamDto?> LoadDtoAsync(long id) =>
-        db.Team.AsNoTracking().Where(t => t.Id == id).Select(ToDto).SingleOrDefaultAsync();
+        appDbContext.Team.AsNoTracking().Where(team => team.Id == id).Select(ToDto).SingleOrDefaultAsync();
 
     // Valida nome e setor. Cada erro leva o nome do campo, e é isso que faz a
     // mensagem aparecer embaixo do campo certo na tela.
@@ -336,7 +336,7 @@ public sealed class TeamsController(AppDbContext db) : ControllerBase
 
         var department = departmentId is null
             ? null
-            : await db.Department.AsNoTracking().SingleOrDefaultAsync(d => d.Id == departmentId);
+            : await appDbContext.Department.AsNoTracking().SingleOrDefaultAsync(department => department.Id == departmentId);
 
         if (department is null)
         {
@@ -357,11 +357,11 @@ public sealed class TeamsController(AppDbContext db) : ControllerBase
         var ignoreId = current?.Id ?? 0;
         var deletedAt = current?.DeletedAt;
 
-        if (await db.Team.AnyAsync(t =>
-                t.Id != ignoreId &&
-                t.Name == name &&
-                t.DepartmentId == departmentId &&
-                t.DeletedAt == deletedAt))
+        if (await appDbContext.Team.AnyAsync(otherTeam =>
+                otherTeam.Id != ignoreId &&
+                otherTeam.Name == name &&
+                otherTeam.DepartmentId == departmentId &&
+                otherTeam.DeletedAt == deletedAt))
         {
             ModelState.AddModelError("name", "This department already has a team with this name.");
         }

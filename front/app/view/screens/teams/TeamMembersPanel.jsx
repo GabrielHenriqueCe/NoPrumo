@@ -83,7 +83,7 @@ export function TeamMembersPanel({ team, onChanged, onDone }) {
 
     return employeeList
       .filter((employee) => employee.active && !onTeam.has(employee.id))
-      .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
+      .sort((first, second) => first.name.localeCompare(second.name, 'pt-BR'))
   }, [employeeList, current])
 
   const changed = () => {
@@ -136,8 +136,8 @@ export function TeamMembersPanel({ team, onChanged, onDone }) {
                 <caption className="sr-only">Current members</caption>
                 <thead>
                   <tr className="border-b border-line text-left">
-                    <Th>Employee</Th>
-                    <Th>Since</Th>
+                    <HeaderCell>Employee</HeaderCell>
+                    <HeaderCell>Since</HeaderCell>
                     <th className="py-2" />
                   </tr>
                 </thead>
@@ -199,8 +199,8 @@ export function TeamMembersPanel({ team, onChanged, onDone }) {
                 <caption className="sr-only">Past members</caption>
                 <thead>
                   <tr className="border-b border-line text-left">
-                    <Th>Employee</Th>
-                    <Th>Period</Th>
+                    <HeaderCell>Employee</HeaderCell>
+                    <HeaderCell>Period</HeaderCell>
                   </tr>
                 </thead>
 
@@ -406,7 +406,7 @@ function EmployeeCell({ member }) {
   )
 }
 
-function Th({ children }) {
+function HeaderCell({ children }) {
   return <th className="label py-2 pr-3 font-normal">{children}</th>
 }
 

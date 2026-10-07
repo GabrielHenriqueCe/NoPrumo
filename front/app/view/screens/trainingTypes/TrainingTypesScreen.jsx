@@ -145,11 +145,11 @@ export function TrainingTypesScreen() {
               <caption className="sr-only">Registered training types</caption>
               <thead>
                 <tr className="border-b border-line bg-cream-soft text-left">
-                  <Th>Code</Th>
-                  <Th>Name</Th>
-                  <Th>Validity</Th>
-                  <Th>Min. workload</Th>
-                  <Th>In person</Th>
+                  <HeaderCell>Code</HeaderCell>
+                  <HeaderCell>Name</HeaderCell>
+                  <HeaderCell>Validity</HeaderCell>
+                  <HeaderCell>Min. workload</HeaderCell>
+                  <HeaderCell>In person</HeaderCell>
                   <th className="px-4 py-3" />
                 </tr>
               </thead>
@@ -211,7 +211,7 @@ function describeValidity(months) {
   return months === 1 ? '1 month' : `${months} months`
 }
 
-function Th({ children }) {
+function HeaderCell({ children }) {
   return <th className="label px-4 py-3 font-normal">{children}</th>
 }
 

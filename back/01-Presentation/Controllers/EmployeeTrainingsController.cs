@@ -21,7 +21,7 @@ namespace NoPrumo.Controllers;
 [ApiController]
 [Route("api/[controller]")] // vira /api/employeetrainings
 [Authorize(Policy = "manage_safety")]
-public sealed class EmployeeTrainingsController(AppDbContext db, TimeProvider timeProvider) : ControllerBase
+public sealed class EmployeeTrainingsController(AppDbContext appDbContext, TimeProvider timeProvider) : ControllerBase
 {
     private const int MaxPageSize = 100;
     private const int MaxWorkloadHours = 1000;
@@ -38,41 +38,41 @@ public sealed class EmployeeTrainingsController(AppDbContext db, TimeProvider ti
         page = Math.Max(1, page);
         size = Math.Clamp(size, 1, MaxPageSize);
 
-        var query = db.EmployeeTraining
+        var query = appDbContext.EmployeeTraining
             .AsNoTracking()
-            .Include(t => t.Employee)
-            .Include(t => t.TrainingType)
+            .Include(training => training.Employee)
+            .Include(training => training.TrainingType)
             .AsQueryable();
 
         if (employeeId is not null)
         {
-            query = query.Where(t => t.EmployeeId == employeeId);
+            query = query.Where(training => training.EmployeeId == employeeId);
         }
 
         if (trainingTypeId is not null)
         {
-            query = query.Where(t => t.TrainingTypeId == trainingTypeId);
+            query = query.Where(training => training.TrainingTypeId == trainingTypeId);
         }
 
         if (!string.IsNullOrWhiteSpace(search))
         {
             var term = search.Trim();
 
-            query = query.Where(t =>
-                t.Employee.Name.Contains(term) ||
-                (t.Employee.RegistrationNumber != null && t.Employee.RegistrationNumber.Contains(term)) ||
-                t.TrainingType.Code.Contains(term) ||
-                t.TrainingType.Name.Contains(term) ||
-                (t.Instructor != null && t.Instructor.Contains(term)));
+            query = query.Where(training =>
+                training.Employee.Name.Contains(term) ||
+                (training.Employee.RegistrationNumber != null && training.Employee.RegistrationNumber.Contains(term)) ||
+                training.TrainingType.Code.Contains(term) ||
+                training.TrainingType.Name.Contains(term) ||
+                (training.Instructor != null && training.Instructor.Contains(term)));
         }
 
         var total = await query.CountAsync();
 
         // O mais recente primeiro: é o certificado que vale hoje.
         var items = await query
-            .OrderByDescending(t => t.IssueDate)
-            .ThenBy(t => t.Employee.Name)
-            .ThenBy(t => t.Id)
+            .OrderByDescending(training => training.IssueDate)
+            .ThenBy(training => training.Employee.Name)
+            .ThenBy(training => training.Id)
             .Skip((page - 1) * size)
             .Take(size)
             .ToListAsync();
@@ -90,11 +90,11 @@ public sealed class EmployeeTrainingsController(AppDbContext db, TimeProvider ti
     [HttpGet("{id:long}")]
     public async Task<ActionResult<EmployeeTrainingDto>> GetById(long id)
     {
-        var training = await db.EmployeeTraining
+        var training = await appDbContext.EmployeeTraining
             .AsNoTracking()
-            .Include(t => t.Employee)
-            .Include(t => t.TrainingType)
-            .SingleOrDefaultAsync(t => t.Id == id);
+            .Include(training => training.Employee)
+            .Include(training => training.TrainingType)
+            .SingleOrDefaultAsync(training => training.Id == id);
 
         if (training is null) return NotFound();
 
@@ -133,8 +133,8 @@ public sealed class EmployeeTrainingsController(AppDbContext db, TimeProvider ti
             Instructor = instructor,
         };
 
-        db.EmployeeTraining.Add(training);
-        await db.SaveChangesAsync();
+        appDbContext.EmployeeTraining.Add(training);
+        await appDbContext.SaveChangesAsync();
 
         return StatusCode(StatusCodes.Status201Created, ToDto(training, timeProvider.Today()));
     }
@@ -142,10 +142,10 @@ public sealed class EmployeeTrainingsController(AppDbContext db, TimeProvider ti
     [HttpPut("{id:long}")]
     public async Task<ActionResult<EmployeeTrainingDto>> Update(long id, SaveEmployeeTrainingRequest request)
     {
-        var training = await db.EmployeeTraining
-            .Include(t => t.Employee)
-            .Include(t => t.TrainingType)
-            .SingleOrDefaultAsync(t => t.Id == id);
+        var training = await appDbContext.EmployeeTraining
+            .Include(training => training.Employee)
+            .Include(training => training.TrainingType)
+            .SingleOrDefaultAsync(training => training.Id == id);
 
         if (training is null) return NotFound();
 
@@ -182,7 +182,7 @@ public sealed class EmployeeTrainingsController(AppDbContext db, TimeProvider ti
         training.Modality = modality;
         training.Instructor = instructor;
 
-        await db.SaveChangesAsync();
+        await appDbContext.SaveChangesAsync();
 
         return Ok(ToDto(training, timeProvider.Today()));
     }
@@ -202,7 +202,7 @@ public sealed class EmployeeTrainingsController(AppDbContext db, TimeProvider ti
         // um objeto não rastreado faria o EF tentar inseri-lo de novo.
         var employee = employeeId is null
             ? null
-            : await db.Employees.SingleOrDefaultAsync(e => e.Id == employeeId);
+            : await appDbContext.Employees.SingleOrDefaultAsync(employee => employee.Id == employeeId);
 
         if (employee is null)
         {
@@ -217,7 +217,7 @@ public sealed class EmployeeTrainingsController(AppDbContext db, TimeProvider ti
 
         var type = trainingTypeId is null
             ? null
-            : await db.TrainingType.SingleOrDefaultAsync(t => t.Id == trainingTypeId);
+            : await appDbContext.TrainingType.SingleOrDefaultAsync(trainingType => trainingType.Id == trainingTypeId);
 
         if (type is null)
         {
@@ -269,11 +269,11 @@ public sealed class EmployeeTrainingsController(AppDbContext db, TimeProvider ti
         // digitada por duas pessoas) apareceria como dois treinamentos.
         var ignoreId = current?.Id ?? 0;
 
-        if (ModelState.IsValid && await db.EmployeeTraining.AnyAsync(t =>
-                t.Id != ignoreId &&
-                t.EmployeeId == employee!.Id &&
-                t.TrainingTypeId == type!.Id &&
-                t.IssueDate == issueDate!.Value))
+        if (ModelState.IsValid && await appDbContext.EmployeeTraining.AnyAsync(training =>
+                training.Id != ignoreId &&
+                training.EmployeeId == employee!.Id &&
+                training.TrainingTypeId == type!.Id &&
+                training.IssueDate == issueDate!.Value))
         {
             ModelState.AddModelError("issueDate", "This employee already has this training recorded on this date.");
         }

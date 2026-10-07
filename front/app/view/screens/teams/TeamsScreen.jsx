@@ -86,7 +86,7 @@ export function TeamsScreen() {
     departments
       .list({ page: 1, size: 100 }, { signal: controller.signal })
       .then((result) =>
-        setDepartmentList([...result.items].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))),
+        setDepartmentList([...result.items].sort((first, second) => first.name.localeCompare(second.name, 'pt-BR'))),
       )
       .catch(() => {
         if (!controller.signal.aborted) setDepartmentList([])
@@ -215,10 +215,10 @@ export function TeamsScreen() {
               <caption className="sr-only">Registered teams</caption>
               <thead>
                 <tr className="border-b border-line bg-cream-soft text-left">
-                  <Th>Name</Th>
-                  <Th>Department</Th>
-                  <Th>Members</Th>
-                  <Th>Status</Th>
+                  <HeaderCell>Name</HeaderCell>
+                  <HeaderCell>Department</HeaderCell>
+                  <HeaderCell>Members</HeaderCell>
+                  <HeaderCell>Status</HeaderCell>
                   <th className="px-4 py-3" />
                 </tr>
               </thead>
@@ -305,7 +305,7 @@ export function TeamsScreen() {
   )
 }
 
-function Th({ children }) {
+function HeaderCell({ children }) {
   return <th className="label px-4 py-3 font-normal">{children}</th>
 }
 

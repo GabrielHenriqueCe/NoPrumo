@@ -205,12 +205,12 @@ export function EmployeeTrainingsScreen() {
               <caption className="sr-only">Recorded trainings</caption>
               <thead>
                 <tr className="border-b border-line bg-cream-soft text-left">
-                  <Th>Employee</Th>
-                  <Th>Training</Th>
-                  <Th>Issued</Th>
-                  <Th>Expires</Th>
-                  <Th>Workload</Th>
-                  <Th>Modality</Th>
+                  <HeaderCell>Employee</HeaderCell>
+                  <HeaderCell>Training</HeaderCell>
+                  <HeaderCell>Issued</HeaderCell>
+                  <HeaderCell>Expires</HeaderCell>
+                  <HeaderCell>Workload</HeaderCell>
+                  <HeaderCell>Modality</HeaderCell>
                   <th className="px-4 py-3" />
                 </tr>
               </thead>
@@ -287,7 +287,7 @@ export function EmployeeTrainingsScreen() {
   )
 }
 
-function Th({ children }) {
+function HeaderCell({ children }) {
   return <th className="label px-4 py-3 font-normal">{children}</th>
 }
 
