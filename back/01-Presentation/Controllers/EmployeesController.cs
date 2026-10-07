@@ -45,7 +45,7 @@ public class EmployeesController : ControllerBase
         var regimes = await _context.EmploymentRegimes.Where(r => regimeIds.Contains(r.Id)).ToDictionaryAsync(r => r.Id, r => r.Label);
 
         // Verifica a permissão financeira
-        bool canViewFinance = User.Claims.Any(c => c.Value == "view_finance" || c.Value == "admin");
+        bool canViewFinance = User.HasClaim("permission", "view_finance");
 
         var items = employees.Select(e => 
         {
@@ -101,7 +101,7 @@ public class EmployeesController : ControllerBase
         _context.Employees.Add(employee);
         await _context.SaveChangesAsync();
 
-        bool canViewFinance = User.Claims.Any(c => c.Value == "view_finance" || c.Value == "admin");
+        bool canViewFinance = User.HasClaim("permission", "view_finance");
 
         if (canViewFinance)
         {
