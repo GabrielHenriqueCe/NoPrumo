@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using NoPrumo.Application.DTOs;
 using NoPrumo.Application.Extensions;
 using NoPrumo.Domain.Entities;
+using NoPrumo.Domain.Enums;
 using NoPrumo.Infrastructure.Data;
 
 namespace NoPrumo.Controllers;
@@ -13,7 +14,7 @@ namespace NoPrumo.Controllers;
 /// (NR-35, ASO...). Não há desativar nem apagar — a tabela não tem
 /// Active/DeletedAt, e certificado é histórico.
 ///
-/// ExpiryDate é sempre calculado aqui: emissão + validade do tipo. O front
+/// ExpiryDate é sempre calculado pela API (TrainingType.ExpiryFor). O front
 /// nunca manda vencimento; só mostra o que voltou.
 /// </summary>
 [ApiController]
@@ -102,7 +103,7 @@ public sealed class EmployeeTrainingsController(AppDbContext db, TimeProvider ti
     [HttpPost]
     public async Task<ActionResult<EmployeeTrainingDto>> Create(CreateEmployeeTrainingRequest request)
     {
-        var modality = NormalizeModality(request.Modality);
+        var modality = request.Modality;
         var instructor = string.IsNullOrWhiteSpace(request.Instructor) ? null : request.Instructor.Trim();
 
         var (employee, type) = await ValidateAsync(
@@ -125,7 +126,7 @@ public sealed class EmployeeTrainingsController(AppDbContext db, TimeProvider ti
             TrainingTypeId = type!.Id,
             TrainingType = type,
             IssueDate = issueDate,
-            ExpiryDate = ExpiryFor(issueDate, type),
+            ExpiryDate = type.ExpiryFor(issueDate),
             WorkloadHours = request.WorkloadHours,
             Modality = modality,
             Instructor = instructor,
@@ -147,7 +148,7 @@ public sealed class EmployeeTrainingsController(AppDbContext db, TimeProvider ti
 
         if (training is null) return NotFound();
 
-        var modality = NormalizeModality(request.Modality);
+        var modality = request.Modality;
         var instructor = string.IsNullOrWhiteSpace(request.Instructor) ? null : request.Instructor.Trim();
 
         var (employee, type) = await ValidateAsync(
@@ -168,7 +169,7 @@ public sealed class EmployeeTrainingsController(AppDbContext db, TimeProvider ti
         // valia quando o certificado foi registrado.
         if (training.IssueDate != issueDate || training.TrainingTypeId != type!.Id)
         {
-            training.ExpiryDate = ExpiryFor(issueDate, type!);
+            training.ExpiryDate = type!.ExpiryFor(issueDate);
         }
 
         training.EmployeeId = employee!.Id;
@@ -192,7 +193,7 @@ public sealed class EmployeeTrainingsController(AppDbContext db, TimeProvider ti
         long? trainingTypeId,
         DateOnly? issueDate,
         int? workloadHours,
-        string? modality,
+        TrainingModality? modality,
         string? instructor,
         EmployeeTraining? current)
     {
@@ -234,11 +235,6 @@ public sealed class EmployeeTrainingsController(AppDbContext db, TimeProvider ti
         if (workloadHours is < 1 or > MaxWorkloadHours)
         {
             ModelState.AddModelError("workloadHours", $"Use 1 to {MaxWorkloadHours} hours, or leave it blank.");
-        }
-
-        if (modality is not null && !TrainingModality.All.Contains(modality))
-        {
-            ModelState.AddModelError("modality", "Pick in person, online or blended.");
         }
 
         if (instructor is { Length: > MaxInstructorLength })
@@ -283,11 +279,4 @@ public sealed class EmployeeTrainingsController(AppDbContext db, TimeProvider ti
 
         return (employee, type);
     }
-
-    // Emissão + validade do tipo. Sem validade (CNH, CREA), não vence.
-    private static DateOnly? ExpiryFor(DateOnly issueDate, TrainingType type) =>
-        type.ValidityMonths is { } months ? issueDate.AddMonths(months) : null;
-
-    private static string? NormalizeModality(string? modality) =>
-        string.IsNullOrWhiteSpace(modality) ? null : modality.Trim().ToLowerInvariant();
 }

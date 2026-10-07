@@ -1,4 +1,5 @@
 using NoPrumo.Domain.Entities;
+using NoPrumo.Domain.Enums;
 
 namespace NoPrumo.Application.DTOs;
 
@@ -7,7 +8,7 @@ namespace NoPrumo.Application.DTOs;
 ///
 /// ExpiryDate e Status saem sempre da API, nunca do front: o vencimento é a
 /// emissão mais a validade do tipo, calculado ao salvar; o status compara esse
-/// vencimento com a data de hoje (ver TrainingStatus).
+/// vencimento com a data de hoje (EmployeeTraining.StatusOn).
 /// </summary>
 public sealed record EmployeeTrainingDto(
     long Id,
@@ -19,9 +20,9 @@ public sealed record EmployeeTrainingDto(
     string TrainingTypeName,
     DateOnly IssueDate,
     DateOnly? ExpiryDate,
-    string Status,
+    TrainingStatus Status,
     int? WorkloadHours,
-    string? Modality,
+    TrainingModality? Modality,
     string? Instructor)
 {
     /// <summary>
@@ -38,44 +39,10 @@ public sealed record EmployeeTrainingDto(
         t.TrainingType.Name,
         t.IssueDate,
         t.ExpiryDate,
-        TrainingStatus.Of(t.ExpiryDate, today),
+        t.StatusOn(today),
         t.WorkloadHours,
         t.Modality,
         t.Instructor);
-}
-
-/// <summary>
-/// A situação do certificado na data de hoje. Não é gravada em coluna
-/// nenhuma — é a regra da antiga view vw_capacitacoes_alerta (vencida, vence
-/// em 30 dias, ok), agora em C#.
-/// </summary>
-public static class TrainingStatus
-{
-    public const string Valid = "valid";
-    public const string Expiring = "expiring";
-    public const string Expired = "expired";
-    public const string NoExpiry = "no_expiry";
-
-    /// <summary>A partir de quantos dias antes do vencimento o certificado pede atenção.</summary>
-    public const int ExpiringWindowDays = 30;
-
-    public static string Of(DateOnly? expiryDate, DateOnly today) => expiryDate switch
-    {
-        null => NoExpiry,
-        { } date when date < today => Expired,
-        { } date when date <= today.AddDays(ExpiringWindowDays) => Expiring,
-        _ => Valid,
-    };
-}
-
-/// <summary>Os valores aceitos em Modality — gravados em inglês, como todo valor do banco.</summary>
-public static class TrainingModality
-{
-    public const string InPerson = "in_person";
-    public const string Online = "online";
-    public const string Blended = "blended";
-
-    public static readonly IReadOnlySet<string> All = new HashSet<string> { InPerson, Online, Blended };
 }
 
 // ExpiryDate não existe no request: o vencimento é conta da API. Ids e datas
@@ -86,7 +53,7 @@ public sealed record CreateEmployeeTrainingRequest(
     long? TrainingTypeId,
     DateOnly? IssueDate,
     int? WorkloadHours,
-    string? Modality,
+    TrainingModality? Modality,
     string? Instructor);
 
 public sealed record UpdateEmployeeTrainingRequest(
@@ -94,5 +61,5 @@ public sealed record UpdateEmployeeTrainingRequest(
     long? TrainingTypeId,
     DateOnly? IssueDate,
     int? WorkloadHours,
-    string? Modality,
+    TrainingModality? Modality,
     string? Instructor);
