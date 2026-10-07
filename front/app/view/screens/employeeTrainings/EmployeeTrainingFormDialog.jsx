@@ -6,15 +6,7 @@ import { TextField } from '../../ui/TextField'
 import { formatDate, todayIso } from '../../format/dates'
 import { MODALITIES } from './trainingLabels'
 
-/*
-  Record or correct a training.
-
-  There is no expiry field. The API sets the expiry from the issue date and
-  the training type's validity, and sends it back; the form only shows what
-  came. The hints under the fields repeat the chosen type's own rules —
-  validity, minimum workload, in person — so they are seen before the API
-  has to refuse anything.
-*/
+// No expiry field: the API calculates it. The hints only repeat the chosen type's rules.
 
 const EMPTY = {
   employeeId: '',
@@ -51,8 +43,7 @@ export function EmployeeTrainingFormDialog({ open, training, employees, training
     setFormError(null)
   }, [open, training])
 
-  // Active employees — plus whoever this certificate already belongs to: the
-  // record of someone who has since left still has to open, and be fixed.
+  // Plus the certificate's own employee, even if inactive: old records still have to open.
   const employeeOptions = useMemo(
     () =>
       employees
@@ -73,8 +64,7 @@ export function EmployeeTrainingFormDialog({ open, training, employees, training
   const submit = async (event) => {
     event.preventDefault()
 
-    // "1.5" would not even reach the validation: it fails to convert on the
-    // way in and comes back as a technical message.
+    // "1.5" fails JSON conversion and would come back as a technical message.
     if (!isWholeOrBlank(form.workloadHours)) {
       setFieldErrors({ workloadHours: 'Use a whole number.' })
       return
@@ -94,7 +84,6 @@ export function EmployeeTrainingFormDialog({ open, training, employees, training
         instructor: form.instructor.trim() || null,
       })
     } catch (error) {
-      // The API is the one that validates. The form only shows where it hurt.
       if (error.isValidation) setFieldErrors(error.fieldErrors)
       else setFormError(error.message ?? 'Could not save the training.')
     } finally {
@@ -212,10 +201,7 @@ export function EmployeeTrainingFormDialog({ open, training, employees, training
   )
 }
 
-/*
-  SelectField has no hint of its own; this sits under it with the same look
-  as TextField's.
-*/
+// SelectField has no hint prop.
 function FieldHint({ children }) {
   return <p className="mt-1.5 text-[12px] text-muted">{children}</p>
 }
@@ -228,7 +214,6 @@ function describeEmployee(employee) {
   return employee.active ? name : `${name} (inactive)`
 }
 
-// Repeats the type's own number; the date itself is the API's to work out.
 function describeValidity(type) {
   if (type.validityMonths == null) return 'This training does not expire.'
 

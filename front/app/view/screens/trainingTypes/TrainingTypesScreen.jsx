@@ -5,13 +5,7 @@ import { Button } from '../../ui/Button'
 import { Pagination } from '../../ui/Pagination'
 import { TrainingTypeFormDialog } from './TrainingTypeFormDialog'
 
-/*
-  Training types: the NR courses, the ASO and any other certificate an
-  employee may need, each with how long it stays valid.
-
-  No activate/deactivate here: the table has no active/deletedAt column, and
-  deleting would break every training already recorded against the type.
-*/
+// No deactivate: the table has no active/deletedAt column.
 
 const PAGE_SIZE = 10
 const SEARCH_DEBOUNCE_MS = 350
@@ -34,7 +28,6 @@ export function TrainingTypesScreen() {
 
   const reload = useCallback(() => setReloadToken((value) => value + 1), [])
 
-  // Typing should not fire a request per keystroke; it waits for a pause.
   useEffect(() => {
     const timer = setTimeout(() => {
       setAppliedSearch(search.trim())
@@ -53,7 +46,6 @@ export function TrainingTypesScreen() {
       .list({ page, size: PAGE_SIZE, search: appliedSearch }, { signal: controller.signal })
       .then((result) => setData(result))
       .catch((error) => {
-        // An aborted request is this effect being replaced, not a failure.
         if (!controller.signal.aborted) setLoadError(error.message ?? 'Could not load training types.')
       })
       .finally(() => {
@@ -63,8 +55,7 @@ export function TrainingTypesScreen() {
     return () => controller.abort()
   }, [trainingTypes, page, appliedSearch, reloadToken])
 
-  // Kept stable on purpose: the dialog moves the focus back to its first
-  // field whenever onClose changes, and this screen re-renders on every load.
+  // Stable on purpose: the Dialog refocuses its first field whenever onClose changes.
   const closeForm = useCallback(() => {
     setFormOpen(false)
     setEditingType(null)
@@ -215,10 +206,6 @@ function HeaderCell({ children }) {
   return <th className="label px-4 py-3 font-normal">{children}</th>
 }
 
-/*
-  Placeholder rows instead of a spinner: the table keeps its shape while it
-  loads, so the page does not jump when the data lands.
-*/
 function TableSkeleton() {
   return (
     <div className="p-4" role="status" aria-label="Loading training types">
