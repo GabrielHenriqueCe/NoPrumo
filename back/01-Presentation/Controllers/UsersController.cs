@@ -19,7 +19,7 @@ namespace NoPrumo.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize(Policy = "manage_users")]
-public sealed class UsersController(AppDbContext db, PasswordGenerator passwordGenerator) : ControllerBase
+public sealed class UsersController(AppDbContext appDbContext, PasswordGenerator passwordGenerator) : ControllerBase
 {
     private const int MaxPageSize = 100;
 
@@ -34,27 +34,27 @@ public sealed class UsersController(AppDbContext db, PasswordGenerator passwordG
         page = Math.Max(1, page);
         size = Math.Clamp(size, 1, MaxPageSize);
 
-        var query = db.User
+        var query = appDbContext.User
             .AsNoTracking()
-            .Include(u => u.Role)
-                .ThenInclude(r => r.Permissions)
+            .Include(user => user.Role)
+                .ThenInclude(role => role.Permissions)
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(search))
         {
             var term = search.Trim();
 
-            query = query.Where(u =>
-                u.Name.Contains(term) ||
-                u.Username.Contains(term) ||
-                (u.Email != null && u.Email.Contains(term)));
+            query = query.Where(user =>
+                user.Name.Contains(term) ||
+                user.Username.Contains(term) ||
+                (user.Email != null && user.Email.Contains(term)));
         }
 
         // Conta antes de paginar: o total é do filtro inteiro, não da página.
         var total = await query.CountAsync();
 
         var items = await query
-            .OrderBy(u => u.Name)
+            .OrderBy(user => user.Name)
             .Skip((page - 1) * size)
             .Take(size)
             .ToListAsync();
@@ -73,19 +73,19 @@ public sealed class UsersController(AppDbContext db, PasswordGenerator passwordG
         var username = request.Username.Trim().ToLowerInvariant();
         var email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim();
 
-        if (await db.User.AnyAsync(u => u.Username == username))
+        if (await appDbContext.User.AnyAsync(existingUser => existingUser.Username == username))
         {
             ModelState.AddModelError("username", "This username is already taken.");
             return ValidationProblem(ModelState);
         }
 
-        if (email is not null && await db.User.AnyAsync(u => u.Email == email))
+        if (email is not null && await appDbContext.User.AnyAsync(existingUser => existingUser.Email == email))
         {
             ModelState.AddModelError("email", "This email is already in use.");
             return ValidationProblem(ModelState);
         }
 
-        if (!await db.Role.AnyAsync(r => r.Id == request.RoleId))
+        if (!await appDbContext.Role.AnyAsync(role => role.Id == request.RoleId))
         {
             ModelState.AddModelError("roleId", "Pick a role.");
             return ValidationProblem(ModelState);
@@ -106,8 +106,8 @@ public sealed class UsersController(AppDbContext db, PasswordGenerator passwordG
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(temporaryPassword, workFactor: 12),
         };
 
-        db.User.Add(user);
-        await db.SaveChangesAsync();
+        appDbContext.User.Add(user);
+        await appDbContext.SaveChangesAsync();
 
         var created = await LoadDtoAsync(user.Id);
 
@@ -119,19 +119,19 @@ public sealed class UsersController(AppDbContext db, PasswordGenerator passwordG
     [HttpPut("{id:long}")]
     public async Task<ActionResult<UserDto>> Update(long id, UpdateUserRequest request)
     {
-        var user = await db.User.SingleOrDefaultAsync(u => u.Id == id);
+        var user = await appDbContext.User.SingleOrDefaultAsync(candidate => candidate.Id == id);
 
         if (user is null) return NotFound();
 
         var email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim();
 
-        if (email is not null && await db.User.AnyAsync(u => u.Email == email && u.Id != id))
+        if (email is not null && await appDbContext.User.AnyAsync(existingUser => existingUser.Email == email && existingUser.Id != id))
         {
             ModelState.AddModelError("email", "This email is already in use.");
             return ValidationProblem(ModelState);
         }
 
-        if (!await db.Role.AnyAsync(r => r.Id == request.RoleId))
+        if (!await appDbContext.Role.AnyAsync(role => role.Id == request.RoleId))
         {
             ModelState.AddModelError("roleId", "Pick a role.");
             return ValidationProblem(ModelState);
@@ -149,7 +149,7 @@ public sealed class UsersController(AppDbContext db, PasswordGenerator passwordG
         user.Email = email;
         user.RoleId = request.RoleId;
 
-        await db.SaveChangesAsync();
+        await appDbContext.SaveChangesAsync();
 
         return Ok(await LoadDtoAsync(id));
     }
@@ -170,7 +170,7 @@ public sealed class UsersController(AppDbContext db, PasswordGenerator passwordG
             return Problem(statusCode: 400, detail: "To change your own password, use the change password screen.");
         }
 
-        var user = await db.User.SingleOrDefaultAsync(u => u.Id == id);
+        var user = await appDbContext.User.SingleOrDefaultAsync(candidate => candidate.Id == id);
 
         if (user is null) return NotFound();
 
@@ -179,14 +179,14 @@ public sealed class UsersController(AppDbContext db, PasswordGenerator passwordG
         user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(temporaryPassword, workFactor: 12);
         user.MustChangePassword = true;
 
-        await db.SaveChangesAsync();
+        await appDbContext.SaveChangesAsync();
 
         return Ok(new TemporaryPasswordResponse(temporaryPassword));
     }
 
     private async Task<IActionResult> SetActiveAsync(long id, bool active)
     {
-        var user = await db.User.SingleOrDefaultAsync(u => u.Id == id);
+        var user = await appDbContext.User.SingleOrDefaultAsync(candidate => candidate.Id == id);
 
         if (user is null) return NotFound();
 
@@ -197,18 +197,18 @@ public sealed class UsersController(AppDbContext db, PasswordGenerator passwordG
         }
 
         user.Active = active;
-        await db.SaveChangesAsync();
+        await appDbContext.SaveChangesAsync();
 
         return NoContent();
     }
 
     private Task<UserDto?> LoadDtoAsync(long id) =>
-        db.User
+        appDbContext.User
             .AsNoTracking()
-            .Include(u => u.Role)
-                .ThenInclude(r => r.Permissions)
-            .Where(u => u.Id == id)
-            .Select(u => UserDto.FromEntity(u))
+            .Include(user => user.Role)
+                .ThenInclude(role => role.Permissions)
+            .Where(user => user.Id == id)
+            .Select(user => UserDto.FromEntity(user))
             .SingleOrDefaultAsync();
 
     private long? CurrentUserId()
