@@ -147,12 +147,16 @@ public class EmployeesController : ControllerBase
         employee.RegistrationNumber = request.RegistrationNumber;
         employee.JobRoleId = request.JobRoleId;
         employee.EmploymentRegimeId = request.EmploymentRegimeId;
-        employee.PayRate = request.PayRate;
-        employee.AdditionalPercentage = request.AdditionalPercentage;
         employee.HireDate = request.HireDate;
         employee.Phone = request.Phone;
-        // Garantindo que convertemos explicitamente o valor booleano
         employee.Active = request.Active;
+
+        // Só aplica as alterações financeiras se o utilizador tiver a claim
+        if (User.HasClaim("permission", "view_finance"))
+        {
+            employee.PayRate = request.PayRate;
+            employee.AdditionalPercentage = request.AdditionalPercentage;
+        }
 
         if (!string.IsNullOrWhiteSpace(request.Document))
         {

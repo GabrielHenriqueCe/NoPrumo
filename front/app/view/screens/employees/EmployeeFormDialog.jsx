@@ -5,7 +5,8 @@ import { Button } from '../../ui/Button';
 import { TextField } from '../../ui/TextField';
 
 export function EmployeeFormDialog({ employee, onClose, onSave }) {
-    const { employees, jobRoles, employmentRegimes } = useContainer();
+    const { employees, jobRoles, employmentRegimes, can } = useContainer();
+    const canViewFinance = can('view_finance');
     
     const [name, setName] = useState(employee ? employee.name : '');
     const [registrationNumber, setRegistrationNumber] = useState(employee && employee.registrationNumber ? employee.registrationNumber : '');
@@ -46,18 +47,21 @@ export function EmployeeFormDialog({ employee, onClose, onSave }) {
         e.preventDefault();
         setErrors(null);
         try {
-            const payload = { 
-                name, 
+            const payload = {
+                name,
                 registrationNumber,
                 jobRoleId: jobRoleId ? Number(jobRoleId) : null,
                 employmentRegimeId: employmentRegimeId ? Number(employmentRegimeId) : null,
-                payRate: payRate ? Number(payRate) : 0,
-                additionalPercentage: additionalPercentage ? Number(additionalPercentage) : 0,
                 hireDate: hireDate || null,
                 phone,
                 document,
-                active 
+                active
             };
+
+            if (canViewFinance) {
+                payload.payRate = payRate ? Number(payRate) : 0;
+                payload.additionalPercentage = additionalPercentage ? Number(additionalPercentage) : 0;
+            }
 
             if (employee) {
                 await employees.update(employee.id, payload);
@@ -97,10 +101,12 @@ export function EmployeeFormDialog({ employee, onClose, onSave }) {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                    <TextField label="Pay Rate" type="number" step="0.01" value={payRate} onChange={e => setPayRate(e.target.value)} />
-                    <TextField label="Additional % (e.g. 30 for hazard)" type="number" step="0.01" value={additionalPercentage} onChange={e => setAdditionalPercentage(e.target.value)} />
-                </div>
+                {canViewFinance && (
+                    <div className="grid grid-cols-2 gap-4">
+                        <TextField label="Pay Rate" type="number" step="0.01" value={payRate} onChange={e => setPayRate(e.target.value)} />
+                        <TextField label="Additional % (e.g. 30 for hazard)" type="number" step="0.01" value={additionalPercentage} onChange={e => setAdditionalPercentage(e.target.value)} />
+                    </div>
+                )}
 
                 <div className="grid grid-cols-3 gap-4">
                     <TextField label="Hire Date" type="date" value={hireDate} onChange={e => setHireDate(e.target.value)} />
