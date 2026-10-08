@@ -5,17 +5,6 @@ import { SelectField } from '../../ui/SelectField'
 import { TextField } from '../../ui/TextField'
 import { PROJECT_STATUSES } from './projectStatus'
 
-/*
-  Create or edit a project.
-
-  contractAmount only appears for accounts with view_finance. The API is the
-  real gate: it ignores the field for everyone else.
-
-  No date checks here (forecast before start, and so on). The database has no
-  CHECK constraints, so the API validates — and its answer lands on the field
-  through ProblemDetails `errors`.
-*/
-
 const EMPTY = {
   code: '',
   name: '',
@@ -92,8 +81,7 @@ export function ProjectFormDialog({ open, project, clientOptions, supervisorOpti
       postalCode: textOrNull(form.postalCode),
     }
 
-    // Not sent at all without view_finance, instead of sent as null: a null
-    // would read as "set the amount to zero" if the API ever trusted it.
+    // Left out, not null, without view_finance: the API keeps the current amount either way.
     if (canSeeAmount) {
       values.contractAmount = form.contractAmount === '' ? null : Number(form.contractAmount)
     }

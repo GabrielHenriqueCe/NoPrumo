@@ -34,6 +34,8 @@ var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>()
 
 builder.Services.AddSingleton(jwtSettings);
 builder.Services.AddScoped<TokenService>();
+builder.Services.AddSingleton<PasswordGenerator>();
+builder.Services.AddScoped<DatabaseSeeder>();
 
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
@@ -140,8 +142,8 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
-    var appDbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await DatabaseSeeder.SeedAsync(appDbContext);
+    var databaseSeeder = scope.ServiceProvider.GetRequiredService<DatabaseSeeder>();
+    await databaseSeeder.SeedAsync();
 }
 
 if (app.Environment.IsDevelopment())

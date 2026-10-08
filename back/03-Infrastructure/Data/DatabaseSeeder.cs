@@ -7,35 +7,19 @@ namespace NoPrumo.Infrastructure.Data;
 /// A migration cria as tabelas vazias — sem esta rotina não existe papel nem
 /// usuário, e ninguém entra. Roda a cada start e só insere o que falta.
 /// </summary>
-public static class DatabaseSeeder
+public sealed class DatabaseSeeder(AppDbContext appDbContext)
 {
     private static readonly (string Code, string Description)[] PermissionCatalog =
     [
         ("manage_users",     "Criar e editar usuários do sistema"),
-          ("manage_projects",  "Cadastrar obras, etapas e prazos"),
-          ("manage_employees", "Cadastrar funcionários e equipes"),
-          ("view_stock",       "Ver saldo e movimentação de estoque"),
-          ("manage_stock",     "Lançar entrada e saída de estoque, EPI e ferramentas"),
-          ("manage_purchases", "Cotar, comprar e registrar nota fiscal"),
-          ("manage_safety",    "Treinamentos de NR, ASO e fichas de EPI"),
-          ("view_finance",     "Ver contrato, custo, salário e margem"),
-      ];
-
-    private static (string Name, string Description, string[] Permissions)[] RoleCatalog()
-    {
-        var all = PermissionCatalog.Select(p => p.Code).ToArray();
-
-        return
-        [
-            ("admin",             "Administrador",        all),
-              ("engineer",          "Engenheiro",           ["manage_projects", "manage_employees", "view_finance"]),
-              // Mestre enxerga quantidade, administração enxerga dinheiro.
-              ("foreman",           "Mestre de obras",      ["view_stock", "manage_stock"]),
-              ("safety_technician", "Técnico de segurança", ["manage_safety"]),
-              ("warehouse_keeper",  "Almoxarife",           ["view_stock", "manage_stock"]),
-              ("purchasing",        "Compras",              ["manage_purchases", "view_finance"]),
-          ];
-    }
+        ("manage_projects",  "Cadastrar obras, etapas e prazos"),
+        ("manage_employees", "Cadastrar funcionários e equipes"),
+        ("view_stock",       "Ver saldo e movimentação de estoque"),
+        ("manage_stock",     "Lançar entrada e saída de estoque, EPI e ferramentas"),
+        ("manage_purchases", "Cotar, comprar e registrar nota fiscal"),
+        ("manage_safety",    "Treinamentos de NR, ASO e fichas de EPI"),
+        ("view_finance",     "Ver contrato, custo, salário e margem"),
+    ];
 
     /// <summary>
     /// As três categorias que definem os fluxos do sistema inteiro. As duas flags
@@ -45,16 +29,91 @@ public static class DatabaseSeeder
     private static readonly (string Name, bool TracksProjectBalance, bool RequiresReturn)[] StockCategoryCatalog =
     [
         ("Consumable material", true,  false),
-    ("PPE",                 false, false),
-    ("Tool",                false, true),
-];
+        ("PPE",                 false, false),
+        ("Tool",                false, true),
+    ];
 
-    private static async Task SeedStockCategoriesAsync(AppDbContext db)
+    private static (string Name, string Description, string[] Permissions)[] RoleCatalog()
     {
-        var existing = await db.StockCategory.Select(c => c.Name).ToListAsync();
+        var all = PermissionCatalog.Select(permission => permission.Code).ToArray();
 
-        // Só o que falta: comparar sem diferenciar maiúscula, para "ppe" e "PPE"
-        // não virarem duas categorias.
+        return
+        [
+            ("admin",             "Administrador",        all),
+            ("engineer",          "Engenheiro",           ["manage_projects", "manage_employees", "view_finance"]),
+            // Mestre enxerga quantidade, administração enxerga dinheiro.
+            ("foreman",           "Mestre de obras",      ["view_stock", "manage_stock"]),
+            ("safety_technician", "Técnico de segurança", ["manage_safety"]),
+            ("warehouse_keeper",  "Almoxarife",           ["view_stock", "manage_stock"]),
+            ("purchasing",        "Compras",              ["manage_purchases", "view_finance"]),
+        ];
+    }
+
+    public async Task SeedAsync()
+    {
+        await SeedPermissionsAsync();
+        await SeedRolesAsync();
+        await SeedStockCategoriesAsync();
+        await SeedFirstAdminAsync();
+    }
+
+    private async Task SeedPermissionsAsync()
+    {
+        var existing = await appDbContext.Permission.Select(permission => permission.Code).ToListAsync();
+
+        var missing = PermissionCatalog
+            .Where(item => !existing.Contains(item.Code))
+            .Select(item => new Permission { Code = item.Code, Description = item.Description })
+            .ToList();
+
+        if (missing.Count == 0) return;
+
+        appDbContext.Permission.AddRange(missing);
+        await appDbContext.SaveChangesAsync();
+    }
+
+    private async Task SeedRolesAsync()
+    {
+        var permissions = await appDbContext.Permission.ToDictionaryAsync(permission => permission.Code);
+
+        // Sem o Include o EF veria a coleção vazia e duplicaria as ligações.
+        var roles = await appDbContext.Role.Include(role => role.Permissions).ToListAsync();
+
+        foreach (var (name, description, codes) in RoleCatalog())
+        {
+            var role = roles.FirstOrDefault(existingRole => existingRole.Name == name);
+
+            if (role is null)
+            {
+                role = new Role { Name = name, Description = description };
+                appDbContext.Role.Add(role);
+                roles.Add(role);
+            }
+            else if (role.Description != description)
+            {
+                // O rótulo é do catálogo, não do banco: se mudou aqui, sincroniza.
+                role.Description = description;
+            }
+
+            foreach (var code in codes)
+            {
+                var alreadyLinked = role.Permissions.Any(permission => permission.Code == code);
+
+                if (!alreadyLinked && permissions.TryGetValue(code, out var permission))
+                {
+                    role.Permissions.Add(permission);
+                }
+            }
+        }
+
+        await appDbContext.SaveChangesAsync();
+    }
+
+    private async Task SeedStockCategoriesAsync()
+    {
+        var existing = await appDbContext.StockCategory.Select(category => category.Name).ToListAsync();
+
+        // Comparar sem diferenciar maiúscula, para "ppe" e "PPE" não virarem duas categorias.
         var missing = StockCategoryCatalog
             .Where(item => !existing.Contains(item.Name, StringComparer.OrdinalIgnoreCase))
             .Select(item => new StockCategory
@@ -67,78 +126,18 @@ public static class DatabaseSeeder
 
         if (missing.Count == 0) return;
 
-        db.StockCategory.AddRange(missing);
-        await db.SaveChangesAsync();
+        appDbContext.StockCategory.AddRange(missing);
+        await appDbContext.SaveChangesAsync();
     }
 
-    public static async Task SeedAsync(AppDbContext db)
-    {
-        await SeedPermissionsAsync(db);
-        await SeedRolesAsync(db);
-        await SeedStockCategoriesAsync(db);
-        await SeedFirstAdminAsync(db);
-    }
-
-    private static async Task SeedPermissionsAsync(AppDbContext db)
-    {
-        var existing = await db.Permission.Select(p => p.Code).ToListAsync();
-
-        var missing = PermissionCatalog
-            .Where(item => !existing.Contains(item.Code))
-            .Select(item => new Permission { Code = item.Code, Description = item.Description })
-            .ToList();
-
-        if (missing.Count == 0) return;
-
-        db.Permission.AddRange(missing);
-        await db.SaveChangesAsync();
-    }
-
-    private static async Task SeedRolesAsync(AppDbContext db)
-    {
-        var permissions = await db.Permission.ToDictionaryAsync(p => p.Code);
-
-        // Sem o Include o EF veria a coleção vazia e duplicaria as ligações.
-        var roles = await db.Role.Include(r => r.Permissions).ToListAsync();
-
-        foreach (var (name, description, codes) in RoleCatalog())
-        {
-            var role = roles.FirstOrDefault(r => r.Name == name);
-
-            if (role is null)
-            {
-                role = new Role { Name = name, Description = description };
-                db.Role.Add(role);
-                roles.Add(role);
-            }
-            else if (role.Description != description)
-            {
-                // O rótulo é do catálogo, não do banco: se mudou aqui, sincroniza.
-                role.Description = description;
-            }
-
-            foreach (var code in codes)
-            {
-                var alreadyLinked = role.Permissions.Any(p => p.Code == code);
-
-                if (!alreadyLinked && permissions.TryGetValue(code, out var permission))
-                {
-                    role.Permissions.Add(permission);
-                }
-            }
-        }
-
-        await db.SaveChangesAsync();
-    }
-
-    private static async Task SeedFirstAdminAsync(AppDbContext db)
+    private async Task SeedFirstAdminAsync()
     {
         // Só em banco sem nenhum usuário: recriar o admin num banco povoado seria uma porta dos fundos.
-        if (await db.User.AnyAsync()) return;
+        if (await appDbContext.User.AnyAsync()) return;
 
-        var adminRole = await db.Role.FirstAsync(r => r.Name == "admin");
+        var adminRole = await appDbContext.Role.FirstAsync(role => role.Name == "admin");
 
-        db.User.Add(new User
+        appDbContext.User.Add(new User
         {
             Username = "admin",
             Name = "Administrador",
@@ -150,6 +149,6 @@ public static class DatabaseSeeder
             MustChangePassword = true,
         });
 
-        await db.SaveChangesAsync();
+        await appDbContext.SaveChangesAsync();
     }
 }

@@ -1,7 +1,4 @@
-/*
-  Values stored in project.status. "Late" is not one of them: it comes from the
-  API as `late`, calculated from forecastDate — never stored, never derived here.
-*/
+// "Late" is not a status: the API sends it as `late`, calculated from forecastDate.
 
 export const PROJECT_STATUSES = [
   { value: 'planning', label: 'Planning' },

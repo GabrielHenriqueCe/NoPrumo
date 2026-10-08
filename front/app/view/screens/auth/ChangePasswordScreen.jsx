@@ -6,12 +6,8 @@ import { Button } from '../../ui/Button'
 import { TextField } from '../../ui/TextField'
 
 /*
-  Forced password change on first sign-in.
-
-  An account created by an administrator starts with a password that was read
-  out loud over the phone or written on a slip of paper — it is shared by
-  construction. RequireSession keeps the account on this screen until it is
-  replaced, so the provisional one never survives the first session.
+  Two ways in: forced on first sign-in (RequireSession keeps the account here
+  until the provisional password is replaced) or by choice, from the menu.
 
   The confirmation field never reaches the API: it exists to catch a typo in a
   value nobody can see while typing.
@@ -20,7 +16,7 @@ import { TextField } from '../../ui/TextField'
 const MIN_LENGTH = 8
 
 export function ChangePasswordScreen() {
-  const { changePassword, signOut, user } = useSession()
+  const { changePassword, signOut, user, mustChangePassword } = useSession()
   const navigate = useNavigate()
 
   const [form, setForm] = useState({ currentPassword: '', newPassword: '', confirmation: '' })
@@ -75,11 +71,14 @@ export function ChangePasswordScreen() {
       >
         <Brand tone="dark" size={68} />
 
-        <p className="label mt-8 text-muted-dark">Choose a new password</p>
+        <p className="label mt-8 text-muted-dark">
+          {mustChangePassword ? 'Choose a new password' : 'Change your password'}
+        </p>
 
         <p className="mt-2 mb-5 text-[12.5px] leading-relaxed text-muted-dark">
-          {user?.name ? `${user.name}, your` : 'Your'} account still uses the password an
-          administrator handed over. Replace it to continue.
+          {mustChangePassword
+            ? `${user?.name ? `${user.name}, your` : 'Your'} account still uses the password an administrator handed over. Replace it to continue.`
+            : 'Confirm the current password, then choose the new one.'}
         </p>
 
         <TextField
@@ -87,7 +86,7 @@ export function ChangePasswordScreen() {
           label="Current password"
           name="currentPassword"
           type="password"
-          placeholder="The password you just signed in with"
+          placeholder={mustChangePassword ? 'The password you just signed in with' : 'Your current password'}
           autoComplete="current-password"
           autoFocus
           required
@@ -136,15 +135,15 @@ export function ChangePasswordScreen() {
         )}
 
         <Button type="submit" variant="gold" busy={busy} busyLabel="Saving…" className="w-full">
-          Save and continue
+          {mustChangePassword ? 'Save and continue' : 'Save new password'}
         </Button>
 
         <button
           type="button"
-          onClick={leave}
+          onClick={mustChangePassword ? leave : () => navigate(-1)}
           className="label mt-5 block w-full cursor-pointer text-center text-muted-dark hover:text-cream"
         >
-          Sign out
+          {mustChangePassword ? 'Sign out' : 'Cancel'}
         </button>
       </form>
     </div>

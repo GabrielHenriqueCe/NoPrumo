@@ -1,16 +1,13 @@
 import { Button } from './Button'
 
-/*
-  Paging controls. The API decides how many pages exist; this only moves
-  between them and says where you are, because "Page 2 of 7" is the part
-  people actually read before clicking.
-*/
+// `noun` and `pluralNoun` name what is being counted: "3 projects", not "3 records".
+export function Pagination({ page, totalPages, total, onChange, busy = false, noun = 'record', pluralNoun = `${noun}s` }) {
+  const counted = `${total} ${total === 1 ? noun : pluralNoun}`
 
-export function Pagination({ page, totalPages, total, onChange, busy = false }) {
   if (totalPages <= 1) {
     return (
       <p className="mt-4 text-[12.5px] text-muted">
-        {total} {total === 1 ? 'user' : 'users'}
+        {counted}
       </p>
     )
   }
@@ -27,7 +24,7 @@ export function Pagination({ page, totalPages, total, onChange, busy = false }) 
       </Button>
 
       <span aria-live="polite" className="text-[12.5px] text-muted">
-        Page {page} of {totalPages} · {total} {total === 1 ? 'user' : 'users'}
+        Page {page} of {totalPages} · {counted}
       </span>
 
       <Button

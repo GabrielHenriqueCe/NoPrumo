@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useSession } from '../providers/sessionContext'
 import { Brand } from './Brand'
 import { MENU } from './menu'
@@ -65,13 +65,19 @@ export function AppShell() {
           <p className="text-[13.5px] text-[#c6cdd4]">{user?.name ?? '—'}</p>
           <p className="text-[11.5px] text-muted-dark">{user?.roleLabel ?? ''}</p>
 
-          <button
-            type="button"
-            onClick={leave}
-            className="label mt-3 cursor-pointer text-muted-dark hover:text-cream"
-          >
-            Sign out →
-          </button>
+          <div className="mt-3 flex flex-col items-start gap-2">
+            <Link to="/change-password" className="label text-muted-dark hover:text-cream">
+              Change password
+            </Link>
+
+            <button
+              type="button"
+              onClick={leave}
+              className="label cursor-pointer text-muted-dark hover:text-cream"
+            >
+              Sign out →
+            </button>
+          </div>
         </div>
       </aside>
 
