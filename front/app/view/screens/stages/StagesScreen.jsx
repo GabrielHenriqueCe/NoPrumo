@@ -219,7 +219,7 @@ export function StagesScreen() {
         </div>
 
         {!loading && !loadError && (
-          <Pagination page={data.page} totalPages={data.totalPages} total={data.total} onChange={setPage} />
+          <Pagination noun="stage" page={data.page} totalPages={data.totalPages} total={data.total} onChange={setPage} />
         )}
       </div>
 

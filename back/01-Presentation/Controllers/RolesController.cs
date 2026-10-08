@@ -12,13 +12,13 @@ namespace NoPrumo.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize(Policy = "manage_users")]
-public sealed class RolesController(AppDbContext db) : ControllerBase
+public sealed class RolesController(AppDbContext appDbContext) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<RoleDto>>> List() =>
-        Ok(await db.Role
+        Ok(await appDbContext.Role
             .AsNoTracking()
-            .OrderBy(r => r.Id)
-            .Select(r => new RoleDto(r.Id, r.Name, r.Description ?? r.Name))
+            .OrderBy(role => role.Id)
+            .Select(role => new RoleDto(role.Id, role.Name, role.Description ?? role.Name))
             .ToListAsync());
 }

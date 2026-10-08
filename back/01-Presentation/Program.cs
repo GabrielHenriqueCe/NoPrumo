@@ -37,6 +37,8 @@ var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>()
 
 builder.Services.AddSingleton(jwtSettings);
 builder.Services.AddScoped<TokenService>();
+builder.Services.AddSingleton<PasswordGenerator>();
+builder.Services.AddScoped<DatabaseSeeder>();
 
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
@@ -143,8 +145,8 @@ var app = builder.Build();
 // Papéis, permissões e o primeiro admin. Roda a cada start e só insere o que falta.
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await DatabaseSeeder.SeedAsync(db);
+    var databaseSeeder = scope.ServiceProvider.GetRequiredService<DatabaseSeeder>();
+    await databaseSeeder.SeedAsync();
 }
 
 

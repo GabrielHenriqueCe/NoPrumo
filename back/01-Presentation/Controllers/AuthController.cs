@@ -8,17 +8,18 @@ using NoPrumo.Application.Requests;
 using NoPrumo.Application.Responses;
 using NoPrumo.Application.Services;
 using NoPrumo.Infrastructure.Data;
+using NoPrumo.Application.Extensions;
 
 namespace NoPrumo.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public sealed class AuthController(AppDbContext db, TokenService tokens) : ControllerBase
+public sealed class AuthController(AppDbContext appDbContext, TokenService tokenService, TimeProvider timeProvider) : ControllerBase
 {
     [HttpPost("login")]
     public async Task<ActionResult<LoginResponse>> Login(LoginRequest request)
     {
-        var user = await LoadWithRoleAsync(u => u.Username == request.Username);
+        var user = await LoadWithRoleAsync(candidate => candidate.Username == request.Username);
 
         // Mesma resposta para usuário inexistente e senha errada: dizer qual
         // dos dois falhou entrega metade da credencial a quem está tentando.
@@ -32,12 +33,12 @@ public sealed class AuthController(AppDbContext db, TokenService tokens) : Contr
             return Problem(statusCode: 403, detail: "This account is inactive. Talk to the administration.");
         }
 
-        user.LastLoginAt = DateTime.UtcNow;
-        await db.SaveChangesAsync();
+        user.LastLoginAt = timeProvider.Now();
+        await appDbContext.SaveChangesAsync();
 
-        var dto = UserDto.FromEntity(user);
+        var userDto = UserDto.FromEntity(user);
 
-        return Ok(new LoginResponse(tokens.Create(dto), dto));
+        return Ok(new LoginResponse(tokenService.Create(userDto), userDto));
     }
 
     [Authorize]
@@ -51,7 +52,7 @@ public sealed class AuthController(AppDbContext db, TokenService tokens) : Contr
 
         // O token diz quem é; o banco diz se ainda vale. Uma conta desativada
         // há cinco minutos continua com token válido por horas.
-        var user = await LoadWithRoleAsync(u => u.Id == userId);
+        var user = await LoadWithRoleAsync(candidate => candidate.Id == userId);
 
         if (user is null || user.Active != true)
         {
@@ -70,7 +71,7 @@ public sealed class AuthController(AppDbContext db, TokenService tokens) : Contr
             return Problem(statusCode: 401, detail: "Invalid token.");
         }
 
-        var user = await db.User.SingleOrDefaultAsync(u => u.Id == userId);
+        var user = await appDbContext.User.SingleOrDefaultAsync(candidate => candidate.Id == userId);
 
         if (user is null || user.Active != true)
         {
@@ -92,16 +93,16 @@ public sealed class AuthController(AppDbContext db, TokenService tokens) : Contr
 
         user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword, workFactor: 12);
         user.MustChangePassword = false;
-        await db.SaveChangesAsync();
+        await appDbContext.SaveChangesAsync();
 
         return NoContent();
     }
 
     private Task<Domain.Entities.User?> LoadWithRoleAsync(
         System.Linq.Expressions.Expression<Func<Domain.Entities.User, bool>> filter) =>
-        db.User
-            .Include(u => u.Role)
-                .ThenInclude(r => r.Permissions)
+        appDbContext.User
+            .Include(user => user.Role)
+                .ThenInclude(role => role.Permissions)
             .SingleOrDefaultAsync(filter);
 
     private bool TryGetUserId(out long userId)

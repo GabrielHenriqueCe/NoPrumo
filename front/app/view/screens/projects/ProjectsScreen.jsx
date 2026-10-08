@@ -7,20 +7,12 @@ import { Pagination } from '../../ui/Pagination'
 import { ProjectFormDialog } from './ProjectFormDialog'
 import { projectStatusLabel } from './projectStatus'
 
-/*
-  Projects (obra).
-
-  contractAmount: whoever lacks view_finance gets a different DTO from the API,
-  without the field. The API is the real gate; the screen only mirrors it, so
-  it does not draw an empty column nor a field that would be ignored.
-
-  "Late" comes ready from the API as `late`. The screen never compares dates.
-*/
+// Without view_finance the API sends a DTO with no contractAmount, so the column is not drawn.
 
 const PAGE_SIZE = 10
 const SEARCH_DEBOUNCE_MS = 350
 const EMPTY_PAGE = { items: [], page: 1, totalPages: 1, total: 0 }
-// Clients and employees feed the selects. 100 is the API's page cap.
+// 100 is the API's page cap.
 const LOOKUP_SIZE = 100
 
 const money = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -81,8 +73,7 @@ export function ProjectsScreen() {
     return () => controller.abort()
   }, [projects, page, appliedSearch, reloadToken])
 
-  // Lookups for the dialog. If either fails the select just comes empty —
-  // the list of projects still works.
+  // A failed lookup leaves its select empty; the list still works.
   useEffect(() => {
     const controller = new AbortController()
     const options = { signal: controller.signal }
@@ -289,6 +280,7 @@ export function ProjectsScreen() {
 
         {!loading && !loadError && (
           <Pagination
+            noun="project"
             page={data.page}
             totalPages={data.totalPages}
             total={data.total}

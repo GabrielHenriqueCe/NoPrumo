@@ -61,7 +61,7 @@ Decisões de negócio já fechadas, não preferências.
 ## Convenções
 
 - **Idioma:** código, banco e valor gravado em **inglês** (`'pending'`, não
-  `'pendente'`). Texto de tela e commit em **português**. Sigla brasileira não
+  `'pendente'`). Texto de tela em **inglês**; commit em **português**. Sigla brasileira não
   se traduz (`cno`, `crea_rt`, `ca`, `inss`). Glossário: obra = `Project` ·
   etapa = `Stage` · ficha de EPI = `PpeIssue` · empreitada = `Subcontract` ·
   setor = `Department` · função = `JobRole` · papel = `Role` · ponto =
@@ -121,3 +121,13 @@ disser que **entendeu** — dúvida e crítica vêm antes do próximo passo.
   Secrets, nunca no `appsettings.json`).
 - O Claude não roda migration. Referência:
   `dotnet ef database update --project back/03-Infrastructure --startup-project back/01-Presentation`
+
+## Skills do projeto
+
+Ficam em `.claude/skills/` e valem para o Claude Code de todos.
+
+- `/revisar-back`: confere o back contra as regras deste arquivo e aponta,
+  sem corrigir. Rodar na própria fatia antes de abrir o PR.
+- `/revisar-tela`: confere a tela contra o padrão do front (modelo: `projects/`
+  e `stages/`) e o básico de acessibilidade.
+- `depurar`: o método para caçar defeito (reproduzir, medir, corrigir a causa).
