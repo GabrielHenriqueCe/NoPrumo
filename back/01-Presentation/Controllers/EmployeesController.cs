@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using NoPrumo.Application.DTOs;
 using NoPrumo.Domain.Entities;
 using NoPrumo.Infrastructure.Data;
+using NoPrumo.Application.Services;
 
 namespace NoPrumo.Presentation.Controllers;
 
@@ -13,10 +14,12 @@ namespace NoPrumo.Presentation.Controllers;
 public class EmployeesController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly DocumentProcessor _documentProcessor;
 
-    public EmployeesController(AppDbContext context)
+    public EmployeesController(AppDbContext context, DocumentProcessor documentProcessor)
     {
         _context = context;
+        _documentProcessor = documentProcessor;
     }
 
     [HttpGet]
@@ -80,8 +83,11 @@ public class EmployeesController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateEmployeeRequest request)
     {
-        if (string.IsNullOrWhiteSpace(request.Name))
-            return BadRequest(new ProblemDetails { Detail = "Name is required." });
+        if (!string.IsNullOrWhiteSpace(request.Document) && !DocumentProcessor.IsValid(request.Document))
+        {
+            ModelState.AddModelError("document", "Invalid document format.");
+            return ValidationProblem(ModelState);
+        }
 
         var employee = new Employee
         {
@@ -89,14 +95,24 @@ public class EmployeesController : ControllerBase
             RegistrationNumber = request.RegistrationNumber,
             JobRoleId = request.JobRoleId,
             EmploymentRegimeId = request.EmploymentRegimeId,
-            PayRate = request.PayRate,
-            AdditionalPercentage = request.AdditionalPercentage,
             HireDate = request.HireDate,
             Phone = request.Phone,
-            // Apenas para fins didáticos, mascara os primeiros digitos
-            DocumentMasked = !string.IsNullOrWhiteSpace(request.Document) ? "***.***." + request.Document.Substring(Math.Max(0, request.Document.Length - 4)) : null,
             Active = true
         };
+
+        if (User.HasClaim("permission", "view_finance"))
+        {
+            employee.PayRate = request.PayRate;
+            employee.AdditionalPercentage = request.AdditionalPercentage;
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Document))
+        {
+            var processedDoc = _documentProcessor.Process(request.Document);
+            employee.DocumentMasked = processedDoc.Masked;
+            employee.DocumentHash = processedDoc.Hash;
+            employee.DocumentEncrypted = processedDoc.Encrypted;
+        }
 
         _context.Employees.Add(employee);
         await _context.SaveChangesAsync();
@@ -160,7 +176,16 @@ public class EmployeesController : ControllerBase
 
         if (!string.IsNullOrWhiteSpace(request.Document))
         {
-            employee.DocumentMasked = "***.***." + request.Document.Substring(Math.Max(0, request.Document.Length - 4));
+            if (!DocumentProcessor.IsValid(request.Document))
+            {
+                ModelState.AddModelError("document", "Invalid document format.");
+                return ValidationProblem(ModelState);
+            }
+
+            var processedDoc = _documentProcessor.Process(request.Document);
+            employee.DocumentMasked = processedDoc.Masked;
+            employee.DocumentHash = processedDoc.Hash;
+            employee.DocumentEncrypted = processedDoc.Encrypted;
         }
 
         await _context.SaveChangesAsync();
