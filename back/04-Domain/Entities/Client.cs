@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 
+using NoPrumo.Domain.Enums;
+
 namespace NoPrumo.Domain.Entities;
 
 public class Client
@@ -9,7 +11,7 @@ public class Client
 
     public string Name { get; set; } = null!;
 
-    public string PersonType { get; set; } = null!;
+    public PersonType PersonType { get; set; } = PersonType.Company;
 
     public byte[]? DocumentEncrypted { get; set; }
 

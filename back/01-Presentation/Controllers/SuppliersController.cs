@@ -2,19 +2,17 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NoPrumo.Application.DTOs;
+using NoPrumo.Application.DTOs.Requests;
 using NoPrumo.Application.Services;
 using NoPrumo.Domain.Entities;
 using NoPrumo.Infrastructure.Data;
 
 namespace NoPrumo.Controllers;
 
-/// <summary>
-/// Gestão de fornecedores.
-/// </summary>
 [ApiController]
 [Route("api/[controller]")]
 [Authorize(Policy = "manage_purchases")]
-public sealed class SuppliersController(AppDbContext db, DocumentSettings docSettings) : ControllerBase
+public sealed class SuppliersController(AppDbContext appDbContext, DocumentProcessor documentProcessor) : ControllerBase
 {
     private const int MaxPageSize = 100;
 
@@ -27,7 +25,7 @@ public sealed class SuppliersController(AppDbContext db, DocumentSettings docSet
         page = Math.Max(1, page);
         size = Math.Clamp(size, 1, MaxPageSize);
 
-        var query = db.Supplier
+        var query = appDbContext.Supplier
             .AsNoTracking()
             .AsQueryable();
 
@@ -35,23 +33,23 @@ public sealed class SuppliersController(AppDbContext db, DocumentSettings docSet
         {
             var term = search.Trim();
 
-            query = query.Where(s =>
-                s.Name.Contains(term) ||
-                (s.DocumentMasked != null && s.DocumentMasked.Contains(term)) ||
-                (s.Email != null && s.Email.Contains(term)) ||
-                (s.ContactName != null && s.ContactName.Contains(term)));
+            query = query.Where(supplier =>
+                supplier.Name.Contains(term) ||
+                (supplier.DocumentMasked != null && supplier.DocumentMasked.Contains(term)) ||
+                (supplier.Email != null && supplier.Email.Contains(term)) ||
+                (supplier.ContactName != null && supplier.ContactName.Contains(term)));
         }
 
         var total = await query.CountAsync();
 
         var items = await query
-            .OrderBy(s => s.Name)
+            .OrderBy(supplier => supplier.Name)
             .Skip((page - 1) * size)
             .Take(size)
             .ToListAsync();
 
         return Ok(new PagedResult<SupplierDto>(
-            items.Select(SupplierDto.FromEntity).ToArray(),
+            items.Select(MapToDto).ToArray(),
             page,
             size,
             total,
@@ -61,13 +59,13 @@ public sealed class SuppliersController(AppDbContext db, DocumentSettings docSet
     [HttpGet("{id:long}")]
     public async Task<ActionResult<SupplierDto>> GetById(long id)
     {
-        var supplier = await db.Supplier
+        var supplier = await appDbContext.Supplier
             .AsNoTracking()
-            .FirstOrDefaultAsync(s => s.Id == id);
+            .FirstOrDefaultAsync(supplier => supplier.Id == id);
 
         if (supplier is null) return NotFound();
 
-        return Ok(SupplierDto.FromEntity(supplier));
+        return Ok(MapToDto(supplier));
     }
 
     [HttpPost]
@@ -75,7 +73,7 @@ public sealed class SuppliersController(AppDbContext db, DocumentSettings docSet
     {
         ValidateSupplierInput(request.Name, request.Email, request.ContactName, request.Phone, request.City, request.State);
 
-        ProcessedDocument? processedDoc = null;
+        ProcessedDocument? processedDocument = null;
         if (!string.IsNullOrWhiteSpace(request.Document))
         {
             if (!DocumentProcessor.IsValid(request.Document))
@@ -84,8 +82,8 @@ public sealed class SuppliersController(AppDbContext db, DocumentSettings docSet
             }
             else
             {
-                processedDoc = DocumentProcessor.Process(request.Document, docSettings.EncryptionKey, docSettings.HmacKey);
-                if (processedDoc.Hash != null && await db.Supplier.AnyAsync(s => s.DocumentHash == processedDoc.Hash && s.DeletedAt == null))
+                processedDocument = documentProcessor.Process(request.Document);
+                if (processedDocument.Hash != null && await appDbContext.Supplier.AnyAsync(supplier => supplier.DocumentHash == processedDocument.Hash && supplier.DeletedAt == null))
                 {
                     ModelState.AddModelError("document", "This document is already registered.");
                 }
@@ -100,9 +98,9 @@ public sealed class SuppliersController(AppDbContext db, DocumentSettings docSet
         var supplier = new Supplier
         {
             Name = request.Name.Trim(),
-            DocumentEncrypted = processedDoc?.Encrypted,
-            DocumentHash = processedDoc?.Hash,
-            DocumentMasked = processedDoc?.Masked,
+            DocumentEncrypted = processedDocument?.Encrypted,
+            DocumentHash = processedDocument?.Hash,
+            DocumentMasked = processedDocument?.Masked,
             Email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim(),
             ContactName = string.IsNullOrWhiteSpace(request.ContactName) ? null : request.ContactName.Trim(),
             Phone = string.IsNullOrWhiteSpace(request.Phone) ? null : request.Phone.Trim(),
@@ -110,25 +108,23 @@ public sealed class SuppliersController(AppDbContext db, DocumentSettings docSet
             State = string.IsNullOrWhiteSpace(request.State) ? null : request.State.Trim().ToUpperInvariant(),
             Notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim(),
             Active = true,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow,
         };
 
-        db.Supplier.Add(supplier);
-        await db.SaveChangesAsync();
+        appDbContext.Supplier.Add(supplier);
+        await appDbContext.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(GetById), new { id = supplier.Id }, SupplierDto.FromEntity(supplier));
+        return CreatedAtAction(nameof(GetById), new { id = supplier.Id }, MapToDto(supplier));
     }
 
     [HttpPut("{id:long}")]
     public async Task<ActionResult<SupplierDto>> Update(long id, UpdateSupplierRequest request)
     {
-        var supplier = await db.Supplier.SingleOrDefaultAsync(s => s.Id == id);
+        var supplier = await appDbContext.Supplier.SingleOrDefaultAsync(supplier => supplier.Id == id);
         if (supplier is null) return NotFound();
 
         ValidateSupplierInput(request.Name, request.Email, request.ContactName, request.Phone, request.City, request.State);
 
-        ProcessedDocument? processedDoc = null;
+        ProcessedDocument? processedDocument = null;
         bool hasNewDocument = !string.IsNullOrWhiteSpace(request.Document);
 
         if (hasNewDocument)
@@ -139,8 +135,8 @@ public sealed class SuppliersController(AppDbContext db, DocumentSettings docSet
             }
             else
             {
-                processedDoc = DocumentProcessor.Process(request.Document, docSettings.EncryptionKey, docSettings.HmacKey);
-                if (processedDoc.Hash != null && await db.Supplier.AnyAsync(s => s.DocumentHash == processedDoc.Hash && s.Id != id && s.DeletedAt == null))
+                processedDocument = documentProcessor.Process(request.Document);
+                if (processedDocument.Hash != null && await appDbContext.Supplier.AnyAsync(supplier => supplier.DocumentHash == processedDocument.Hash && supplier.Id != id && supplier.DeletedAt == null))
                 {
                     ModelState.AddModelError("document", "This document is already registered.");
                 }
@@ -154,11 +150,11 @@ public sealed class SuppliersController(AppDbContext db, DocumentSettings docSet
 
         supplier.Name = request.Name.Trim();
 
-        if (hasNewDocument && processedDoc != null)
+        if (hasNewDocument && processedDocument != null)
         {
-            supplier.DocumentEncrypted = processedDoc.Encrypted;
-            supplier.DocumentHash = processedDoc.Hash;
-            supplier.DocumentMasked = processedDoc.Masked;
+            supplier.DocumentEncrypted = processedDocument.Encrypted;
+            supplier.DocumentHash = processedDocument.Hash;
+            supplier.DocumentMasked = processedDocument.Masked;
         }
 
         supplier.Email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim();
@@ -167,23 +163,21 @@ public sealed class SuppliersController(AppDbContext db, DocumentSettings docSet
         supplier.City = string.IsNullOrWhiteSpace(request.City) ? null : request.City.Trim();
         supplier.State = string.IsNullOrWhiteSpace(request.State) ? null : request.State.Trim().ToUpperInvariant();
         supplier.Notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim();
-        supplier.UpdatedAt = DateTime.UtcNow;
 
-        await db.SaveChangesAsync();
+        await appDbContext.SaveChangesAsync();
 
-        return Ok(SupplierDto.FromEntity(supplier));
+        return Ok(MapToDto(supplier));
     }
 
     [HttpPatch("{id:long}/activate")]
     public async Task<IActionResult> Activate(long id)
     {
-        var supplier = await db.Supplier.SingleOrDefaultAsync(s => s.Id == id);
+        var supplier = await appDbContext.Supplier.SingleOrDefaultAsync(supplier => supplier.Id == id);
         if (supplier is null) return NotFound();
 
         supplier.Active = true;
         supplier.DeletedAt = null;
-        supplier.UpdatedAt = DateTime.UtcNow;
-        await db.SaveChangesAsync();
+        await appDbContext.SaveChangesAsync();
 
         return NoContent();
     }
@@ -191,16 +185,27 @@ public sealed class SuppliersController(AppDbContext db, DocumentSettings docSet
     [HttpPatch("{id:long}/deactivate")]
     public async Task<IActionResult> Deactivate(long id)
     {
-        var supplier = await db.Supplier.SingleOrDefaultAsync(s => s.Id == id);
+        var supplier = await appDbContext.Supplier.SingleOrDefaultAsync(supplier => supplier.Id == id);
         if (supplier is null) return NotFound();
 
         supplier.Active = false;
         supplier.DeletedAt = DateTime.UtcNow;
-        supplier.UpdatedAt = DateTime.UtcNow;
-        await db.SaveChangesAsync();
+        await appDbContext.SaveChangesAsync();
 
         return NoContent();
     }
+
+    private static SupplierDto MapToDto(Supplier supplier) => new(
+        supplier.Id,
+        supplier.Name,
+        supplier.DocumentMasked,
+        supplier.ContactName,
+        supplier.Phone,
+        supplier.Email,
+        supplier.City,
+        supplier.State,
+        supplier.Notes,
+        supplier.Active ?? (supplier.DeletedAt == null));
 
     private void ValidateSupplierInput(
         string name, string? email, string? contactName,

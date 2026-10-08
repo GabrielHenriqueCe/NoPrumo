@@ -2,19 +2,18 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NoPrumo.Application.DTOs;
+using NoPrumo.Application.DTOs.Requests;
 using NoPrumo.Application.Services;
 using NoPrumo.Domain.Entities;
+using NoPrumo.Domain.Enums;
 using NoPrumo.Infrastructure.Data;
 
 namespace NoPrumo.Controllers;
 
-/// <summary>
-/// Gestão de clientes.
-/// </summary>
 [ApiController]
 [Route("api/[controller]")]
 [Authorize(Policy = "manage_projects")]
-public sealed class ClientsController(AppDbContext db, DocumentSettings docSettings) : ControllerBase
+public sealed class ClientsController(AppDbContext appDbContext, DocumentProcessor documentProcessor) : ControllerBase
 {
     private const int MaxPageSize = 100;
 
@@ -27,7 +26,7 @@ public sealed class ClientsController(AppDbContext db, DocumentSettings docSetti
         page = Math.Max(1, page);
         size = Math.Clamp(size, 1, MaxPageSize);
 
-        var query = db.Client
+        var query = appDbContext.Client
             .AsNoTracking()
             .AsQueryable();
 
@@ -35,23 +34,23 @@ public sealed class ClientsController(AppDbContext db, DocumentSettings docSetti
         {
             var term = search.Trim();
 
-            query = query.Where(c =>
-                c.Name.Contains(term) ||
-                (c.DocumentMasked != null && c.DocumentMasked.Contains(term)) ||
-                (c.Email != null && c.Email.Contains(term)) ||
-                (c.ContactName != null && c.ContactName.Contains(term)));
+            query = query.Where(client =>
+                client.Name.Contains(term) ||
+                (client.DocumentMasked != null && client.DocumentMasked.Contains(term)) ||
+                (client.Email != null && client.Email.Contains(term)) ||
+                (client.ContactName != null && client.ContactName.Contains(term)));
         }
 
         var total = await query.CountAsync();
 
         var items = await query
-            .OrderBy(c => c.Name)
+            .OrderBy(client => client.Name)
             .Skip((page - 1) * size)
             .Take(size)
             .ToListAsync();
 
         return Ok(new PagedResult<ClientDto>(
-            items.Select(ClientDto.FromEntity).ToArray(),
+            items.Select(MapToDto).ToArray(),
             page,
             size,
             total,
@@ -61,13 +60,13 @@ public sealed class ClientsController(AppDbContext db, DocumentSettings docSetti
     [HttpGet("{id:long}")]
     public async Task<ActionResult<ClientDto>> GetById(long id)
     {
-        var client = await db.Client
+        var client = await appDbContext.Client
             .AsNoTracking()
-            .FirstOrDefaultAsync(c => c.Id == id);
+            .FirstOrDefaultAsync(client => client.Id == id);
 
         if (client is null) return NotFound();
 
-        return Ok(ClientDto.FromEntity(client));
+        return Ok(MapToDto(client));
     }
 
     [HttpPost]
@@ -77,7 +76,7 @@ public sealed class ClientsController(AppDbContext db, DocumentSettings docSetti
             request.Phone, request.Mobile, request.Street, request.Number, request.Complement,
             request.District, request.City, request.State, request.PostalCode);
 
-        ProcessedDocument? processedDoc = null;
+        ProcessedDocument? processedDocument = null;
         if (!string.IsNullOrWhiteSpace(request.Document))
         {
             if (!DocumentProcessor.IsValid(request.Document))
@@ -86,8 +85,8 @@ public sealed class ClientsController(AppDbContext db, DocumentSettings docSetti
             }
             else
             {
-                processedDoc = DocumentProcessor.Process(request.Document, docSettings.EncryptionKey, docSettings.HmacKey);
-                if (processedDoc.Hash != null && await db.Client.AnyAsync(c => c.DocumentHash == processedDoc.Hash && c.DeletedAt == null))
+                processedDocument = documentProcessor.Process(request.Document);
+                if (processedDocument.Hash != null && await appDbContext.Client.AnyAsync(client => client.DocumentHash == processedDocument.Hash && client.DeletedAt == null))
                 {
                     ModelState.AddModelError("document", "This document is already registered.");
                 }
@@ -99,15 +98,17 @@ public sealed class ClientsController(AppDbContext db, DocumentSettings docSetti
             return ValidationProblem(ModelState);
         }
 
-        var personType = string.IsNullOrWhiteSpace(request.PersonType) ? "company" : request.PersonType.Trim().ToLowerInvariant();
+        var personType = Enum.TryParse<PersonType>(request.PersonType, true, out var parsedType)
+            ? parsedType
+            : PersonType.Company;
 
         var client = new Client
         {
             Name = request.Name.Trim(),
             PersonType = personType,
-            DocumentEncrypted = processedDoc?.Encrypted,
-            DocumentHash = processedDoc?.Hash,
-            DocumentMasked = processedDoc?.Masked,
+            DocumentEncrypted = processedDocument?.Encrypted,
+            DocumentHash = processedDocument?.Hash,
+            DocumentMasked = processedDocument?.Masked,
             Email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim(),
             ContactName = string.IsNullOrWhiteSpace(request.ContactName) ? null : request.ContactName.Trim(),
             Phone = string.IsNullOrWhiteSpace(request.Phone) ? null : request.Phone.Trim(),
@@ -120,27 +121,25 @@ public sealed class ClientsController(AppDbContext db, DocumentSettings docSetti
             State = string.IsNullOrWhiteSpace(request.State) ? null : request.State.Trim().ToUpperInvariant(),
             PostalCode = string.IsNullOrWhiteSpace(request.PostalCode) ? null : request.PostalCode.Trim(),
             Notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim(),
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow,
         };
 
-        db.Client.Add(client);
-        await db.SaveChangesAsync();
+        appDbContext.Client.Add(client);
+        await appDbContext.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(GetById), new { id = client.Id }, ClientDto.FromEntity(client));
+        return CreatedAtAction(nameof(GetById), new { id = client.Id }, MapToDto(client));
     }
 
     [HttpPut("{id:long}")]
     public async Task<ActionResult<ClientDto>> Update(long id, UpdateClientRequest request)
     {
-        var client = await db.Client.SingleOrDefaultAsync(c => c.Id == id);
+        var client = await appDbContext.Client.SingleOrDefaultAsync(client => client.Id == id);
         if (client is null) return NotFound();
 
         ValidateClientInput(request.Name, request.PersonType, request.Email, request.ContactName,
             request.Phone, request.Mobile, request.Street, request.Number, request.Complement,
             request.District, request.City, request.State, request.PostalCode);
 
-        ProcessedDocument? processedDoc = null;
+        ProcessedDocument? processedDocument = null;
         bool hasNewDocument = !string.IsNullOrWhiteSpace(request.Document);
 
         if (hasNewDocument)
@@ -151,8 +150,8 @@ public sealed class ClientsController(AppDbContext db, DocumentSettings docSetti
             }
             else
             {
-                processedDoc = DocumentProcessor.Process(request.Document, docSettings.EncryptionKey, docSettings.HmacKey);
-                if (processedDoc.Hash != null && await db.Client.AnyAsync(c => c.DocumentHash == processedDoc.Hash && c.Id != id && c.DeletedAt == null))
+                processedDocument = documentProcessor.Process(request.Document);
+                if (processedDocument.Hash != null && await appDbContext.Client.AnyAsync(client => client.DocumentHash == processedDocument.Hash && client.Id != id && client.DeletedAt == null))
                 {
                     ModelState.AddModelError("document", "This document is already registered.");
                 }
@@ -164,16 +163,18 @@ public sealed class ClientsController(AppDbContext db, DocumentSettings docSetti
             return ValidationProblem(ModelState);
         }
 
-        var personType = string.IsNullOrWhiteSpace(request.PersonType) ? "company" : request.PersonType.Trim().ToLowerInvariant();
+        var personType = Enum.TryParse<PersonType>(request.PersonType, true, out var parsedType)
+            ? parsedType
+            : PersonType.Company;
 
         client.Name = request.Name.Trim();
         client.PersonType = personType;
 
-        if (hasNewDocument && processedDoc != null)
+        if (hasNewDocument && processedDocument != null)
         {
-            client.DocumentEncrypted = processedDoc.Encrypted;
-            client.DocumentHash = processedDoc.Hash;
-            client.DocumentMasked = processedDoc.Masked;
+            client.DocumentEncrypted = processedDocument.Encrypted;
+            client.DocumentHash = processedDocument.Hash;
+            client.DocumentMasked = processedDocument.Masked;
         }
 
         client.Email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim();
@@ -188,22 +189,20 @@ public sealed class ClientsController(AppDbContext db, DocumentSettings docSetti
         client.State = string.IsNullOrWhiteSpace(request.State) ? null : request.State.Trim().ToUpperInvariant();
         client.PostalCode = string.IsNullOrWhiteSpace(request.PostalCode) ? null : request.PostalCode.Trim();
         client.Notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim();
-        client.UpdatedAt = DateTime.UtcNow;
 
-        await db.SaveChangesAsync();
+        await appDbContext.SaveChangesAsync();
 
-        return Ok(ClientDto.FromEntity(client));
+        return Ok(MapToDto(client));
     }
 
     [HttpPatch("{id:long}/activate")]
     public async Task<IActionResult> Activate(long id)
     {
-        var client = await db.Client.SingleOrDefaultAsync(c => c.Id == id);
+        var client = await appDbContext.Client.SingleOrDefaultAsync(client => client.Id == id);
         if (client is null) return NotFound();
 
         client.DeletedAt = null;
-        client.UpdatedAt = DateTime.UtcNow;
-        await db.SaveChangesAsync();
+        await appDbContext.SaveChangesAsync();
 
         return NoContent();
     }
@@ -211,15 +210,33 @@ public sealed class ClientsController(AppDbContext db, DocumentSettings docSetti
     [HttpPatch("{id:long}/deactivate")]
     public async Task<IActionResult> Deactivate(long id)
     {
-        var client = await db.Client.SingleOrDefaultAsync(c => c.Id == id);
+        var client = await appDbContext.Client.SingleOrDefaultAsync(client => client.Id == id);
         if (client is null) return NotFound();
 
         client.DeletedAt = DateTime.UtcNow;
-        client.UpdatedAt = DateTime.UtcNow;
-        await db.SaveChangesAsync();
+        await appDbContext.SaveChangesAsync();
 
         return NoContent();
     }
+
+    private static ClientDto MapToDto(Client client) => new(
+        client.Id,
+        client.Name,
+        client.PersonType.ToString().ToLowerInvariant(),
+        client.DocumentMasked,
+        client.Email,
+        client.ContactName,
+        client.Phone,
+        client.Mobile,
+        client.Street,
+        client.Number,
+        client.Complement,
+        client.District,
+        client.City,
+        client.State,
+        client.PostalCode,
+        client.Notes,
+        client.DeletedAt == null);
 
     private void ValidateClientInput(
         string name, string? personType, string? email, string? contactName,
