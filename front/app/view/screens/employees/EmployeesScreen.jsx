@@ -14,12 +14,14 @@ export function EmployeesScreen() {
     const [search, setSearch] = useState('');
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingEmployee, setEditingEmployee] = useState(null);
+    const [total, setTotal] = useState(0);
 
     const loadEmployees = async () => {
         try {
             const response = await employees.list({ page, size, search });
             setEmployeesList(response.items);
             setTotalPages(response.totalPages);
+            setTotal(response.total);
         } catch (error) {
             console.error("Error loading employees", error);
         }
@@ -79,7 +81,7 @@ export function EmployeesScreen() {
                 </tbody>
             </table>
 
-            <Pagination current={page} total={totalPages} onPageChange={setPage} />
+            <Pagination page={page} totalPages={totalPages} total={total} onChange={setPage} />
 
             {isDialogOpen && (
                 <EmployeeFormDialog 
