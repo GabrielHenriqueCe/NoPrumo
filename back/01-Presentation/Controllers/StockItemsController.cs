@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NoPrumo.Application.DTOs;
+using NoPrumo.Application.Requests;
 using NoPrumo.Application.Services;
 using NoPrumo.Domain.Entities;
 using NoPrumo.Infrastructure.Data;
@@ -18,9 +19,9 @@ namespace NoPrumo.Controllers;
 /// quem decide, a tela é só a primeira barreira.
 /// </summary>
 [ApiController]
-[Route("api/[controller]")] // vira /api/stockitems
+[Route("api/[controller]")]
 [Authorize(Policy = "view_stock")]
-public sealed class StockItemsController(AppDbContext db) : ControllerBase
+public sealed class StockItemsController(AppDbContext appDbContext) : ControllerBase
 {
     private const int MaxPageSize = 100;
 
@@ -36,26 +37,26 @@ public sealed class StockItemsController(AppDbContext db) : ControllerBase
         page = Math.Max(1, page);
         size = Math.Clamp(size, 1, MaxPageSize);
 
-        var query = db.StockItem
+        var query = appDbContext.StockItem
             .AsNoTracking()
-            .Include(i => i.StockGroup)
+            .Include(item => item.StockGroup)
             .AsQueryable();
 
         if (stockGroupId is not null)
         {
-            query = query.Where(i => i.StockGroupId == stockGroupId);
+            query = query.Where(item => item.StockGroupId == stockGroupId);
         }
 
         if (!string.IsNullOrWhiteSpace(search))
         {
             var term = search.Trim();
-            query = query.Where(i => i.Name.Contains(term) || (i.Code != null && i.Code.Contains(term)));
+            query = query.Where(item => item.Name.Contains(term) || (item.Code != null && item.Code.Contains(term)));
         }
 
         var total = await query.CountAsync();
 
         var items = await query
-            .OrderBy(i => i.Name)
+            .OrderBy(item => item.Name)
             .Skip((page - 1) * size)
             .Take(size)
             .ToListAsync();
@@ -63,8 +64,8 @@ public sealed class StockItemsController(AppDbContext db) : ControllerBase
         // O tipo do item muda conforme quem pergunta — por isso o corpo é
         // montado aqui em vez de deixar o ActionResult<T> genérico decidir.
         object dtoItems = CanSeePrice
-            ? items.Select(StockItemWithPriceDto.FromEntity).ToArray()
-            : items.Select(StockItemDto.FromEntity).ToArray();
+            ? items.Select(ToDtoWithPrice).ToArray()
+            : items.Select(ToDto).ToArray();
 
         return Ok(new
         {
@@ -98,20 +99,20 @@ public sealed class StockItemsController(AppDbContext db) : ControllerBase
             ReferencePrice = CanSeePrice ? (request.ReferencePrice ?? 0) : 0,
         };
 
-        db.StockItem.Add(item);
-        await db.SaveChangesAsync();
-        item.StockGroup = group; // evita um SELECT extra só para montar o DTO
+        appDbContext.StockItem.Add(item);
+        await appDbContext.SaveChangesAsync();
+        item.StockGroup = group;
 
-        return StatusCode(StatusCodes.Status201Created, ToDto(item));
+        return StatusCode(StatusCodes.Status201Created, ToResponseDto(item));
     }
 
     [HttpPut("{id:long}")]
     [Authorize(Policy = "manage_stock")]
     public async Task<IActionResult> Update(long id, UpdateStockItemRequest request)
     {
-        var item = await db.StockItem
-            .Include(i => i.StockGroup)
-            .SingleOrDefaultAsync(i => i.Id == id);
+        var item = await appDbContext.StockItem
+            .Include(item => item.StockGroup)
+            .SingleOrDefaultAsync(item => item.Id == id);
 
         if (item is null) return NotFound();
 
@@ -135,9 +136,9 @@ public sealed class StockItemsController(AppDbContext db) : ControllerBase
             item.ReferencePrice = request.ReferencePrice.Value;
         }
 
-        await db.SaveChangesAsync();
+        await appDbContext.SaveChangesAsync();
 
-        return Ok(ToDto(item));
+        return Ok(ToResponseDto(item));
     }
 
     [HttpPatch("{id:long}/activate")]
@@ -150,20 +151,27 @@ public sealed class StockItemsController(AppDbContext db) : ControllerBase
 
     private async Task<IActionResult> SetActiveAsync(long id, bool active)
     {
-        var item = await db.StockItem.SingleOrDefaultAsync(i => i.Id == id);
+        var item = await appDbContext.StockItem.SingleOrDefaultAsync(item => item.Id == id);
 
         if (item is null) return NotFound();
 
         item.Active = active;
-        await db.SaveChangesAsync();
+        await appDbContext.SaveChangesAsync();
 
         return NoContent();
     }
 
-    private object ToDto(StockItem item) =>
-        CanSeePrice ? StockItemWithPriceDto.FromEntity(item) : StockItemDto.FromEntity(item);
+    private object ToResponseDto(StockItem item) =>
+        CanSeePrice ? ToDtoWithPrice(item) : ToDto(item);
 
-    // Valida campos e devolve o grupo (ou null, já com os erros no ModelState).
+    private static StockItemDto ToDto(StockItem item) => new(
+        item.Id, item.StockGroupId, item.StockGroup.Name, item.Code, item.Name, item.Unit,
+        item.MinQuantity, item.Ca, item.CaExpiryDate, item.Active ?? true);
+
+    private static StockItemWithPriceDto ToDtoWithPrice(StockItem item) => new(
+        item.Id, item.StockGroupId, item.StockGroup.Name, item.Code, item.Name, item.Unit,
+        item.MinQuantity, item.ReferencePrice, item.Ca, item.CaExpiryDate, item.Active ?? true);
+
     private async Task<StockGroup?> ValidateAsync(
         string name, string unit, decimal minQuantity, long stockGroupId, decimal? referencePrice)
     {
@@ -190,7 +198,9 @@ public sealed class StockItemsController(AppDbContext db) : ControllerBase
             ModelState.AddModelError("referencePrice", "Price cannot be negative.");
         }
 
-        var group = await db.StockGroup.Include(g => g.StockCategory).SingleOrDefaultAsync(g => g.Id == stockGroupId);
+        var group = await appDbContext.StockGroup
+            .Include(group => group.StockCategory)
+            .SingleOrDefaultAsync(group => group.Id == stockGroupId);
 
         if (group is null)
         {
