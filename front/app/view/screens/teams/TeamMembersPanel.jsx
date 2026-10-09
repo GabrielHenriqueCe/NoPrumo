@@ -3,22 +3,11 @@ import { useContainer } from '../../providers/containerContext'
 import { Button } from '../../ui/Button'
 import { SelectField } from '../../ui/SelectField'
 import { TextField } from '../../ui/TextField'
-import { formatDate, todayIso } from './format'
+import { formatDate, todayIso } from '../../format/dates'
 
-/*
-  The members tab: who is on the team now, and who was before.
+// Nobody is removed: ending a stint fills its end date and the row becomes history.
 
-  Nobody is removed. Ending a stint fills its end date and moves the row to
-  the history, which is what answers "who was on this team in March" months
-  later. Someone who comes back gets a new stint, starting after the last one
-  ended.
-
-  Every add and every end is saved the moment it is confirmed — this tab has
-  no "save" of its own.
-*/
-
-// The employee list comes in pages of up to 100; the cap only stops a
-// runaway loop if the API ever answered nonsense.
+// The API serves at most 100 per page; the page cap only stops a runaway loop.
 const EMPLOYEE_PAGE_SIZE = 100
 const MAX_EMPLOYEE_PAGES = 50
 
@@ -36,11 +25,7 @@ export function TeamMembersPanel({ team, onChanged, onDone }) {
 
   const reload = useCallback(() => setReloadToken((value) => value + 1), [])
 
-  /*
-    Only the first load shows the skeleton. After an add or an end the lists
-    stay on screen while the new answer arrives, instead of blinking out
-    under the person's cursor.
-  */
+  // Only the first load shows the skeleton, so the lists don't blink on every add or end.
   useEffect(() => {
     const controller = new AbortController()
     setLoadError(null)
@@ -52,15 +37,12 @@ export function TeamMembersPanel({ team, onChanged, onDone }) {
         setLoaded(true)
       })
       .catch((error) => {
-        // An aborted request is this effect being replaced, not a failure.
         if (!controller.signal.aborted) setLoadError(error.message ?? 'Could not load the members.')
       })
 
     return () => controller.abort()
   }, [teams, team.id, reloadToken])
 
-  // Employees come from slice 2. Until someone registers one the picker is
-  // empty — which is the right answer, not an error.
   useEffect(() => {
     const controller = new AbortController()
 
@@ -76,14 +58,12 @@ export function TeamMembersPanel({ team, onChanged, onDone }) {
   const current = useMemo(() => members.filter((member) => member.endDate == null), [members])
   const past = useMemo(() => members.filter((member) => member.endDate != null), [members])
 
-  // Active employees who are not on the team right now. The API refuses the
-  // rest anyway; this only keeps them out of the list.
   const candidates = useMemo(() => {
     const onTeam = new Set(current.map((member) => member.employeeId))
 
     return employeeList
       .filter((employee) => employee.active && !onTeam.has(employee.id))
-      .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
+      .sort((first, second) => first.name.localeCompare(second.name, 'pt-BR'))
   }, [employeeList, current])
 
   const changed = () => {
@@ -92,7 +72,6 @@ export function TeamMembersPanel({ team, onChanged, onDone }) {
     onChanged?.()
   }
 
-  // The row's form goes away; the focus goes back to the button that opened it.
   const cancelEnding = (employeeId) => {
     setEndingId(null)
     setTimeout(() => endButtons.current[employeeId]?.focus(), 0)
@@ -136,8 +115,8 @@ export function TeamMembersPanel({ team, onChanged, onDone }) {
                 <caption className="sr-only">Current members</caption>
                 <thead>
                   <tr className="border-b border-line text-left">
-                    <Th>Employee</Th>
-                    <Th>Since</Th>
+                    <HeaderCell>Employee</HeaderCell>
+                    <HeaderCell>Since</HeaderCell>
                     <th className="py-2" />
                   </tr>
                 </thead>
@@ -199,8 +178,8 @@ export function TeamMembersPanel({ team, onChanged, onDone }) {
                 <caption className="sr-only">Past members</caption>
                 <thead>
                   <tr className="border-b border-line text-left">
-                    <Th>Employee</Th>
-                    <Th>Period</Th>
+                    <HeaderCell>Employee</HeaderCell>
+                    <HeaderCell>Period</HeaderCell>
                   </tr>
                 </thead>
 
@@ -261,7 +240,6 @@ function AddMemberForm({ teamId, candidates, employeesError, onAdded }) {
       setForm((current) => ({ ...current, employeeId: '' }))
       onAdded()
     } catch (error) {
-      // The API is the one that validates. The form only shows where it hurt.
       if (error.isValidation) setFieldErrors(error.fieldErrors)
       else setFormError(error.message ?? 'Could not add the member.')
     } finally {
@@ -324,7 +302,6 @@ function AddMemberForm({ teamId, candidates, employeesError, onAdded }) {
 function EndStintForm({ teamId, member, onEnded, onCancel }) {
   const { teams } = useContainer()
 
-  // Today — unless the stint only starts later than that.
   const [endDate, setEndDate] = useState(() => {
     const today = todayIso()
     return member.startDate > today ? member.startDate : today
@@ -344,7 +321,7 @@ function EndStintForm({ teamId, member, onEnded, onCancel }) {
 
     try {
       await teams.endMember(teamId, member.employeeId, endDate || null)
-      // On success this form goes away with the row it belongs to.
+      // No setBusy(false) on success: this form unmounts with its row.
       onEnded()
     } catch (failure) {
       setError(failure.fieldErrors?.endDate ?? failure.message ?? 'Could not end the stint.')
@@ -357,8 +334,7 @@ function EndStintForm({ teamId, member, onEnded, onCancel }) {
       onSubmit={submit}
       noValidate
       onKeyDown={(event) => {
-        // Escape cancels this row only. Left alone it would reach the dialog
-        // and close the whole thing.
+        // Without stopPropagation, Escape would also close the whole dialog.
         if (event.key === 'Escape') {
           event.stopPropagation()
           onCancel()
@@ -406,7 +382,7 @@ function EmployeeCell({ member }) {
   )
 }
 
-function Th({ children }) {
+function HeaderCell({ children }) {
   return <th className="label py-2 pr-3 font-normal">{children}</th>
 }
 
@@ -420,10 +396,6 @@ function ListSkeleton() {
   )
 }
 
-/*
-  Every employee, page by page: the picker needs the whole list, and the API
-  serves it in pages.
-*/
 async function listAllEmployees(employees, signal) {
   const all = []
 

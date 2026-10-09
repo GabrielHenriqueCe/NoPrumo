@@ -3,17 +3,8 @@ import { Button } from '../../ui/Button'
 import { Dialog } from '../../ui/Dialog'
 import { TextField } from '../../ui/TextField'
 
-/*
-  Create or edit a training type.
-
-  Validity and minimum workload are optional on purpose: a driving licence
-  has no workload, a CIPA mandate has no fixed validity. Blank goes to the
-  API as null, which is how it reads "does not apply".
-
-  The API is the one that validates. The only check made here is that both
-  numbers are whole: "1.5" would not even reach the validation — it fails to
-  convert on the way in and comes back as a technical message.
-*/
+// Validity and workload are optional (a CNH has no workload): blank goes as null.
+// The only local check is "whole number": "1.5" fails JSON conversion with a technical message.
 
 const EMPTY = {
   code: '',
@@ -79,7 +70,6 @@ export function TrainingTypeFormDialog({ open, trainingType, onClose, onSubmit }
         requiresInPerson: form.requiresInPerson,
       })
     } catch (error) {
-      // The API is the one that validates. The form only shows where it hurt.
       if (error.isValidation) setFieldErrors(error.fieldErrors)
       else setFormError(error.message ?? 'Could not save the training type.')
     } finally {

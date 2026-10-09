@@ -6,15 +6,6 @@ import { Pagination } from '../../ui/Pagination'
 import { SelectField } from '../../ui/SelectField'
 import { TeamFormDialog } from './TeamFormDialog'
 
-/*
-  Teams: who works together, inside a department. The team dialog carries a
-  second tab with the members, because a member is not something anyone
-  registers on its own — it only exists inside a team.
-
-  A team is switched off, never deleted, and the API refuses to switch off
-  one that still has people in it: each member leaves with their own date,
-  and only whoever runs the team knows which.
-*/
 
 const PAGE_SIZE = 10
 const SEARCH_DEBOUNCE_MS = 350
@@ -42,7 +33,6 @@ export function TeamsScreen() {
 
   const reload = useCallback(() => setReloadToken((value) => value + 1), [])
 
-  // Typing should not fire a request per keystroke; it waits for a pause.
   useEffect(() => {
     const timer = setTimeout(() => {
       setAppliedSearch(search.trim())
@@ -64,7 +54,6 @@ export function TeamsScreen() {
       )
       .then((result) => setData(result))
       .catch((error) => {
-        // An aborted request is this effect being replaced, not a failure.
         if (!controller.signal.aborted) setLoadError(error.message ?? 'Could not load teams.')
       })
       .finally(() => {
@@ -74,19 +63,14 @@ export function TeamsScreen() {
     return () => controller.abort()
   }, [teams, page, appliedSearch, departmentFilter, reloadToken])
 
-  /*
-    Departments feed the filter and the form's dropdown; fetched once, not on
-    every list refresh. They come from slice 2: until someone registers one,
-    this list is empty and so is the dropdown — which is the right answer.
-    That API returns them in no particular order, so they are sorted here.
-  */
+  // The departments API returns them unordered.
   useEffect(() => {
     const controller = new AbortController()
 
     departments
       .list({ page: 1, size: 100 }, { signal: controller.signal })
       .then((result) =>
-        setDepartmentList([...result.items].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))),
+        setDepartmentList([...result.items].sort((first, second) => first.name.localeCompare(second.name, 'pt-BR'))),
       )
       .catch(() => {
         if (!controller.signal.aborted) setDepartmentList([])
@@ -95,9 +79,7 @@ export function TeamsScreen() {
     return () => controller.abort()
   }, [departments])
 
-  // Kept stable on purpose: the dialog moves the focus back to its first
-  // control whenever onClose changes, and the list reloads behind it while
-  // members are added.
+  // Stable on purpose: the Dialog refocuses its first control whenever onClose changes.
   const closeForm = useCallback(() => {
     setFormOpen(false)
     setEditingTeam(null)
@@ -128,8 +110,7 @@ export function TeamsScreen() {
       await teams.update(editingTeam.id, values)
       closeForm()
     } else {
-      // A new team is empty. The dialog stays open on the members tab, which
-      // is the next thing anyone does with it.
+      // A new team is empty: the dialog stays open on the members tab.
       const created = await teams.create(values)
       setEditingTeam(created)
       setDialogTab('members')
@@ -215,10 +196,10 @@ export function TeamsScreen() {
               <caption className="sr-only">Registered teams</caption>
               <thead>
                 <tr className="border-b border-line bg-cream-soft text-left">
-                  <Th>Name</Th>
-                  <Th>Department</Th>
-                  <Th>Members</Th>
-                  <Th>Status</Th>
+                  <HeaderCell>Name</HeaderCell>
+                  <HeaderCell>Department</HeaderCell>
+                  <HeaderCell>Members</HeaderCell>
+                  <HeaderCell>Status</HeaderCell>
                   <th className="px-4 py-3" />
                 </tr>
               </thead>
@@ -305,14 +286,10 @@ export function TeamsScreen() {
   )
 }
 
-function Th({ children }) {
+function HeaderCell({ children }) {
   return <th className="label px-4 py-3 font-normal">{children}</th>
 }
 
-/*
-  Placeholder rows instead of a spinner: the table keeps its shape while it
-  loads, so the page does not jump when the data lands.
-*/
 function TableSkeleton() {
   return (
     <div className="p-4" role="status" aria-label="Loading teams">

@@ -5,17 +5,7 @@ import { SelectField } from '../../ui/SelectField'
 import { TextField } from '../../ui/TextField'
 import { TeamMembersPanel } from './TeamMembersPanel'
 
-/*
-  Create or edit a team, with its members on a second tab.
-
-  The members tab only exists once the team does: a stint hangs off the
-  team's id. That is why creating a team keeps the dialog open and moves
-  straight to members — it is the next thing anyone does with a new team.
-
-  Each tab saves on its own. Details go with "Save changes"; on the members
-  tab every add and every end is one call to the API, made the moment it is
-  confirmed, so closing the dialog never loses anything.
-*/
+// Members hang off the team's id, so the members tab only exists once the team does.
 
 const EMPTY = { name: '', departmentId: '' }
 
@@ -43,12 +33,8 @@ export function TeamFormDialog({
   const [formError, setFormError] = useState(null)
   const [busy, setBusy] = useState(false)
 
-  /*
-    Closing is refused while a save is in flight, through a ref instead of
-    swapping onClose for undefined: the dialog moves the focus back to its
-    first control every time onClose changes, which here would yank it off
-    the tab the person is on.
-  */
+  // Closing is blocked through a ref, not by swapping onClose: the Dialog
+  // refocuses its first control whenever onClose changes.
   const busyRef = useRef(false)
   useEffect(() => {
     busyRef.current = busy
@@ -66,16 +52,14 @@ export function TeamFormDialog({
     setTab(team ? initialTab : 'details')
   }, [open, team, initialTab])
 
-  // The dialog focuses its first control, which is the first tab. Whoever
-  // opened it on "Members" (or just created the team) should land there.
+  // The Dialog focuses the first tab; whoever opened "Members" should land there.
   useEffect(() => {
     if (!open || !team) return undefined
     const timer = setTimeout(() => tabRefs.current[tab]?.focus(), 0)
     return () => clearTimeout(timer)
   }, [open, team, tab])
 
-  // An inactive department takes no new team, but a team that is already in
-  // one keeps showing it — otherwise the dropdown would quietly go blank.
+  // An inactive department takes no new team, but a team already in one keeps showing it.
   const departmentOptions = departments
     .filter((department) => department.active || department.id === team?.departmentId)
     .map((department) => ({
@@ -100,7 +84,6 @@ export function TeamFormDialog({
         departmentId: form.departmentId ? Number(form.departmentId) : null,
       })
     } catch (error) {
-      // The API is the one that validates. The form only shows where it hurt.
       if (error.isValidation) setFieldErrors(error.fieldErrors)
       else setFormError(error.message ?? 'Could not save the team.')
     } finally {
@@ -108,7 +91,6 @@ export function TeamFormDialog({
     }
   }
 
-  // Arrow keys move between tabs, as in any tab list; Tab moves into the panel.
   const onTabKeyDown = (event) => {
     if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return
     event.preventDefault()

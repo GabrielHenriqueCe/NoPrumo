@@ -5,26 +5,15 @@ import { Button } from '../../ui/Button'
 import { Pagination } from '../../ui/Pagination'
 import { SelectField } from '../../ui/SelectField'
 import { EmployeeTrainingFormDialog } from './EmployeeTrainingFormDialog'
-import { formatDate, modalityLabel, statusBadge } from './format'
+import { formatDate } from '../../format/dates'
+import { modalityLabel, statusBadge } from './trainingLabels'
 
-/*
-  Trainings: the certificate record of each employee — NR courses, the ASO
-  and the rest. Each row is one certificate.
-
-  The expiry date and the status come from the API. The screen never works
-  out when something expires, or whether it already has: that arithmetic is
-  the back's, done once, in the place that will also feed the "NR expiring"
-  alert.
-
-  Nothing here is deleted or switched off: the table has neither column, and
-  a certificate is history.
-*/
+// Expiry date and status come from the API; the screen never works them out.
 
 const PAGE_SIZE = 10
 const SEARCH_DEBOUNCE_MS = 350
 
-// The employee list comes in pages of up to 100; the cap only stops a
-// runaway loop if the API ever answered nonsense.
+// The API serves at most 100 per page; the page cap only stops a runaway loop.
 const EMPLOYEE_PAGE_SIZE = 100
 const MAX_EMPLOYEE_PAGES = 50
 
@@ -50,7 +39,6 @@ export function EmployeeTrainingsScreen() {
 
   const reload = useCallback(() => setReloadToken((value) => value + 1), [])
 
-  // Typing should not fire a request per keystroke; it waits for a pause.
   useEffect(() => {
     const timer = setTimeout(() => {
       setAppliedSearch(search.trim())
@@ -72,7 +60,6 @@ export function EmployeeTrainingsScreen() {
       )
       .then((result) => setData(result))
       .catch((error) => {
-        // An aborted request is this effect being replaced, not a failure.
         if (!controller.signal.aborted) setLoadError(error.message ?? 'Could not load trainings.')
       })
       .finally(() => {
@@ -82,12 +69,7 @@ export function EmployeeTrainingsScreen() {
     return () => controller.abort()
   }, [employeeTrainings, page, appliedSearch, typeFilter, reloadToken])
 
-  /*
-    Employees and training types fill the filter and the form's dropdowns;
-    fetched once, each on its own so one failing does not empty the other.
-    Employees come from slice 2 — empty until someone registers one, which is
-    the right answer, not an error.
-  */
+  // Loaded separately so one failing does not empty the other.
   useEffect(() => {
     const controller = new AbortController()
     const fail = (error) => {
@@ -104,8 +86,7 @@ export function EmployeeTrainingsScreen() {
     return () => controller.abort()
   }, [employees, trainingTypes])
 
-  // Kept stable on purpose: the dialog moves the focus back to its first
-  // field whenever onClose changes, and this screen re-renders on every load.
+  // Stable on purpose: the Dialog refocuses its first field whenever onClose changes.
   const closeForm = useCallback(() => {
     setFormOpen(false)
     setEditingTraining(null)
@@ -204,12 +185,12 @@ export function EmployeeTrainingsScreen() {
               <caption className="sr-only">Recorded trainings</caption>
               <thead>
                 <tr className="border-b border-line bg-cream-soft text-left">
-                  <Th>Employee</Th>
-                  <Th>Training</Th>
-                  <Th>Issued</Th>
-                  <Th>Expires</Th>
-                  <Th>Workload</Th>
-                  <Th>Modality</Th>
+                  <HeaderCell>Employee</HeaderCell>
+                  <HeaderCell>Training</HeaderCell>
+                  <HeaderCell>Issued</HeaderCell>
+                  <HeaderCell>Expires</HeaderCell>
+                  <HeaderCell>Workload</HeaderCell>
+                  <HeaderCell>Modality</HeaderCell>
                   <th className="px-4 py-3" />
                 </tr>
               </thead>
@@ -286,14 +267,10 @@ export function EmployeeTrainingsScreen() {
   )
 }
 
-function Th({ children }) {
+function HeaderCell({ children }) {
   return <th className="label px-4 py-3 font-normal">{children}</th>
 }
 
-/*
-  Placeholder rows instead of a spinner: the table keeps its shape while it
-  loads, so the page does not jump when the data lands.
-*/
 function TableSkeleton() {
   return (
     <div className="p-4" role="status" aria-label="Loading trainings">
@@ -304,10 +281,6 @@ function TableSkeleton() {
   )
 }
 
-/*
-  Every employee, page by page: the form's dropdown needs the whole list, and
-  the API serves it in pages.
-*/
 async function listAllEmployees(employees, signal) {
   const all = []
 

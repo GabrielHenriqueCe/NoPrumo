@@ -709,7 +709,8 @@ public class AppDbContext : DbContext
             entity.Property(e => e.Instructor)
                 .HasMaxLength(160);
             entity.Property(e => e.Modality)
-                .HasMaxLength(20);
+                .HasMaxLength(20)
+                .HasConversion<SnakeCaseEnumConverter<TrainingModality>>();
             entity.Property(e => e.CertificateNumber)
                 .HasMaxLength(80);
             entity.Property(e => e.Notes)

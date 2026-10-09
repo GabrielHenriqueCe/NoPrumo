@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NoPrumo.Application.DTOs;
+using NoPrumo.Application.Requests;
 using NoPrumo.Domain.Entities;
 using NoPrumo.Infrastructure.Data;
 
@@ -18,7 +19,7 @@ namespace NoPrumo.Controllers;
 [ApiController]
 [Route("api/[controller]")] // vira /api/trainingtypes
 [Authorize(Policy = "manage_safety")]
-public sealed class TrainingTypesController(AppDbContext db) : ControllerBase
+public sealed class TrainingTypesController(AppDbContext appDbContext) : ControllerBase
 {
     private const int MaxPageSize = 100;
 
@@ -36,24 +37,24 @@ public sealed class TrainingTypesController(AppDbContext db) : ControllerBase
         page = Math.Max(1, page);
         size = Math.Clamp(size, 1, MaxPageSize);
 
-        var query = db.TrainingType.AsNoTracking().AsQueryable();
+        var query = appDbContext.TrainingType.AsNoTracking().AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(search))
         {
             var term = search.Trim();
-            query = query.Where(t => t.Code.Contains(term) || t.Name.Contains(term));
+            query = query.Where(trainingType => trainingType.Code.Contains(term) || trainingType.Name.Contains(term));
         }
 
         var total = await query.CountAsync();
 
         var items = await query
-            .OrderBy(t => t.Code)
+            .OrderBy(trainingType => trainingType.Code)
             .Skip((page - 1) * size)
             .Take(size)
             .ToListAsync();
 
         return Ok(new PagedResult<TrainingTypeDto>(
-            items.Select(TrainingTypeDto.FromEntity).ToArray(),
+            items.Select(ToDto).ToArray(),
             page,
             size,
             total,
@@ -63,15 +64,15 @@ public sealed class TrainingTypesController(AppDbContext db) : ControllerBase
     [HttpGet("{id:long}")]
     public async Task<ActionResult<TrainingTypeDto>> GetById(long id)
     {
-        var type = await db.TrainingType.AsNoTracking().SingleOrDefaultAsync(t => t.Id == id);
+        var type = await appDbContext.TrainingType.AsNoTracking().SingleOrDefaultAsync(trainingType => trainingType.Id == id);
 
         if (type is null) return NotFound();
 
-        return Ok(TrainingTypeDto.FromEntity(type));
+        return Ok(ToDto(type));
     }
 
     [HttpPost]
-    public async Task<ActionResult<TrainingTypeDto>> Create(CreateTrainingTypeRequest request)
+    public async Task<ActionResult<TrainingTypeDto>> Create(SaveTrainingTypeRequest request)
     {
         var code = NormalizeCode(request.Code);
         var name = request.Name?.Trim() ?? string.Empty;
@@ -88,16 +89,16 @@ public sealed class TrainingTypesController(AppDbContext db) : ControllerBase
             RequiresInPerson = request.RequiresInPerson,
         };
 
-        db.TrainingType.Add(type);
-        await db.SaveChangesAsync();
+        appDbContext.TrainingType.Add(type);
+        await appDbContext.SaveChangesAsync();
 
-        return StatusCode(StatusCodes.Status201Created, TrainingTypeDto.FromEntity(type));
+        return StatusCode(StatusCodes.Status201Created, ToDto(type));
     }
 
     [HttpPut("{id:long}")]
-    public async Task<ActionResult<TrainingTypeDto>> Update(long id, UpdateTrainingTypeRequest request)
+    public async Task<ActionResult<TrainingTypeDto>> Update(long id, SaveTrainingTypeRequest request)
     {
-        var type = await db.TrainingType.SingleOrDefaultAsync(t => t.Id == id);
+        var type = await appDbContext.TrainingType.SingleOrDefaultAsync(trainingType => trainingType.Id == id);
 
         if (type is null) return NotFound();
 
@@ -113,9 +114,9 @@ public sealed class TrainingTypesController(AppDbContext db) : ControllerBase
         type.MinWorkloadHours = request.MinWorkloadHours;
         type.RequiresInPerson = request.RequiresInPerson;
 
-        await db.SaveChangesAsync();
+        await appDbContext.SaveChangesAsync();
 
-        return Ok(TrainingTypeDto.FromEntity(type));
+        return Ok(ToDto(type));
     }
 
     // Código de norma se escreve em maiúscula (NR-35, ASO). Normalizar aqui
@@ -136,7 +137,7 @@ public sealed class TrainingTypesController(AppDbContext db) : ControllerBase
         {
             ModelState.AddModelError("code", "Use at most 30 characters.");
         }
-        else if (await db.TrainingType.AnyAsync(t => t.Code == code && t.Id != ignoreId))
+        else if (await appDbContext.TrainingType.AnyAsync(trainingType => trainingType.Code == code && trainingType.Id != ignoreId))
         {
             // O índice único do banco recusaria do mesmo jeito; aqui a recusa
             // chega com o campo, em vez de virar erro 500.
@@ -168,4 +169,14 @@ public sealed class TrainingTypesController(AppDbContext db) : ControllerBase
                 $"Use 1 to {MaxWorkloadHours} hours, or leave it blank if there is no minimum.");
         }
     }
+
+    private static TrainingTypeDto ToDto(TrainingType trainingType) => new()
+    {
+        Id = trainingType.Id,
+        Code = trainingType.Code,
+        Name = trainingType.Name,
+        ValidityMonths = trainingType.ValidityMonths,
+        MinWorkloadHours = trainingType.MinWorkloadHours,
+        RequiresInPerson = trainingType.RequiresInPerson,
+    };
 }

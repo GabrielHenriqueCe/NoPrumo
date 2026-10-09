@@ -20,4 +20,8 @@ public class TrainingType
     public string? Notes { get; set; }
 
     public virtual ICollection<EmployeeTraining> EmployeeTrainings { get; set; } = new List<EmployeeTraining>();
+
+    // Sem validade (CNH, CREA), o certificado não vence.
+    public DateOnly? ExpiryFor(DateOnly issueDate) =>
+        ValidityMonths is { } months ? issueDate.AddMonths(months) : null;
 }
