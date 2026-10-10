@@ -9,6 +9,7 @@ import { EmployeesScreen } from './screens/employees/EmployeesScreen'
 import { EmployeeTrainingsScreen } from './screens/employeeTrainings/EmployeeTrainingsScreen'
 import { EmploymentRegimesScreen } from './screens/employmentRegimes/EmploymentRegimesScreen'
 import { JobRolesScreen } from './screens/jobRoles/JobRolesScreen'
+import { PortalScreen } from './screens/portal/PortalScreen'
 import { ProjectsScreen } from './screens/projects/ProjectsScreen'
 import { StagesScreen } from './screens/stages/StagesScreen'
 import { StockCategoriesScreen } from './screens/stockCategories/StockCategoriesScreen'
@@ -63,6 +64,7 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<LoginScreen />} />
+      <Route path="/portal/:token" element={<PortalScreen />} />
 
       <Route
         path="/change-password"
