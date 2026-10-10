@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 
+using System.Linq;
+
 namespace NoPrumo.Domain.Entities;
 
 public class Employee
@@ -62,4 +64,14 @@ public class Employee
     public virtual EmploymentRegime? EmploymentRegime { get; set; }
 
     public virtual ICollection<User> Users { get; set; } = new List<User>();
+
+    // Só o certificado mais recente de cada tipo vale: um NR-35 vencido que já
+    // foi renovado não está mais vencendo. Exige EmployeeTrainings carregado.
+    public IEnumerable<EmployeeTraining> LatestTrainings() =>
+        EmployeeTrainings
+            .GroupBy(training => training.TrainingTypeId)
+            .Select(trainings => trainings
+                .OrderByDescending(training => training.IssueDate)
+                .ThenByDescending(training => training.Id)
+                .First());
 }

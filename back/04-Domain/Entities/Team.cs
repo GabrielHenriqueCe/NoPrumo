@@ -26,4 +26,6 @@ public class Team
     public virtual ICollection<EmployeeTeam> EmployeeTeams { get; set; } = new List<EmployeeTeam>();
 
     public virtual Department Department { get; set; } = null!;
+
+    public bool IsActive() => DeletedAt is null;
 }
