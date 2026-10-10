@@ -231,7 +231,7 @@ public sealed class TeamsController(AppDbContext appDbContext) : ControllerBase
         // funcionário não rastreado faria o EF tentar inseri-lo de novo.
         var employee = request.EmployeeId is null
             ? null
-            : await appDbContext.Employees.SingleOrDefaultAsync(employee => employee.Id == request.EmployeeId);
+            : await appDbContext.Employee.SingleOrDefaultAsync(employee => employee.Id == request.EmployeeId);
 
         if (employee is null)
         {

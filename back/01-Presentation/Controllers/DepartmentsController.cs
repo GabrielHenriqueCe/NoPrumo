@@ -26,7 +26,7 @@ public class DepartmentsController : ControllerBase
         page = Math.Max(1, page);
         size = Math.Clamp(size, 1, 100);
 
-        var query = _context.Departments.AsQueryable();
+        var query = _context.Department.AsNoTracking();
 
         if (!string.IsNullOrWhiteSpace(search))
         {
@@ -52,13 +52,21 @@ public class DepartmentsController : ControllerBase
         return Ok(new PagedResult<DepartmentDto>(items, page, size, total, totalPages));
     }
 
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetById(long id)
+    {
+        var department = await _context.Department.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
+        if (department == null) return NotFound();
+        return Ok(new DepartmentDto { Id = department.Id, Name = department.Name, Active = department.Active });
+    }
+
     [HttpPost]
     public async Task<ActionResult<DepartmentDto>> Create([FromBody] CreateDepartmentRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Name))
             return BadRequest(new ProblemDetails { Detail = "Name is required." });
 
-        if (await _context.Departments.AnyAsync(department => department.Name == request.Name))
+        if (await _context.Department.AnyAsync(department => department.Name == request.Name))
         {
             ModelState.AddModelError("name", "Name already exists.");
             return ValidationProblem(ModelState);
@@ -70,22 +78,22 @@ public class DepartmentsController : ControllerBase
             Active = true
         };
 
-        _context.Departments.Add(department);
+        _context.Department.Add(department);
         await _context.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(Get), new { id = department.Id }, new DepartmentDto { Id = department.Id, Name = department.Name, Active = department.Active });
+        return CreatedAtAction(nameof(GetById), new { id = department.Id }, new DepartmentDto { Id = department.Id, Name = department.Name, Active = department.Active });
     }
 
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(long id, [FromBody] UpdateDepartmentRequest request)
     {
-        var department = await _context.Departments.FindAsync(id);
+        var department = await _context.Department.FindAsync(id);
         if (department == null) return NotFound();
 
         if (string.IsNullOrWhiteSpace(request.Name))
             return BadRequest(new ProblemDetails { Detail = "Name is required." });
 
-        if (await _context.Departments.AnyAsync(department => department.Name == request.Name && department.Id != id))
+        if (await _context.Department.AnyAsync(department => department.Name == request.Name && department.Id != id))
         {
             ModelState.AddModelError("name", "Name already exists.");
             return ValidationProblem(ModelState);
@@ -100,7 +108,7 @@ public class DepartmentsController : ControllerBase
     [HttpPatch("{id}/activate")]
     public async Task<IActionResult> Activate(long id)
     {
-        var department = await _context.Departments.FindAsync(id);
+        var department = await _context.Department.FindAsync(id);
         if (department == null) return NotFound();
 
         department.Active = true;
@@ -111,7 +119,7 @@ public class DepartmentsController : ControllerBase
     [HttpPatch("{id}/deactivate")]
     public async Task<IActionResult> Deactivate(long id)
     {
-        var department = await _context.Departments.FindAsync(id);
+        var department = await _context.Department.FindAsync(id);
         if (department == null) return NotFound();
 
         department.Active = false;

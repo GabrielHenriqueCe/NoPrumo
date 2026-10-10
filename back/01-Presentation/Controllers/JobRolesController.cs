@@ -25,7 +25,7 @@ public class JobRolesController : ControllerBase
     {
         page = Math.Max(1, page);
         size = Math.Clamp(size, 1, 100);
-        var query = _context.JobRoles.AsQueryable();
+        var query = _context.JobRole.AsNoTracking();
 
         if (!string.IsNullOrWhiteSpace(search))
         {
@@ -52,6 +52,14 @@ public class JobRolesController : ControllerBase
         return Ok(new PagedResult<JobRoleDto>(items, page, size, total, totalPages));
     }
 
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetById(long id)
+    {
+        var jobRole = await _context.JobRole.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
+        if (jobRole == null) return NotFound();
+        return Ok(new JobRoleDto { Id = jobRole.Id, Name = jobRole.Name, DepartmentId = jobRole.DepartmentId, Active = jobRole.Active });
+    }
+
     [HttpPost]
     public async Task<ActionResult<JobRoleDto>> Create([FromBody] CreateJobRoleRequest request)
     {
@@ -59,11 +67,11 @@ public class JobRolesController : ControllerBase
             return BadRequest(new ProblemDetails { Detail = "Name is required." });
 
         // Valida se o Setor existe
-        var departmentExists = await _context.Departments.AnyAsync(d => d.Id == request.DepartmentId);
+        var departmentExists = await _context.Department.AnyAsync(d => d.Id == request.DepartmentId);
         if (!departmentExists)
             return BadRequest(new ProblemDetails { Detail = "Invalid DepartmentId." });
 
-        if (await _context.JobRoles.AnyAsync(jobRole => jobRole.Name == request.Name && jobRole.DepartmentId == request.DepartmentId))
+        if (await _context.JobRole.AnyAsync(jobRole => jobRole.Name == request.Name && jobRole.DepartmentId == request.DepartmentId))
         {
             ModelState.AddModelError("name", "Name already exists in this department.");
             return ValidationProblem(ModelState);
@@ -76,28 +84,28 @@ public class JobRolesController : ControllerBase
             Active = true
         };
 
-        _context.JobRoles.Add(jobRole);
+        _context.JobRole.Add(jobRole);
         await _context.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(Get), new { id = jobRole.Id }, new JobRoleDto { Id = jobRole.Id, Name = jobRole.Name, DepartmentId = jobRole.DepartmentId, Active = jobRole.Active });
+        return CreatedAtAction(nameof(GetById), new { id = jobRole.Id }, new JobRoleDto { Id = jobRole.Id, Name = jobRole.Name, DepartmentId = jobRole.DepartmentId, Active = jobRole.Active });
     }
 
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(long id, [FromBody] UpdateJobRoleRequest request)
     {
-        var jobRole = await _context.JobRoles.FindAsync(id);
+        var jobRole = await _context.JobRole.FindAsync(id);
         if (jobRole == null) return NotFound();
 
         if (string.IsNullOrWhiteSpace(request.Name))
             return BadRequest(new ProblemDetails { Detail = "Name is required." });
 
-        if (!await _context.Departments.AnyAsync(department => department.Id == request.DepartmentId))
+        if (!await _context.Department.AnyAsync(department => department.Id == request.DepartmentId))
         {
             ModelState.AddModelError("departmentId", "Department not found.");
             return ValidationProblem(ModelState);
         }
 
-        if (await _context.JobRoles.AnyAsync(jobRole => jobRole.Name == request.Name && jobRole.DepartmentId == request.DepartmentId && jobRole.Id != id))
+        if (await _context.JobRole.AnyAsync(jobRole => jobRole.Name == request.Name && jobRole.DepartmentId == request.DepartmentId && jobRole.Id != id))
         {
             ModelState.AddModelError("name", "Name already exists in this department.");
             return ValidationProblem(ModelState);
@@ -113,7 +121,7 @@ public class JobRolesController : ControllerBase
     [HttpPatch("{id}/activate")]
     public async Task<IActionResult> Activate(long id)
     {
-        var jobRole = await _context.JobRoles.FindAsync(id);
+        var jobRole = await _context.JobRole.FindAsync(id);
         if (jobRole == null) return NotFound();
 
         jobRole.Active = true;
@@ -124,7 +132,7 @@ public class JobRolesController : ControllerBase
     [HttpPatch("{id}/deactivate")]
     public async Task<IActionResult> Deactivate(long id)
     {
-        var jobRole = await _context.JobRoles.FindAsync(id);
+        var jobRole = await _context.JobRole.FindAsync(id);
         if (jobRole == null) return NotFound();
 
         jobRole.Active = false;

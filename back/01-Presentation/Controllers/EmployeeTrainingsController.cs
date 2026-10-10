@@ -202,7 +202,7 @@ public sealed class EmployeeTrainingsController(AppDbContext appDbContext, TimeP
         // um objeto não rastreado faria o EF tentar inseri-lo de novo.
         var employee = employeeId is null
             ? null
-            : await appDbContext.Employees.SingleOrDefaultAsync(employee => employee.Id == employeeId);
+            : await appDbContext.Employee.SingleOrDefaultAsync(employee => employee.Id == employeeId);
 
         if (employee is null)
         {

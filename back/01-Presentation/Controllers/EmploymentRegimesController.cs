@@ -25,7 +25,7 @@ public class EmploymentRegimesController : ControllerBase
     {
         page = Math.Max(1, page);
         size = Math.Clamp(size, 1, 100);
-        var query = _context.EmploymentRegimes.AsQueryable();
+        var query = _context.EmploymentRegime.AsNoTracking();
 
         if (!string.IsNullOrWhiteSpace(search))
         {
@@ -54,13 +54,21 @@ public class EmploymentRegimesController : ControllerBase
         return Ok(new PagedResult<EmploymentRegimeDto>(items, page, size, total, totalPages));
     }
 
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetById(long id)
+    {
+        var regime = await _context.EmploymentRegime.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
+        if (regime == null) return NotFound();
+        return Ok(new EmploymentRegimeDto { Id = regime.Id, Label = regime.Label, Unit = regime.Unit, MonthlyHours = regime.MonthlyHours, Description = regime.Description, Active = regime.Active });
+    }
+
     [HttpPost]
     public async Task<ActionResult<EmploymentRegimeDto>> Create([FromBody] CreateEmploymentRegimeRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Label))
             return BadRequest(new ProblemDetails { Detail = "Label is required." });
 
-        if (await _context.EmploymentRegimes.AnyAsync(regime => regime.Label == request.Label))
+        if (await _context.EmploymentRegime.AnyAsync(regime => regime.Label == request.Label))
         {
             ModelState.AddModelError("label", "Label already exists.");
             return ValidationProblem(ModelState);
@@ -78,10 +86,10 @@ public class EmploymentRegimesController : ControllerBase
             Active = true
         };
 
-        _context.EmploymentRegimes.Add(regime);
+        _context.EmploymentRegime.Add(regime);
         await _context.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(Get), new { id = regime.Id }, new EmploymentRegimeDto 
+        return CreatedAtAction(nameof(GetById), new { id = regime.Id }, new EmploymentRegimeDto 
         { 
             Id = regime.Id, Label = regime.Label, Unit = regime.Unit, 
             MonthlyHours = regime.MonthlyHours, Description = regime.Description, Active = regime.Active 
@@ -91,13 +99,13 @@ public class EmploymentRegimesController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(long id, [FromBody] UpdateEmploymentRegimeRequest request)
     {
-        var regime = await _context.EmploymentRegimes.FindAsync(id);
+        var regime = await _context.EmploymentRegime.FindAsync(id);
         if (regime == null) return NotFound();
 
         if (string.IsNullOrWhiteSpace(request.Label))
             return BadRequest(new ProblemDetails { Detail = "Label is required." });
 
-        if (await _context.EmploymentRegimes.AnyAsync(regime => regime.Label == request.Label && regime.Id != id))
+        if (await _context.EmploymentRegime.AnyAsync(regime => regime.Label == request.Label && regime.Id != id))
         {
             ModelState.AddModelError("label", "Label already exists.");
             return ValidationProblem(ModelState);
@@ -118,7 +126,7 @@ public class EmploymentRegimesController : ControllerBase
     [HttpPatch("{id}/activate")]
     public async Task<IActionResult> Activate(long id)
     {
-        var regime = await _context.EmploymentRegimes.FindAsync(id);
+        var regime = await _context.EmploymentRegime.FindAsync(id);
         if (regime == null) return NotFound();
 
         regime.Active = true;
@@ -129,7 +137,7 @@ public class EmploymentRegimesController : ControllerBase
     [HttpPatch("{id}/deactivate")]
     public async Task<IActionResult> Deactivate(long id)
     {
-        var regime = await _context.EmploymentRegimes.FindAsync(id);
+        var regime = await _context.EmploymentRegime.FindAsync(id);
         if (regime == null) return NotFound();
 
         regime.Active = false;
