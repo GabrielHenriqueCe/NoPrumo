@@ -16,6 +16,8 @@
   advertise what the person cannot open.
 */
 
+export const SCHEDULE_PERMISSIONS = ['manage_projects', 'manage_safety']
+
 export const MENU = [
   {
     heading: 'Master data',
@@ -41,5 +43,9 @@ export const MENU = [
       { to: '/training-types', label: 'Training types', permission: 'manage_safety' },
       { to: '/trainings', label: 'Trainings', permission: 'manage_safety' },
     ],
+  },
+  {
+    heading: 'Planning',
+    items: [{ to: '/schedule', label: 'Schedule', permission: SCHEDULE_PERMISSIONS }],
   },
 ]
