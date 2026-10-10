@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using NoPrumo.Domain.Enums;
 
 namespace NoPrumo.Domain.Entities;
 
@@ -15,7 +16,7 @@ public class PurchaseRequest
 
     public DateOnly? NeededByDate { get; set; }
 
-    public string Status { get; set; } = null!;
+    public PurchaseRequestStatus Status { get; set; }
 
     public string? Notes { get; set; }
 
@@ -36,4 +37,46 @@ public class PurchaseRequest
     public virtual ICollection<PurchaseRequestItem> Items { get; set; } = new List<PurchaseRequestItem>();
 
     public virtual User? RequestedByUser { get; set; }
+
+    public bool Approve(long decidedByUserId, DateTime decidedAtUtc)
+    {
+        if (Status != PurchaseRequestStatus.Pending)
+        {
+            return false;
+        }
+
+        Status = PurchaseRequestStatus.Approved;
+        DecidedBy = decidedByUserId;
+        DecidedAt = decidedAtUtc;
+        RejectionReason = null;
+        UpdatedAt = decidedAtUtc;
+        return true;
+    }
+
+    public bool Reject(long decidedByUserId, DateTime decidedAtUtc, string reason)
+    {
+        if (Status != PurchaseRequestStatus.Pending)
+        {
+            return false;
+        }
+
+        Status = PurchaseRequestStatus.Rejected;
+        DecidedBy = decidedByUserId;
+        DecidedAt = decidedAtUtc;
+        RejectionReason = reason;
+        UpdatedAt = decidedAtUtc;
+        return true;
+    }
+
+    public bool MarkPurchased(DateTime purchasedAtUtc)
+    {
+        if (Status != PurchaseRequestStatus.Approved)
+        {
+            return false;
+        }
+
+        Status = PurchaseRequestStatus.Purchased;
+        UpdatedAt = purchasedAtUtc;
+        return true;
+    }
 }
