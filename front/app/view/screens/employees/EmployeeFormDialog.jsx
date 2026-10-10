@@ -20,7 +20,8 @@ export function EmployeeFormDialog({ employee, onClose, onSave, canViewFinance }
     const [document, setDocument] = useState(''); // Documento vem limpo no frontend
     
     const [active, setActive] = useState(employee ? employee.active : true);
-    const [errors, setErrors] = useState(null);
+    const [fieldErrors, setFieldErrors] = useState({});
+    const [formError, setFormError] = useState(null);
 
     const [rolesList, setRolesList] = useState([]);
     const [regimesList, setRegimesList] = useState([]);
@@ -44,7 +45,8 @@ export function EmployeeFormDialog({ employee, onClose, onSave, canViewFinance }
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setErrors(null);
+        setFieldErrors({});
+        setFormError(null);
         try {
             const payload = {
                 name,
@@ -69,8 +71,10 @@ export function EmployeeFormDialog({ employee, onClose, onSave, canViewFinance }
             }
             onSave();
         } catch (error) {
-            if (error.payload && error.payload.errors) {
-                setErrors(error.payload.errors);
+            if (error.isValidation) {
+                setFieldErrors(error.fieldErrors);
+            } else {
+                setFormError(error.message || 'An unexpected error occurred.');
             }
         }
     };
@@ -78,8 +82,9 @@ export function EmployeeFormDialog({ employee, onClose, onSave, canViewFinance }
     return (
         <Dialog open={true} title={employee ? "Edit Employee" : "New Employee"} onClose={onClose}>
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                {formError && <div className="p-3 bg-red-100 text-red-700 rounded text-sm">{formError}</div>}
                 <div className="grid grid-cols-2 gap-4">
-                    <TextField label="Name" value={name} onChange={e => setName(e.target.value)} error={errors?.Name?.join(', ')} />
+                    <TextField label="Name" value={name} onChange={e => setName(e.target.value)} error={fieldErrors.name} />
                     <TextField label="Registration Number" value={registrationNumber} onChange={e => setRegistrationNumber(e.target.value)} />
                 </div>
 

@@ -83,6 +83,12 @@ public class EmployeesController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateEmployeeRequest request)
     {
+        if (string.IsNullOrWhiteSpace(request.Name))
+        {
+            ModelState.AddModelError("name", "The Name field is required.");
+            return ValidationProblem(ModelState);
+        }
+
         if (!string.IsNullOrWhiteSpace(request.Document) && !DocumentProcessor.IsValid(request.Document))
         {
             ModelState.AddModelError("document", "Invalid document format.");
@@ -156,6 +162,12 @@ public class EmployeesController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(long id, [FromBody] UpdateEmployeeRequest request)
     {
+        if (string.IsNullOrWhiteSpace(request.Name))
+        {
+            ModelState.AddModelError("name", "The Name field is required.");
+            return ValidationProblem(ModelState);
+        }
+
         var employee = await _context.Employees.FindAsync(id);
         if (employee == null) return NotFound();
 

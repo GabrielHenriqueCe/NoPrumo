@@ -11,11 +11,13 @@ export function EmploymentRegimeFormDialog({ regime, onClose, onSave }) {
     const [monthlyHours, setMonthlyHours] = useState(regime && regime.monthlyHours ? regime.monthlyHours : '');
     const [description, setDescription] = useState(regime && regime.description ? regime.description : '');
     const [active, setActive] = useState(regime ? regime.active : true);
-    const [errors, setErrors] = useState(null);
+    const [fieldErrors, setFieldErrors] = useState({});
+    const [formError, setFormError] = useState(null);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setErrors(null);
+        setFieldErrors({});
+        setFormError(null);
         try {
             const payload = { 
                 label, 
@@ -32,10 +34,10 @@ export function EmploymentRegimeFormDialog({ regime, onClose, onSave }) {
             }
             onSave();
         } catch (error) {
-            if (error.payload && error.payload.errors) {
-                setErrors(error.payload.errors);
-            } else if (error.errors) {
-                setErrors(error.errors);
+            if (error.isValidation) {
+                setFieldErrors(error.fieldErrors);
+            } else {
+                setFormError(error.message || 'An unexpected error occurred.');
             }
         }
     };
@@ -43,11 +45,12 @@ export function EmploymentRegimeFormDialog({ regime, onClose, onSave }) {
     return (
         <Dialog open={true} title={regime ? "Edit Regime" : "New Regime"} onClose={onClose}>
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                {formError && <div className="p-3 bg-red-100 text-red-700 rounded text-sm">{formError}</div>}
                 <TextField 
                     label="Label (e.g. CLT, PJ)" 
                     value={label} 
                     onChange={e => setLabel(e.target.value)} 
-                    error={errors?.Label?.join(', ')}
+                    error={fieldErrors.name}
                 />
 
                 <div className="flex flex-col gap-1">
@@ -61,7 +64,7 @@ export function EmploymentRegimeFormDialog({ regime, onClose, onSave }) {
                         <option value="hour">Hour</option>
                         <option value="day">Day</option>
                     </select>
-                    {errors?.Unit && <span className="text-danger text-sm">{errors.Unit.join(', ')}</span>}
+                    {fieldErrors.unit && <span className="text-danger text-sm">{fieldErrors.unit.join(', ')}</span>}
                 </div>
 
                 <TextField 
@@ -70,7 +73,7 @@ export function EmploymentRegimeFormDialog({ regime, onClose, onSave }) {
                     step="0.01"
                     value={monthlyHours} 
                     onChange={e => setMonthlyHours(e.target.value)} 
-                    error={errors?.MonthlyHours?.join(', ')}
+                    error={fieldErrors.monthlyHours}
                 />
 
                 <div className="flex flex-col gap-1">

@@ -11,7 +11,8 @@ export function JobRoleFormDialog({ jobRole, onClose, onSave }) {
     const [active, setActive] = useState(jobRole ? jobRole.active : true);
     
     const [departmentsList, setDepartmentsList] = useState([]);
-    const [errors, setErrors] = useState(null);
+    const [fieldErrors, setFieldErrors] = useState({});
+    const [formError, setFormError] = useState(null);
 
     // Carrega a lista de Setores para o Select
     useEffect(() => {
@@ -35,7 +36,8 @@ export function JobRoleFormDialog({ jobRole, onClose, onSave }) {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setErrors(null);
+        setFieldErrors({});
+        setFormError(null);
         try {
             const payload = { 
                 name, 
@@ -50,10 +52,10 @@ export function JobRoleFormDialog({ jobRole, onClose, onSave }) {
             }
             onSave();
         } catch (error) {
-            if (error.payload && error.payload.errors) {
-                setErrors(error.payload.errors);
-            } else if (error.errors) {
-                setErrors(error.errors);
+            if (error.isValidation) {
+                setFieldErrors(error.fieldErrors);
+            } else {
+                setFormError(error.message || 'An unexpected error occurred.');
             }
         }
     };
@@ -61,11 +63,12 @@ export function JobRoleFormDialog({ jobRole, onClose, onSave }) {
     return (
         <Dialog open={true} title={jobRole ? "Edit Job Role" : "New Job Role"} onClose={onClose}>
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                {formError && <div className="p-3 bg-red-100 text-red-700 rounded text-sm">{formError}</div>}
                 <TextField 
                     label="Name" 
                     value={name} 
                     onChange={e => setName(e.target.value)} 
-                    error={errors?.Name?.join(', ')}
+                    error={fieldErrors.name}
                 />
                 
                 <div className="flex flex-col">
@@ -79,7 +82,7 @@ export function JobRoleFormDialog({ jobRole, onClose, onSave }) {
                             <option key={dep.id} value={dep.id}>{dep.name}</option>
                         ))}
                     </select>
-                    {errors?.DepartmentId && <span className="text-danger text-sm mt-1">{errors.DepartmentId.join(', ')}</span>}
+                    {fieldErrors.departmentId && <span className="text-danger text-sm mt-1">{fieldErrors.departmentId.join(', ')}</span>}
                 </div>
                 
                 {jobRole && (
