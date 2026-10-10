@@ -17,7 +17,7 @@ export function DecidePurchaseDialog({ open, request, onClose, onDecided }) {
     setError(null)
 
     if (!approved && !rejectionReason.trim()) {
-      setError('Informe o motivo da recusa.')
+      setError('Please provide a reason for rejecting the request.')
       setBusy(false)
       return
     }
@@ -29,7 +29,7 @@ export function DecidePurchaseDialog({ open, request, onClose, onDecided }) {
       })
       onClose()
     } catch (err) {
-      setError(err.message || 'Erro ao processar decisão.')
+      setError(err.message || 'Could not process decision.')
     } finally {
       setBusy(false)
     }
@@ -39,8 +39,8 @@ export function DecidePurchaseDialog({ open, request, onClose, onDecided }) {
     <Dialog
       open={open}
       onClose={onClose}
-      title="Decisão de Compra"
-      description={`Solicitação #${request.id} · Obra: ${request.projectName}`}
+      title="Decide Purchase Request"
+      description={`Request #${request.id} · Project: ${request.projectName}`}
     >
       <form onSubmit={handleSubmit} className="p-6">
         {error && (
@@ -57,7 +57,7 @@ export function DecidePurchaseDialog({ open, request, onClose, onDecided }) {
               checked={approved}
               onChange={() => setApproved(true)}
             />
-            Aprovar Solicitação
+            Approve request
           </label>
           <label className="flex items-center gap-2 text-sm font-medium text-danger">
             <input
@@ -66,15 +66,15 @@ export function DecidePurchaseDialog({ open, request, onClose, onDecided }) {
               checked={!approved}
               onChange={() => setApproved(false)}
             />
-            Recusar Solicitação
+            Reject request
           </label>
         </div>
 
         {!approved && (
           <div className="mb-4">
             <TextField
-              label="Motivo da Recusa"
-              placeholder="Ex: Item fora de especificação ou verba esgotada"
+              label="Rejection reason"
+              placeholder="Ex: Item out of specification or budget unavailable"
               value={rejectionReason}
               onChange={(e) => setRejectionReason(e.target.value)}
               required
@@ -84,14 +84,14 @@ export function DecidePurchaseDialog({ open, request, onClose, onDecided }) {
 
         <div className="mt-6 flex justify-end gap-3 border-t border-line-soft pt-4">
           <Button type="button" variant="outline" onClick={onClose} disabled={busy}>
-            Cancelar
+            Cancel
           </Button>
           <Button
             type="submit"
             variant={approved ? 'primary' : 'danger'}
             disabled={busy}
           >
-            {busy ? 'Processando...' : approved ? 'Confirmar Aprovação' : 'Confirmar Recusa'}
+            {busy ? 'Processing...' : approved ? 'Confirm approval' : 'Confirm rejection'}
           </Button>
         </div>
       </form>

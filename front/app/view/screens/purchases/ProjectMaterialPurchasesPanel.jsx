@@ -30,7 +30,7 @@ export function ProjectMaterialPurchasesPanel({ projectId }) {
       .then((data) => setRequests(data.items || []))
       .catch((err) => {
         if (!controller.signal.aborted) {
-          setError(err.message || 'Erro ao carregar solicitações de compra.')
+          setError(err.message || 'Could not load project purchase requests.')
         }
       })
       .finally(() => {
@@ -48,12 +48,12 @@ export function ProjectMaterialPurchasesPanel({ projectId }) {
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="label">Suprimentos da Obra</div>
-          <h2 className="text-lg font-semibold text-graphite">Solicitações de Compra</h2>
+          <div className="label">Project Supplies</div>
+          <h2 className="text-lg font-semibold text-graphite">Purchase Requests</h2>
         </div>
 
         <Button variant="primary" onClick={() => setFormOpen(true)}>
-          + Solicitar Materiais
+          + Request materials
         </Button>
       </div>
 
@@ -64,22 +64,26 @@ export function ProjectMaterialPurchasesPanel({ projectId }) {
       )}
 
       {loading ? (
-        <p className="py-8 text-center text-xs text-muted">Carregando solicitações...</p>
+        <div className="p-4" role="status" aria-label="Loading purchase requests">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <div key={index} className="mb-2 h-10 animate-pulse bg-cream last:mb-0" />
+          ))}
+        </div>
       ) : requests.length === 0 ? (
         <div className="border border-line bg-cream-soft p-8 text-center">
-          <p className="text-sm text-muted">Nenhuma solicitação de compra cadastrada para esta obra.</p>
+          <p className="text-sm text-muted">No purchase request registered for this project yet.</p>
         </div>
       ) : (
         <div className="overflow-x-auto border border-line bg-white">
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr className="border-b border-line bg-cream-soft text-left">
-                <th className="label px-4 py-3 font-normal">Data</th>
-                <th className="label px-4 py-3 font-normal">Itens / Quantidades</th>
-                <th className="label px-4 py-3 font-normal">Precisa Até</th>
-                <th className="label px-4 py-3 font-normal">Solicitado Por</th>
-                <th className="label px-4 py-3 font-normal">Status</th>
-                <th className="label px-4 py-3 font-normal">Observações</th>
+                <HeaderCell>Date</HeaderCell>
+                <HeaderCell>Items / Quantities</HeaderCell>
+                <HeaderCell>Needed by</HeaderCell>
+                <HeaderCell>Requested by</HeaderCell>
+                <HeaderCell>Status</HeaderCell>
+                <HeaderCell>Notes</HeaderCell>
               </tr>
             </thead>
             <tbody>
@@ -96,7 +100,7 @@ export function ProjectMaterialPurchasesPanel({ projectId }) {
                           </span>
                           {item.fulfilledQuantity > 0 && (
                             <span className="ml-1 text-success">
-                              (Atendido: {item.fulfilledQuantity} {item.unit})
+                              (Fulfilled: {item.fulfilledQuantity} {item.unit})
                             </span>
                           )}
                         </div>
@@ -111,7 +115,7 @@ export function ProjectMaterialPurchasesPanel({ projectId }) {
                     </Badge>
                     {req.rejectionReason && (
                       <div className="mt-1 text-[11px] text-danger">
-                        Motivo: {req.rejectionReason}
+                        Reason: {req.rejectionReason}
                       </div>
                     )}
                   </td>
@@ -131,4 +135,8 @@ export function ProjectMaterialPurchasesPanel({ projectId }) {
       />
     </div>
   )
+}
+
+function HeaderCell({ children }) {
+  return <th className="label px-4 py-3 font-normal">{children}</th>
 }

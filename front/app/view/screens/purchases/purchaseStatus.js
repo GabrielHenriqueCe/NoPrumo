@@ -1,13 +1,13 @@
 export function purchaseStatusLabel(status) {
   switch (status?.toLowerCase()) {
     case 'pending':
-      return 'Pendente'
+      return 'Pending'
     case 'approved':
-      return 'Aprovado'
+      return 'Approved'
     case 'rejected':
-      return 'Recusado'
+      return 'Rejected'
     case 'purchased':
-      return 'Comprado'
+      return 'Purchased'
     default:
       return status || '—'
   }

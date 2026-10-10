@@ -26,7 +26,7 @@ export function ClientPortalLinksDialog({ client, open, onClose }) {
       })
       .catch((err) => {
         if (!controller.signal.aborted) {
-          setError(err.message || 'Erro ao carregar obras do cliente.')
+          setError(err.message || 'Could not load client projects.')
         }
       })
       .finally(() => {
@@ -43,8 +43,8 @@ export function ClientPortalLinksDialog({ client, open, onClose }) {
       <Dialog
         open={open && !selectedProject}
         onClose={onClose}
-        title="Portal do Cliente · Obras"
-        description={`Selecione a obra de “${client?.name || 'Cliente'}” para gerenciar os links de acesso.`}
+        title="Client Portal · Projects"
+        description={`Select a project for “${client?.name || 'Client'}” to manage portal access links.`}
       >
         <div className="p-6">
           {error && (
@@ -54,10 +54,10 @@ export function ClientPortalLinksDialog({ client, open, onClose }) {
           )}
 
           {loading ? (
-            <p className="py-4 text-center text-xs text-muted">Buscando obras do cliente...</p>
+            <p className="py-4 text-center text-xs text-muted">Loading client projects...</p>
           ) : clientProjects.length === 0 ? (
             <div className="border border-line bg-cream-soft p-6 text-center">
-              <p className="text-sm text-muted">Este cliente não possui nenhuma obra vinculada.</p>
+              <p className="text-sm text-muted">This client has no linked projects yet.</p>
             </div>
           ) : (
             <div className="divide-y divide-line-soft border border-line">
@@ -78,7 +78,7 @@ export function ClientPortalLinksDialog({ client, open, onClose }) {
                       className="px-3 py-1.5 text-xs"
                       onClick={() => setSelectedProject(proj)}
                     >
-                      Gerenciar Links
+                      Manage links
                     </Button>
                   </div>
                 </div>
@@ -88,7 +88,7 @@ export function ClientPortalLinksDialog({ client, open, onClose }) {
 
           <div className="mt-6 flex justify-end border-t border-line-soft pt-4">
             <Button type="button" variant="outline" onClick={onClose}>
-              Fechar
+              Close
             </Button>
           </div>
         </div>

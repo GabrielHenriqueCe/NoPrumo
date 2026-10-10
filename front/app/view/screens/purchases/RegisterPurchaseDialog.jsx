@@ -72,7 +72,7 @@ export function RegisterPurchaseDialog({ open, request, onClose, onPurchased }) 
     )
 
     if (validItems.length === 0) {
-      setError('Preencha ao menos um item com quantidade e preço unitário válidos.')
+      setError('Please fill in at least one item with valid quantity and unit price.')
       setBusy(false)
       return
     }
@@ -91,7 +91,7 @@ export function RegisterPurchaseDialog({ open, request, onClose, onPurchased }) 
       })
       onClose()
     } catch (err) {
-      setError(err.message || 'Erro ao registrar compra.')
+      setError(err.message || 'Could not register purchase.')
     } finally {
       setBusy(false)
     }
@@ -101,8 +101,8 @@ export function RegisterPurchaseDialog({ open, request, onClose, onPurchased }) 
     <Dialog
       open={open}
       onClose={onClose}
-      title="Registrar Compra Realizada"
-      description={`Solicitação #${request.id} · Obra: ${request.projectName}`}
+      title="Register Purchase"
+      description={`Request #${request.id} · Project: ${request.projectName}`}
     >
       <form onSubmit={handleSubmit} className="p-6">
         {error && (
@@ -113,11 +113,11 @@ export function RegisterPurchaseDialog({ open, request, onClose, onPurchased }) 
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <SelectField
-            label="Fornecedor"
+            label="Supplier"
             value={supplierId}
             onChange={(e) => setSupplierId(e.target.value)}
           >
-            <option value="">Selecione o fornecedor (opcional)...</option>
+            <option value="">Select supplier (optional)...</option>
             {supplierList.map((sup) => (
               <option key={sup.id} value={sup.id}>
                 {sup.name}
@@ -126,7 +126,7 @@ export function RegisterPurchaseDialog({ open, request, onClose, onPurchased }) 
           </SelectField>
 
           <TextField
-            label="Número da Nota Fiscal"
+            label="Invoice number"
             placeholder="Ex: NF-e 12345"
             value={invoiceNumber}
             onChange={(e) => setInvoiceNumber(e.target.value)}
@@ -134,16 +134,16 @@ export function RegisterPurchaseDialog({ open, request, onClose, onPurchased }) 
         </div>
 
         <div className="mt-6 border-t border-line-soft pt-4">
-          <div className="label mb-3">Itens e Valores da Compra</div>
+          <div className="label mb-3">Purchased Items & Unit Costs</div>
           <div className="space-y-3">
             {itemPurchases.map((item, index) => (
               <div key={item.purchaseRequestItemId} className="rounded border border-line bg-cream-soft p-3">
                 <div className="mb-2 font-medium text-graphite">
-                  {item.stockItemName} (Pendente: {item.remaining} {item.unit})
+                  {item.stockItemName} (Pending: {item.remaining} {item.unit})
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <TextField
-                    label={`Qtd comprada (${item.unit})`}
+                    label={`Quantity (${item.unit})`}
                     type="number"
                     step="0.01"
                     min="0.01"
@@ -152,11 +152,11 @@ export function RegisterPurchaseDialog({ open, request, onClose, onPurchased }) 
                     required
                   />
                   <TextField
-                    label="Preço Unitário (R$)"
+                    label="Unit cost (R$)"
                     type="number"
                     step="0.01"
                     min="0"
-                    placeholder="0,00"
+                    placeholder="0.00"
                     value={item.unitCost}
                     onChange={(e) => handleItemCostChange(index, e.target.value)}
                     required
@@ -169,10 +169,10 @@ export function RegisterPurchaseDialog({ open, request, onClose, onPurchased }) 
 
         <div className="mt-6 flex justify-end gap-3 border-t border-line-soft pt-4">
           <Button type="button" variant="outline" onClick={onClose} disabled={busy}>
-            Cancelar
+            Cancel
           </Button>
           <Button type="submit" variant="primary" disabled={busy}>
-            {busy ? 'Gravando...' : 'Confirmar e Dar Entrada'}
+            {busy ? 'Saving...' : 'Confirm & register to stock'}
           </Button>
         </div>
       </form>

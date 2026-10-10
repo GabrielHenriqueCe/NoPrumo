@@ -75,14 +75,14 @@ export function PurchaseRequestFormDialog({
 
     const targetProjectId = fixedProjectId || Number(selectedProjectId)
     if (!targetProjectId) {
-      setError('Selecione a obra.')
+      setError('Please select a project.')
       setBusy(false)
       return
     }
 
     const validItems = items.filter((i) => i.stockItemId && Number(i.requestedQuantity) > 0)
     if (validItems.length === 0) {
-      setError('Adicione pelo menos um item válido com quantidade maior que zero.')
+      setError('Please add at least one item with quantity greater than zero.')
       setBusy(false)
       return
     }
@@ -103,7 +103,7 @@ export function PurchaseRequestFormDialog({
       onSubmitted?.()
       onClose?.()
     } catch (err) {
-      setError(err.message || 'Erro ao registrar solicitação de compra.')
+      setError(err.message || 'Could not create purchase request.')
     } finally {
       setBusy(false)
     }
@@ -113,8 +113,8 @@ export function PurchaseRequestFormDialog({
     <Dialog
       open={open}
       onClose={onClose}
-      title="Nova Solicitação de Compra"
-      description="Solicitação de materiais e suprimentos para a obra (apenas quantidades)."
+      title="New Purchase Request"
+      description="Request materials and supplies for the project (quantities only)."
     >
       <form onSubmit={handleSubmit} className="p-6">
         {error && (
@@ -126,12 +126,12 @@ export function PurchaseRequestFormDialog({
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {!fixedProjectId && (
             <SelectField
-              label="Obra"
+              label="Project"
               value={selectedProjectId}
               onChange={(e) => setSelectedProjectId(e.target.value)}
               required
             >
-              <option value="">Selecione a obra...</option>
+              <option value="">Select project...</option>
               {projectOptions.map((proj) => (
                 <option key={proj.id} value={proj.id}>
                   {proj.name} ({proj.code})
@@ -141,7 +141,7 @@ export function PurchaseRequestFormDialog({
           )}
 
           <TextField
-            label="Precisa até"
+            label="Needed by date"
             type="date"
             value={neededByDate}
             onChange={(e) => setNeededByDate(e.target.value)}
@@ -149,8 +149,8 @@ export function PurchaseRequestFormDialog({
 
           <div className="sm:col-span-2">
             <TextField
-              label="Observações gerais (opcional)"
-              placeholder="Ex: Urgência para concretagem de laje"
+              label="Notes (optional)"
+              placeholder="Ex: Urgent for foundation casting"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
             />
@@ -160,9 +160,9 @@ export function PurchaseRequestFormDialog({
         {/* Items Section */}
         <div className="mt-6 border-t border-line-soft pt-4">
           <div className="mb-2 flex items-center justify-between">
-            <span className="label">Itens Solicitados</span>
+            <span className="label">Requested Items</span>
             <Button type="button" variant="outline" className="px-2.5 py-1 text-xs" onClick={addItemRow}>
-              + Adicionar Item
+              + Add Item
             </Button>
           </div>
 
@@ -171,12 +171,12 @@ export function PurchaseRequestFormDialog({
               <div key={index} className="flex flex-col gap-2 rounded border border-line bg-cream-soft p-3 sm:flex-row sm:items-end">
                 <div className="flex-1">
                   <SelectField
-                    label="Material / Item"
+                    label="Item / Material"
                     value={row.stockItemId}
                     onChange={(e) => handleItemChange(index, 'stockItemId', e.target.value)}
                     required
                   >
-                    <option value="">Selecione o item...</option>
+                    <option value="">Select item...</option>
                     {availableItems.map((item) => (
                       <option key={item.id} value={item.id}>
                         {item.name} ({item.unit})
@@ -187,7 +187,7 @@ export function PurchaseRequestFormDialog({
 
                 <div className="w-full sm:w-28">
                   <TextField
-                    label="Quantidade"
+                    label="Quantity"
                     type="number"
                     step="0.01"
                     min="0.01"
@@ -199,7 +199,7 @@ export function PurchaseRequestFormDialog({
 
                 <div className="w-full sm:w-24">
                   <TextField
-                    label="Unidade"
+                    label="Unit"
                     value={row.unit}
                     onChange={(e) => handleItemChange(index, 'unit', e.target.value)}
                     required
@@ -213,7 +213,7 @@ export function PurchaseRequestFormDialog({
                     className="px-2.5 py-2 text-xs text-danger hover:border-danger"
                     onClick={() => removeItemRow(index)}
                   >
-                    Remover
+                    Remove
                   </Button>
                 )}
               </div>
@@ -223,10 +223,10 @@ export function PurchaseRequestFormDialog({
 
         <div className="mt-6 flex justify-end gap-3 border-t border-line-soft pt-4">
           <Button type="button" variant="outline" onClick={onClose} disabled={busy}>
-            Cancelar
+            Cancel
           </Button>
           <Button type="submit" variant="primary" disabled={busy}>
-            {busy ? 'Enviando...' : 'Solicitar Compra'}
+            {busy ? 'Submitting...' : 'Submit request'}
           </Button>
         </div>
       </form>
