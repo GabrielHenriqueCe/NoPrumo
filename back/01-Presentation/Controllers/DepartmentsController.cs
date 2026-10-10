@@ -20,8 +20,11 @@ public class DepartmentsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<PagedResult<DepartmentDto>>> Get([FromQuery] int page = 1, [FromQuery] int size = 10, [FromQuery] string? search = null)
+    public async Task<IActionResult> Get([FromQuery] int page = 1, [FromQuery] int size = 10, [FromQuery] string search = "")
     {
+        page = Math.Max(1, page);
+        size = Math.Clamp(size, 1, 100);
+
         var query = _context.Departments.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(search))
@@ -33,6 +36,8 @@ public class DepartmentsController : ControllerBase
         var totalPages = (int)Math.Ceiling(total / (double)size);
 
         var items = await query
+            .OrderBy(department => department.Name)
+            .ThenBy(department => department.Id)
             .Skip((page - 1) * size)
             .Take(size)
             .Select(d => new DepartmentDto

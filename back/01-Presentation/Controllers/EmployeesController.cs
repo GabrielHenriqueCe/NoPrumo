@@ -23,8 +23,11 @@ public class EmployeesController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> Get([FromQuery] int page = 1, [FromQuery] int size = 10, [FromQuery] string? search = null)
+    public async Task<IActionResult> Get([FromQuery] int page = 1, [FromQuery] int size = 10, [FromQuery] string search = "")
     {
+        page = Math.Max(1, page);
+        size = Math.Clamp(size, 1, 100);
+
         var query = _context.Employees.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(search))
@@ -37,6 +40,8 @@ public class EmployeesController : ControllerBase
 
         // Fazemos o JOIN manual para trazer os nomes (caso não existam as Navigation Properties configuradas)
         var employees = await query
+            .OrderBy(employee => employee.Name)
+            .ThenBy(employee => employee.Id)
             .Skip((page - 1) * size)
             .Take(size)
             .ToListAsync();

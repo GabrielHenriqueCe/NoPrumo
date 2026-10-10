@@ -20,8 +20,10 @@ public class EmploymentRegimesController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<PagedResult<EmploymentRegimeDto>>> Get([FromQuery] int page = 1, [FromQuery] int size = 10, [FromQuery] string? search = null)
+    public async Task<IActionResult> Get([FromQuery] int page = 1, [FromQuery] int size = 10, [FromQuery] string search = "")
     {
+        page = Math.Max(1, page);
+        size = Math.Clamp(size, 1, 100);
         var query = _context.EmploymentRegimes.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(search))
@@ -33,6 +35,8 @@ public class EmploymentRegimesController : ControllerBase
         var totalPages = (int)Math.Ceiling(total / (double)size);
 
         var items = await query
+            .OrderBy(regime => regime.Label)
+            .ThenBy(regime => regime.Id)
             .Skip((page - 1) * size)
             .Take(size)
             .Select(e => new EmploymentRegimeDto
