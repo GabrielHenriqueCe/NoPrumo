@@ -1,24 +1,25 @@
+import { SelectField } from '../../ui/SelectField';
 import { useState, useEffect } from 'react';
 import { useContainer } from '../../providers/containerContext';
 import { Dialog } from '../../ui/Dialog';
 import { Button } from '../../ui/Button';
 import { TextField } from '../../ui/TextField';
 
-export function EmployeeFormDialog({ employee, onClose, onSave, canViewFinance }) { 
+export function EmployeeFormDialog({ employee, onClose, onSave, canViewFinance }) {
     const { employees, jobRoles, employmentRegimes } = useContainer();
-    
+
     const [name, setName] = useState(employee ? employee.name : '');
     const [registrationNumber, setRegistrationNumber] = useState(employee && employee.registrationNumber ? employee.registrationNumber : '');
     const [jobRoleId, setJobRoleId] = useState(employee && employee.jobRoleId ? employee.jobRoleId : '');
     const [employmentRegimeId, setEmploymentRegimeId] = useState(employee && employee.employmentRegimeId ? employee.employmentRegimeId : '');
-    
+
     // Campos Financeiros e Adicionais
     const [payRate, setPayRate] = useState(employee && employee.payRate !== undefined ? employee.payRate : '');
     const [additionalPercentage, setAdditionalPercentage] = useState(employee && employee.additionalPercentage !== undefined ? employee.additionalPercentage : '');
     const [hireDate, setHireDate] = useState(employee && employee.hireDate ? employee.hireDate : '');
     const [phone, setPhone] = useState(employee && employee.phone ? employee.phone : '');
     const [document, setDocument] = useState(''); // Documento vem limpo no frontend
-    
+
     const [active, setActive] = useState(employee ? employee.active : true);
     const [fieldErrors, setFieldErrors] = useState({});
     const [formError, setFormError] = useState(null);
@@ -81,7 +82,7 @@ export function EmployeeFormDialog({ employee, onClose, onSave, canViewFinance }
 
     return (
         <Dialog open={true} title={employee ? "Edit Employee" : "New Employee"} onClose={onClose}>
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-6">
                 {formError && <div className="p-3 bg-red-100 text-red-700 rounded text-sm">{formError}</div>}
                 <div className="grid grid-cols-2 gap-4">
                     <TextField label="Name" value={name} onChange={e => setName(e.target.value)} error={fieldErrors.name} />
@@ -89,20 +90,27 @@ export function EmployeeFormDialog({ employee, onClose, onSave, canViewFinance }
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                    <div className="flex flex-col gap-1">
-                        <label className="text-sm font-semibold">Job Role</label>
-                        <select value={jobRoleId} onChange={e => setJobRoleId(e.target.value)} className="border border-line rounded px-3 py-2">
-                            <option value="">Select a Role</option>
-                            {rolesList.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-                        </select>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                        <label className="text-sm font-semibold">Employment Regime</label>
-                        <select value={employmentRegimeId} onChange={e => setEmploymentRegimeId(e.target.value)} className="border border-line rounded px-3 py-2">
-                            <option value="">Select a Regime</option>
-                            {regimesList.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
-                        </select>
-                    </div>
+                    <SelectField
+                        label="Job Role"
+                        value={jobRoleId}
+                        onChange={e => setJobRoleId(e.target.value)}
+                        error={fieldErrors.jobRoleId}
+                        options={[
+                            { value: '', label: 'Select a Role' },
+                            ...rolesList.map(r => ({ value: r.id, label: r.name }))
+                        ]}
+                    />
+
+                    <SelectField
+                        label="Employment Regime"
+                        value={employmentRegimeId}
+                        onChange={e => setEmploymentRegimeId(e.target.value)}
+                        error={fieldErrors.employmentRegimeId}
+                        options={[
+                            { value: '', label: 'Select a Regime' },
+                            ...regimesList.map(r => ({ value: r.id, label: r.label }))
+                        ]}
+                    />
                 </div>
 
                 {canViewFinance && (
@@ -117,14 +125,14 @@ export function EmployeeFormDialog({ employee, onClose, onSave, canViewFinance }
                     <TextField label="Phone" value={phone} onChange={e => setPhone(e.target.value)} />
                     <TextField label="Document (CPF/RG)" value={document} onChange={e => setDocument(e.target.value)} placeholder={employee?.documentMasked || ''} />
                 </div>
-                
+
                 {employee && (
                     <label className="flex items-center gap-2">
                         <input type="checkbox" checked={active} onChange={e => setActive(e.target.checked)} />
                         Active
                     </label>
                 )}
-                
+
                 <div className="flex gap-2 mt-4 justify-end">
                     <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
                     <Button type="submit">Save</Button>
