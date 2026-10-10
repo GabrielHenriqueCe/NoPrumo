@@ -1,3 +1,4 @@
+import { createAppointmentGateway } from './data/gateways/appointmentGateway'
 import { createAuthGateway } from './data/gateways/authGateway'
 import { createClientGateway } from './data/gateways/clientGateway'
 import { createDepartmentGateway } from './data/gateways/departmentGateway'
@@ -5,7 +6,9 @@ import { createEmployeeGateway } from './data/gateways/employeeGateway'
 import { createEmployeeTrainingGateway } from './data/gateways/employeeTrainingGateway'
 import { createEmploymentRegimeGateway } from './data/gateways/employmentRegimeGateway'
 import { createJobRoleGateway } from './data/gateways/jobRoleGateway'
+import { createPpeIssueGateway } from './data/gateways/ppeIssueGateway'
 import { createProjectGateway } from './data/gateways/projectGateway'
+import { createProjectTeamGateway } from './data/gateways/projectTeamGateway'
 import { createStageGateway } from './data/gateways/stageGateway'
 import { createStockCategoryGateway } from './data/gateways/stockCategoryGateway'
 import { createStockGroupGateway } from './data/gateways/stockGroupGateway'
@@ -63,9 +66,12 @@ export function createContainer({
 
     projects: createProjectGateway(http),
     stages: createStageGateway(http),
+    projectTeams: createProjectTeamGateway(http),
+    appointments: createAppointmentGateway(http),
 
     trainingTypes: createTrainingTypeGateway(http),
     employeeTrainings: createEmployeeTrainingGateway(http),
+    ppeIssues: createPpeIssueGateway(http),
 
     tokenStorage,
     baseUrl,
