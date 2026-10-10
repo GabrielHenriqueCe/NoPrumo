@@ -31,10 +31,14 @@ export function DepartmentsScreen() {
         loadDepartments();
     }, [page, search, departmentGateway]);
 
-    const handleDelete = async (id) => {
-        if (confirm('Deactivate department?')) {
-            await departmentGateway.remove(id);
+    const handleToggleActive = async (item) => {
+        if (item.active && !window.confirm('Are you sure you want to deactivate this record?')) return;
+
+        try {
+            await departmentGateway.setActive(item.id, !item.active); // <-- Aqui foi alterado
             loadDepartments();
+        } catch (error) {
+            console.error(error);
         }
     };
 
@@ -68,7 +72,9 @@ export function DepartmentsScreen() {
                             <td className="py-2">{dep.active ? 'Active' : 'Inactive'}</td>
                             <td className="py-2 flex gap-2">
                                 <Button variant="outline" onClick={() => { setEditingDepartment(dep); setIsDialogOpen(true); }}>Edit</Button>
-                                <Button variant="danger" onClick={() => handleDelete(dep.id)}>Deactivate</Button>
+                                <Button variant="outline" onClick={() => handleToggleActive(dep)}>
+                                    {dep.active ? "Deactivate" : "Activate"}
+                                </Button>
                             </td>
                         </tr>
                     ))}

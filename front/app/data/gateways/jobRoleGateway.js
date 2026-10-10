@@ -15,10 +15,7 @@ export function createJobRoleGateway(http) {
     update(id, item, { signal } = {}) {
       return http.put(`/job-roles/${id}`, item, { signal })
     },
-    
-    // Adicione o método de remoção (soft delete)
-    remove(id, { signal } = {}) {
-      return http.remove(`/job-roles/${id}`, { signal })
-    }
+
+      setActive: (id, active, signal) => http.patch(`/job-roles/${id}/${active ? 'activate' : 'deactivate'}`, null, { signal }),
   }
 }

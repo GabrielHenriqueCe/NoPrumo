@@ -34,10 +34,15 @@ export function EmployeesScreen() {
         loadEmployees();
     }, [page, search, employees]);
 
-    const handleDelete = async (id) => {
-        if (confirm('Deactivate employee?')) {
-            await employees.remove(id);
+    const handleToggleActive = async (item) => {
+        if (item.active && !window.confirm('Are you sure you want to deactivate this record?')) return;
+
+        try {
+            await employees.setActive(item.id, !item.active);
+
             loadEmployees();
+        } catch (error) {
+            console.error(error);
         }
     };
 
@@ -77,7 +82,9 @@ export function EmployeesScreen() {
                             <td className="py-2">{emp.active ? 'Active' : 'Inactive'}</td>
                             <td className="py-2 flex gap-2">
                                 <Button variant="outline" onClick={() => { setEditingEmployee(emp); setIsDialogOpen(true); }}>Edit</Button>
-                                <Button variant="danger" onClick={() => handleDelete(emp.id)}>Deactivate</Button>
+                                <Button variant="outline" onClick={() => handleToggleActive(emp)}>
+                                    {emp.active ? "Deactivate" : "Activate"}
+                                </Button>
                             </td>
                         </tr>
                     ))}

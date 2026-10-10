@@ -51,11 +51,16 @@ export function JobRolesScreen() {
         loadRoles();
     }, [page, search, jobRoles]);
 
-    const handleDelete = async (id) => {
-        if (confirm('Deactivate job role?')) {
-            // O gateway de JobRoles precisa ter o método remove configurado, faremos isso a seguir
-            await jobRoles.remove(id);
+    // Substitua o handleDelete antigo por este:
+    const handleToggleActive = async (item) => {
+        if (item.active && !window.confirm('Are you sure you want to deactivate this record?')) return;
+
+        try {
+            await jobRoles.setActive(item.id, !item.active);
+
             loadRoles();
+        } catch (error) {
+            console.error(error);
         }
     };
 
@@ -91,7 +96,9 @@ export function JobRolesScreen() {
                             <td className="py-2">{role.active ? 'Active' : 'Inactive'}</td>
                             <td className="py-2 flex gap-2">
                                 <Button variant="outline" onClick={() => { setEditingRole(role); setIsDialogOpen(true); }}>Edit</Button>
-                                <Button variant="danger" onClick={() => handleDelete(role.id)}>Deactivate</Button>
+                                <Button variant="outline" onClick={() => handleToggleActive(role)}>
+                                    {role.active ? "Deactivate" : "Activate"}
+                                </Button>
                             </td>
                         </tr>
                     ))}

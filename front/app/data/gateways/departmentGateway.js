@@ -16,8 +16,6 @@ export function createDepartmentGateway(http) {
       return http.put(`/departments/${id}`, item, { signal })
     },
 
-    remove(id, { signal } = {}) {
-      return http.remove(`/departments/${id}`, { signal })
-    }
+      setActive: (id, active, signal) => http.patch(`/departments/${id}/${active ? 'activate' : 'deactivate'}`, null, { signal }),
   }
 }

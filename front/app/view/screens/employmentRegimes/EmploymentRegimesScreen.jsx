@@ -31,10 +31,15 @@ export function EmploymentRegimesScreen() {
         loadRegimes();
     }, [page, search, employmentRegimes]);
 
-    const handleDelete = async (id) => {
-        if (confirm('Deactivate employment regime?')) {
-            await employmentRegimes.remove(id);
+    const handleToggleActive = async (item) => {
+        if (item.active && !window.confirm('Are you sure you want to deactivate this record?')) return;
+
+        try {
+            await employmentRegimes.setActive(item.id, !item.active);
+
             loadRegimes();
+        } catch (error) {
+            console.error(error);
         }
     };
 
@@ -72,7 +77,9 @@ export function EmploymentRegimesScreen() {
                             <td className="py-2">{regime.active ? 'Active' : 'Inactive'}</td>
                             <td className="py-2 flex gap-2">
                                 <Button variant="outline" onClick={() => { setEditingRegime(regime); setIsDialogOpen(true); }}>Edit</Button>
-                                <Button variant="danger" onClick={() => handleDelete(regime.id)}>Deactivate</Button>
+                                <Button variant="outline" onClick={() => handleToggleActive(regime)}>
+                                    {regime.active ? "Deactivate" : "Activate"}
+                                </Button>
                             </td>
                         </tr>
                     ))}

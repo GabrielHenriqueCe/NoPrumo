@@ -16,9 +16,6 @@ export function createEmploymentRegimeGateway(http) {
       return http.put(`/employment-regimes/${id}`, item, { signal })
     },
     
-    // Adicione o método remove
-    remove(id, { signal } = {}) {
-      return http.remove(`/employment-regimes/${id}`, { signal })
-    }
+      setActive: (id, active, signal) => http.patch(`/employment-regimes/${id}/${active ? 'activate' : 'deactivate'}`, null, { signal }),
   }
 }
