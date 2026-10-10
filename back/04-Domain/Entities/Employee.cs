@@ -74,4 +74,19 @@ public class Employee
                 .OrderByDescending(training => training.IssueDate)
                 .ThenByDescending(training => training.Id)
                 .First());
+
+    // Confirmação da entrega de EPI: o nome digitado tem que ser o do cadastro,
+    // sem diferença de maiúscula, acento ou espaço sobrando.
+    public bool IsNamed(string typedName) => Normalize(typedName) == Normalize(Name);
+
+    private static string Normalize(string name)
+    {
+        var withoutAccents = new string(name
+            .Normalize(System.Text.NormalizationForm.FormD)
+            .Where(character => System.Globalization.CharUnicodeInfo.GetUnicodeCategory(character)
+                != System.Globalization.UnicodeCategory.NonSpacingMark)
+            .ToArray());
+
+        return string.Join(' ', withoutAccents.Split(' ', StringSplitOptions.RemoveEmptyEntries)).ToUpperInvariant();
+    }
 }

@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using NoPrumo.Domain.Entities;
 using NoPrumo.Domain.Enums;
 using NoPrumo.Infrastructure.Data.Converters;
@@ -584,7 +584,8 @@ public class AppDbContext : DbContext
                 .HasDefaultValueSql("'1.000'");
             entity.Property(e => e.Status)
                 .HasMaxLength(20)
-                .HasDefaultValueSql("'issued'");
+                .HasDefaultValueSql("'issued'")
+                .HasConversion<SnakeCaseEnumConverter<PpeItemStatus>>();
             entity.Property(e => e.Unit)
                 .HasMaxLength(30);
             entity.Property(e => e.UpdatedAt)

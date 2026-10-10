@@ -46,6 +46,8 @@ builder.Services.AddScoped<IProjectTeamRepository, ProjectTeamRepository>();
 builder.Services.AddScoped<IProjectTeamService, ProjectTeamService>();
 builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
 builder.Services.AddScoped<IAppointmentService, AppointmentService>();
+builder.Services.AddScoped<IPpeIssueRepository, PpeIssueRepository>();
+builder.Services.AddScoped<IPpeIssueService, PpeIssueService>();
 
 var encryptionKeyBase64 = builder.Configuration["Documents:EncryptionKey"]
     ?? throw new InvalidOperationException("Falta Documents:EncryptionKey nos User Secrets. Veja o README para gerar.");
@@ -107,6 +109,11 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("manage_schedule", policy => policy.RequireAssertion(context =>
         context.User.HasClaim("permission", "manage_projects") ||
         context.User.HasClaim("permission", "manage_safety")));
+
+    // Ficha de EPI: o técnico de segurança entrega; mestre e almoxarife (view_stock) só leem.
+    options.AddPolicy("view_ppe", policy => policy.RequireAssertion(context =>
+        context.User.HasClaim("permission", "manage_safety") ||
+        context.User.HasClaim("permission", "view_stock")));
 });
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");

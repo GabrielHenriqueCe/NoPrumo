@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 
+using NoPrumo.Domain.Enums;
+
 namespace NoPrumo.Domain.Entities;
 
 public class PpeIssueItem
@@ -19,7 +21,7 @@ public class PpeIssueItem
 
     public string Unit { get; set; } = null!;
 
-    public string Status { get; set; } = null!;
+    public PpeItemStatus Status { get; set; }
 
     public DateOnly? IssueDate { get; set; }
 
@@ -34,4 +36,16 @@ public class PpeIssueItem
     public virtual PpeIssue PpeIssue { get; set; } = null!;
 
     public virtual StockItem? StockItem { get; set; }
+
+    public bool IsIssued() => Status == PpeItemStatus.Issued;
+
+    public bool ReturnsBeforeIssue(DateOnly returnDate) => returnDate < IssueDate;
+
+    public void Return(DateOnly returnDate)
+    {
+        Status = PpeItemStatus.Returned;
+        ReturnDate = returnDate;
+    }
+
+    public void MarkLost() => Status = PpeItemStatus.Lost;
 }
