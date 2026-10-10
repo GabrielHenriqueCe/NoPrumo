@@ -4,8 +4,11 @@ import { Pagination } from '../../ui/Pagination';
 import { Button } from '../../ui/Button';
 import { TextField } from '../../ui/TextField';
 import { EmployeeFormDialog } from './EmployeeFormDialog';
+import { useSession } from '../../providers/sessionContext';
 
 export function EmployeesScreen() {
+    const { can } = useSession();
+    const canViewFinance = can('view_finance');
     const { employees } = useContainer();
     const [employeesList, setEmployeesList] = useState([]);
     const [page, setPage] = useState(1);
@@ -88,6 +91,7 @@ export function EmployeesScreen() {
                     employee={editingEmployee} 
                     onClose={() => setIsDialogOpen(false)} 
                     onSave={() => { setIsDialogOpen(false); loadEmployees(); }} 
+                    canViewFinance={canViewFinance}
                 />
             )}
         </div>

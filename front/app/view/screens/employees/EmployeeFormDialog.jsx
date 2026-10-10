@@ -4,9 +4,8 @@ import { Dialog } from '../../ui/Dialog';
 import { Button } from '../../ui/Button';
 import { TextField } from '../../ui/TextField';
 
-export function EmployeeFormDialog({ employee, onClose, onSave }) {
-    const { employees, jobRoles, employmentRegimes, can } = useContainer();
-    const canViewFinance = can('view_finance');
+export function EmployeeFormDialog({ employee, onClose, onSave, canViewFinance }) { 
+    const { employees, jobRoles, employmentRegimes } = useContainer();
     
     const [name, setName] = useState(employee ? employee.name : '');
     const [registrationNumber, setRegistrationNumber] = useState(employee && employee.registrationNumber ? employee.registrationNumber : '');
