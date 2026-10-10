@@ -1,4 +1,4 @@
-namespace NoPrumo.Application.DTOs;
+namespace NoPrumo.Application.Results;
 
 public sealed record ProcessedDocument(
     byte[]? Encrypted,
