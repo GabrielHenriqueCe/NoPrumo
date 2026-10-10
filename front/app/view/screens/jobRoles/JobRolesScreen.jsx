@@ -9,7 +9,7 @@ export function JobRolesScreen() {
     const { jobRoles, departments } = useContainer();
     const [rolesList, setRolesList] = useState([]);
     const [departmentsMap, setDepartmentsMap] = useState({});
-    
+    const [total, setTotal] = useState(0);
     const [page, setPage] = useState(1);
     const [size] = useState(10);
     const [totalPages, setTotalPages] = useState(1);
@@ -41,6 +41,7 @@ export function JobRolesScreen() {
             const response = await jobRoles.list({ page, size, search });
             setRolesList(response.items);
             setTotalPages(response.totalPages);
+            setTotal(response.total);
         } catch (error) {
             console.error("Error loading job roles", error);
         }
@@ -97,7 +98,7 @@ export function JobRolesScreen() {
                 </tbody>
             </table>
 
-            <Pagination current={page} total={totalPages} onPageChange={setPage} />
+            <Pagination page={page} totalPages={totalPages} total={total} onChange={setPage} />
 
             {isDialogOpen && (
                 <JobRoleFormDialog 
