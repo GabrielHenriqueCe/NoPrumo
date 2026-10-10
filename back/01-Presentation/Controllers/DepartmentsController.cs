@@ -57,6 +57,12 @@ public class DepartmentsController : ControllerBase
         if (string.IsNullOrWhiteSpace(request.Name))
             return BadRequest(new ProblemDetails { Detail = "Name is required." });
 
+        if (await _context.Departments.AnyAsync(department => department.Name == request.Name))
+        {
+            ModelState.AddModelError("name", "Name already exists.");
+            return ValidationProblem(ModelState);
+        }
+
         var department = new Department
         {
             Name = request.Name,
@@ -77,6 +83,12 @@ public class DepartmentsController : ControllerBase
 
         if (string.IsNullOrWhiteSpace(request.Name))
             return BadRequest(new ProblemDetails { Detail = "Name is required." });
+
+        if (await _context.Departments.AnyAsync(department => department.Name == request.Name && department.Id != id))
+        {
+            ModelState.AddModelError("name", "Name already exists.");
+            return ValidationProblem(ModelState);
+        }
 
         department.Name = request.Name;
         department.Active = request.Active;

@@ -59,6 +59,12 @@ public class EmploymentRegimesController : ControllerBase
         if (string.IsNullOrWhiteSpace(request.Label))
             return BadRequest(new ProblemDetails { Detail = "Label is required." });
 
+        if (await _context.EmploymentRegimes.AnyAsync(regime => regime.Label == request.Label))
+        {
+            ModelState.AddModelError("label", "Label already exists.");
+            return ValidationProblem(ModelState);
+        }
+
         if (string.IsNullOrWhiteSpace(request.Unit))
             return BadRequest(new ProblemDetails { Detail = "Unit is required." });
 
@@ -89,6 +95,12 @@ public class EmploymentRegimesController : ControllerBase
 
         if (string.IsNullOrWhiteSpace(request.Label))
             return BadRequest(new ProblemDetails { Detail = "Label is required." });
+
+        if (await _context.EmploymentRegimes.AnyAsync(regime => regime.Label == request.Label && regime.Id != id))
+        {
+            ModelState.AddModelError("label", "Label already exists.");
+            return ValidationProblem(ModelState);
+        }
 
         if (string.IsNullOrWhiteSpace(request.Unit))
             return BadRequest(new ProblemDetails { Detail = "Unit is required." });

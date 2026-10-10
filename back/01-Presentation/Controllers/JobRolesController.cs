@@ -62,6 +62,12 @@ public class JobRolesController : ControllerBase
         if (!departmentExists)
             return BadRequest(new ProblemDetails { Detail = "Invalid DepartmentId." });
 
+        if (await _context.JobRoles.AnyAsync(jobRole => jobRole.Name == request.Name && jobRole.DepartmentId == request.DepartmentId))
+        {
+            ModelState.AddModelError("name", "Name already exists in this department.");
+            return ValidationProblem(ModelState);
+        }
+
         var jobRole = new JobRole
         {
             Name = request.Name,
@@ -83,6 +89,18 @@ public class JobRolesController : ControllerBase
 
         if (string.IsNullOrWhiteSpace(request.Name))
             return BadRequest(new ProblemDetails { Detail = "Name is required." });
+
+        if (!await _context.Departments.AnyAsync(department => department.Id == request.DepartmentId))
+        {
+            ModelState.AddModelError("departmentId", "Department not found.");
+            return ValidationProblem(ModelState);
+        }
+
+        if (await _context.JobRoles.AnyAsync(jobRole => jobRole.Name == request.Name && jobRole.DepartmentId == request.DepartmentId && jobRole.Id != id))
+        {
+            ModelState.AddModelError("name", "Name already exists in this department.");
+            return ValidationProblem(ModelState);
+        }
 
         jobRole.Name = request.Name;
         jobRole.DepartmentId = request.DepartmentId;
