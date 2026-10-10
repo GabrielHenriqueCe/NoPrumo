@@ -4,24 +4,30 @@ using Microsoft.EntityFrameworkCore;
 using NoPrumo.Application.DTOs;
 using NoPrumo.Domain.Entities;
 using NoPrumo.Infrastructure.Data;
+using NoPrumo.Application.Services;
 
 namespace NoPrumo.Presentation.Controllers;
 
 [ApiController]
 [Route("api/employees")]
-[Authorize]
+[Authorize(Policy = "manage_employees")]
 public class EmployeesController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly DocumentProcessor _documentProcessor;
 
-    public EmployeesController(AppDbContext context)
+    public EmployeesController(AppDbContext context, DocumentProcessor documentProcessor)
     {
         _context = context;
+        _documentProcessor = documentProcessor;
     }
 
     [HttpGet]
-    public async Task<IActionResult> Get([FromQuery] int page = 1, [FromQuery] int size = 10, [FromQuery] string? search = null)
+    public async Task<IActionResult> Get([FromQuery] int page = 1, [FromQuery] int size = 10, [FromQuery] string search = "")
     {
+        page = Math.Max(1, page);
+        size = Math.Clamp(size, 1, 100);
+
         var query = _context.Employees.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(search))
@@ -34,6 +40,8 @@ public class EmployeesController : ControllerBase
 
         // Fazemos o JOIN manual para trazer os nomes (caso não existam as Navigation Properties configuradas)
         var employees = await query
+            .OrderBy(employee => employee.Name)
+            .ThenBy(employee => employee.Id)
             .Skip((page - 1) * size)
             .Take(size)
             .ToListAsync();
@@ -45,7 +53,7 @@ public class EmployeesController : ControllerBase
         var regimes = await _context.EmploymentRegimes.Where(r => regimeIds.Contains(r.Id)).ToDictionaryAsync(r => r.Id, r => r.Label);
 
         // Verifica a permissão financeira
-        bool canViewFinance = User.Claims.Any(c => c.Value == "view_finance" || c.Value == "admin");
+        bool canViewFinance = User.HasClaim("permission", "view_finance");
 
         var items = employees.Select(e => 
         {
@@ -81,7 +89,16 @@ public class EmployeesController : ControllerBase
     public async Task<IActionResult> Create([FromBody] CreateEmployeeRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Name))
-            return BadRequest(new ProblemDetails { Detail = "Name is required." });
+        {
+            ModelState.AddModelError("name", "The Name field is required.");
+            return ValidationProblem(ModelState);
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Document) && !DocumentProcessor.IsValid(request.Document))
+        {
+            ModelState.AddModelError("document", "Invalid document format.");
+            return ValidationProblem(ModelState);
+        }
 
         var employee = new Employee
         {
@@ -89,24 +106,73 @@ public class EmployeesController : ControllerBase
             RegistrationNumber = request.RegistrationNumber,
             JobRoleId = request.JobRoleId,
             EmploymentRegimeId = request.EmploymentRegimeId,
-            PayRate = request.PayRate,
-            AdditionalPercentage = request.AdditionalPercentage,
             HireDate = request.HireDate,
             Phone = request.Phone,
-            // Apenas para fins didáticos, mascara os primeiros digitos
-            DocumentMasked = !string.IsNullOrWhiteSpace(request.Document) ? "***.***." + request.Document.Substring(Math.Max(0, request.Document.Length - 4)) : null,
             Active = true
         };
+
+        if (User.HasClaim("permission", "view_finance"))
+        {
+            employee.PayRate = request.PayRate;
+            employee.AdditionalPercentage = request.AdditionalPercentage;
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Document))
+        {
+            var processedDoc = _documentProcessor.Process(request.Document);
+            employee.DocumentMasked = processedDoc.Masked;
+            employee.DocumentHash = processedDoc.Hash;
+            employee.DocumentEncrypted = processedDoc.Encrypted;
+        }
 
         _context.Employees.Add(employee);
         await _context.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(Get), new { id = employee.Id }, employee);
+        bool canViewFinance = User.HasClaim("permission", "view_finance");
+
+        if (canViewFinance)
+        {
+            var financialDto = new EmployeeFinancialDto
+            {
+                Id = employee.Id,
+                RegistrationNumber = employee.RegistrationNumber,
+                Name = employee.Name,
+                JobRoleId = employee.JobRoleId,
+                EmploymentRegimeId = employee.EmploymentRegimeId,
+                HireDate = employee.HireDate,
+                Phone = employee.Phone,
+                DocumentMasked = employee.DocumentMasked,
+                Active = employee.Active ?? false,
+                PayRate = employee.PayRate,
+                AdditionalPercentage = employee.AdditionalPercentage
+            };
+            return CreatedAtAction(nameof(Get), new { id = employee.Id }, financialDto);
+        }
+
+        var dto = new EmployeeDto
+        {
+            Id = employee.Id,
+            RegistrationNumber = employee.RegistrationNumber,
+            Name = employee.Name,
+            JobRoleId = employee.JobRoleId,
+            EmploymentRegimeId = employee.EmploymentRegimeId,
+            HireDate = employee.HireDate,
+            Phone = employee.Phone,
+            DocumentMasked = employee.DocumentMasked,
+            Active = employee.Active ?? false
+        };
+        return CreatedAtAction(nameof(Get), new { id = employee.Id }, dto);
     }
 
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(long id, [FromBody] UpdateEmployeeRequest request)
     {
+        if (string.IsNullOrWhiteSpace(request.Name))
+        {
+            ModelState.AddModelError("name", "The Name field is required.");
+            return ValidationProblem(ModelState);
+        }
+
         var employee = await _context.Employees.FindAsync(id);
         if (employee == null) return NotFound();
 
@@ -114,16 +180,29 @@ public class EmployeesController : ControllerBase
         employee.RegistrationNumber = request.RegistrationNumber;
         employee.JobRoleId = request.JobRoleId;
         employee.EmploymentRegimeId = request.EmploymentRegimeId;
-        employee.PayRate = request.PayRate;
-        employee.AdditionalPercentage = request.AdditionalPercentage;
         employee.HireDate = request.HireDate;
         employee.Phone = request.Phone;
-        // Garantindo que convertemos explicitamente o valor booleano
         employee.Active = request.Active;
+
+        // Só aplica as alterações financeiras se o utilizador tiver a claim
+        if (User.HasClaim("permission", "view_finance"))
+        {
+            employee.PayRate = request.PayRate;
+            employee.AdditionalPercentage = request.AdditionalPercentage;
+        }
 
         if (!string.IsNullOrWhiteSpace(request.Document))
         {
-            employee.DocumentMasked = "***.***." + request.Document.Substring(Math.Max(0, request.Document.Length - 4));
+            if (!DocumentProcessor.IsValid(request.Document))
+            {
+                ModelState.AddModelError("document", "Invalid document format.");
+                return ValidationProblem(ModelState);
+            }
+
+            var processedDoc = _documentProcessor.Process(request.Document);
+            employee.DocumentMasked = processedDoc.Masked;
+            employee.DocumentHash = processedDoc.Hash;
+            employee.DocumentEncrypted = processedDoc.Encrypted;
         }
 
         await _context.SaveChangesAsync();

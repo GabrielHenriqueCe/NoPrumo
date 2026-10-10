@@ -9,7 +9,7 @@ namespace NoPrumo.Presentation.Controllers;
 
 [ApiController]
 [Route("api/job-roles")] // <-- Rota fixa com hífen
-[Authorize]
+[Authorize(Policy = "manage_employees")]
 public class JobRolesController : ControllerBase
 {
     private readonly AppDbContext _context;
@@ -20,8 +20,10 @@ public class JobRolesController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<PagedResult<JobRoleDto>>> Get([FromQuery] int page = 1, [FromQuery] int size = 10, [FromQuery] string? search = null)
+    public async Task<IActionResult> Get([FromQuery] int page = 1, [FromQuery] int size = 10, [FromQuery] string search = "")
     {
+        page = Math.Max(1, page);
+        size = Math.Clamp(size, 1, 100);
         var query = _context.JobRoles.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(search))
@@ -33,6 +35,8 @@ public class JobRolesController : ControllerBase
         var totalPages = (int)Math.Ceiling(total / (double)size);
 
         var items = await query
+            .OrderBy(jobRole => jobRole.Name)
+            .ThenBy(jobRole => jobRole.Id)
             .Skip((page - 1) * size)
             .Take(size)
             .Select(j => new JobRoleDto
@@ -58,6 +62,12 @@ public class JobRolesController : ControllerBase
         if (!departmentExists)
             return BadRequest(new ProblemDetails { Detail = "Invalid DepartmentId." });
 
+        if (await _context.JobRoles.AnyAsync(jobRole => jobRole.Name == request.Name && jobRole.DepartmentId == request.DepartmentId))
+        {
+            ModelState.AddModelError("name", "Name already exists in this department.");
+            return ValidationProblem(ModelState);
+        }
+
         var jobRole = new JobRole
         {
             Name = request.Name,
@@ -79,6 +89,18 @@ public class JobRolesController : ControllerBase
 
         if (string.IsNullOrWhiteSpace(request.Name))
             return BadRequest(new ProblemDetails { Detail = "Name is required." });
+
+        if (!await _context.Departments.AnyAsync(department => department.Id == request.DepartmentId))
+        {
+            ModelState.AddModelError("departmentId", "Department not found.");
+            return ValidationProblem(ModelState);
+        }
+
+        if (await _context.JobRoles.AnyAsync(jobRole => jobRole.Name == request.Name && jobRole.DepartmentId == request.DepartmentId && jobRole.Id != id))
+        {
+            ModelState.AddModelError("name", "Name already exists in this department.");
+            return ValidationProblem(ModelState);
+        }
 
         jobRole.Name = request.Name;
         jobRole.DepartmentId = request.DepartmentId;

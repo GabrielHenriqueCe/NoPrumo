@@ -8,11 +8,13 @@ export function DepartmentFormDialog({ department, onClose, onSave }) {
     const { departments: departmentGateway } = useContainer();
     const [name, setName] = useState(department ? department.name : '');
     const [active, setActive] = useState(department ? department.active : true);
-    const [errors, setErrors] = useState(null);
+    const [fieldErrors, setFieldErrors] = useState({});
+    const [formError, setFormError] = useState(null);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setErrors(null);
+        setFieldErrors({});
+        setFormError(null);
         try {
             if (department) {
                 await departmentGateway.update(department.id, { name, active });
@@ -21,11 +23,10 @@ export function DepartmentFormDialog({ department, onClose, onSave }) {
             }
             onSave();
         } catch (error) {
-            // O tratamento de erro do httpClient (problemDetails) injeta os erros no payload
-            if (error.payload && error.payload.errors) {
-                setErrors(error.payload.errors);
-            } else if (error.errors) {
-                setErrors(error.errors);
+            if (error.isValidation) {
+                setFieldErrors(error.fieldErrors);
+            } else {
+                setFormError(error.message || 'An unexpected error occurred.');
             }
         }
     };
@@ -33,11 +34,12 @@ export function DepartmentFormDialog({ department, onClose, onSave }) {
     return (
         <Dialog open={true} title={department ? "Edit Department" : "New Department"} onClose={onClose}>
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                {formError && <div className="p-3 bg-red-100 text-red-700 rounded text-sm">{formError}</div>}
                 <TextField 
                     label="Name" 
                     value={name} 
                     onChange={e => setName(e.target.value)} 
-                    error={errors?.Name?.join(', ')}
+                    error={fieldErrors.name}
                 />
                 
                 {department && (

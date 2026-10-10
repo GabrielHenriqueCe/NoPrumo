@@ -9,7 +9,7 @@ namespace NoPrumo.Presentation.Controllers;
 
 [ApiController]
 [Route("api/employment-regimes")]
-[Authorize]
+[Authorize(Policy = "manage_employees")]
 public class EmploymentRegimesController : ControllerBase
 {
     private readonly AppDbContext _context;
@@ -20,8 +20,10 @@ public class EmploymentRegimesController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<PagedResult<EmploymentRegimeDto>>> Get([FromQuery] int page = 1, [FromQuery] int size = 10, [FromQuery] string? search = null)
+    public async Task<IActionResult> Get([FromQuery] int page = 1, [FromQuery] int size = 10, [FromQuery] string search = "")
     {
+        page = Math.Max(1, page);
+        size = Math.Clamp(size, 1, 100);
         var query = _context.EmploymentRegimes.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(search))
@@ -33,6 +35,8 @@ public class EmploymentRegimesController : ControllerBase
         var totalPages = (int)Math.Ceiling(total / (double)size);
 
         var items = await query
+            .OrderBy(regime => regime.Label)
+            .ThenBy(regime => regime.Id)
             .Skip((page - 1) * size)
             .Take(size)
             .Select(e => new EmploymentRegimeDto
@@ -54,6 +58,12 @@ public class EmploymentRegimesController : ControllerBase
     {
         if (string.IsNullOrWhiteSpace(request.Label))
             return BadRequest(new ProblemDetails { Detail = "Label is required." });
+
+        if (await _context.EmploymentRegimes.AnyAsync(regime => regime.Label == request.Label))
+        {
+            ModelState.AddModelError("label", "Label already exists.");
+            return ValidationProblem(ModelState);
+        }
 
         if (string.IsNullOrWhiteSpace(request.Unit))
             return BadRequest(new ProblemDetails { Detail = "Unit is required." });
@@ -85,6 +95,12 @@ public class EmploymentRegimesController : ControllerBase
 
         if (string.IsNullOrWhiteSpace(request.Label))
             return BadRequest(new ProblemDetails { Detail = "Label is required." });
+
+        if (await _context.EmploymentRegimes.AnyAsync(regime => regime.Label == request.Label && regime.Id != id))
+        {
+            ModelState.AddModelError("label", "Label already exists.");
+            return ValidationProblem(ModelState);
+        }
 
         if (string.IsNullOrWhiteSpace(request.Unit))
             return BadRequest(new ProblemDetails { Detail = "Unit is required." });
