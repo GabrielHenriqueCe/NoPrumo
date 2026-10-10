@@ -1,8 +1,8 @@
 export function createEmployeeGateway(http) {
   return {
-    list({ page = 1, size = 10, search = '' } = {}, { signal } = {}) {
-      return http.get('/employees', { params: { page, size, search }, signal })
-    },
+      list: ({ page = 1, size = 10, search = '' } = {}, { signal } = {}) => {
+          return http.get('/employees', { params: { page, size, search }, signal })
+      },
 
     getById(id, { signal } = {}) {
       return http.get(`/employees/${id}`, { signal })

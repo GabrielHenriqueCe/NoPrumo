@@ -1,8 +1,8 @@
 export function createDepartmentGateway(http) {
   return {
-    list({ page = 1, size = 10, search = '' } = {}, { signal } = {}) {
-      return http.get('/departments', { params: { page, size, search }, signal })
-    },
+      list: ({ page = 1, size = 10, search = '' } = {}, { signal } = {}) => {
+          return http.get('/departments', { params: { page, size, search }, signal })
+      },
 
     getById(id, { signal } = {}) {
       return http.get(`/departments/${id}`, { signal })

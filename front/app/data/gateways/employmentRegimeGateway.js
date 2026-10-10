@@ -1,8 +1,8 @@
 export function createEmploymentRegimeGateway(http) {
   return {
-    list({ page = 1, size = 10, search = '' } = {}, { signal } = {}) {
-      return http.get('/employment-regimes', { params: { page, size, search }, signal })
-    },
+      list: ({ page = 1, size = 10, search = '' } = {}, { signal } = {}) => {
+          return http.get('/employment-regimes', { params: { page, size, search }, signal })
+      },
 
     getById(id, { signal } = {}) {
       return http.get(`/employment-regimes/${id}`, { signal })

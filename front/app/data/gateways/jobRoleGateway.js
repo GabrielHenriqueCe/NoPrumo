@@ -1,8 +1,8 @@
 export function createJobRoleGateway(http) {
   return {
-    list({ page = 1, size = 10, search = '' } = {}, { signal } = {}) {
-      return http.get('/job-roles', { params: { page, size, search }, signal })
-    },
+      list: ({ page = 1, size = 10, search = '' } = {}, { signal } = {}) => {
+          return http.get('/job-roles', { params: { page, size, search }, signal })
+      },
 
     getById(id, { signal } = {}) {
       return http.get(`/job-roles/${id}`, { signal })

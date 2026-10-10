@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useContainer } from '../../providers/containerContext';
 import { Pagination } from '../../ui/Pagination';
 import { Button } from '../../ui/Button';
@@ -15,38 +15,56 @@ export function EmploymentRegimesScreen() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingRegime, setEditingRegime] = useState(null);
     const [total, setTotal] = useState(0);
+    const [error, setError] = useState(null);
 
-    const loadRegimes = async () => {
+    const loadRegimes = useCallback(async (signal) => {
+        setError(null);
         try {
-            const response = await employmentRegimes.list({ page, size, search });
+            const response = await employmentRegimes.list({ page, size, search }, {signal});
             setRegimes(response.items);
             setTotalPages(response.totalPages);
             setTotal(response.total);
         } catch (error) {
+            if (error.name === 'AbortError' || error.name === 'CanceledError') return;
             console.error("Error loading employment regimes", error);
+            setError("Error loading employment regimes. Please try again.");
         }
-    };
+    }, [employmentRegimes, page, size, search]);
 
     useEffect(() => {
-        loadRegimes();
-    }, [page, search, employmentRegimes]);
+        const controller = new AbortController();
+
+        const delay = setTimeout(() => {
+            loadRegimes(controller.signal);
+        }, 350);
+
+        return () => {
+            clearTimeout(delay);
+            controller.abort();
+        };
+    }, [loadRegimes]);
 
     const handleToggleActive = async (item) => {
         if (item.active && !window.confirm('Are you sure you want to deactivate this record?')) return;
-
+        setError(null);
         try {
             await employmentRegimes.setActive(item.id, !item.active);
 
             loadRegimes();
         } catch (error) {
             console.error(error);
+            setError("Error updating employment regime status. Please try again.");
         }
     };
 
     return (
         <div className="p-6">
             <h1 className="text-2xl font-bold mb-4">Employment Regimes</h1>
-            
+            {error && (
+                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                    {error}
+                </div>
+            )}
             <div className="flex gap-4 mb-4">
                 <TextField 
                     placeholder="Search regimes..." 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useContainer } from '../../providers/containerContext';
 import { Dialog } from '../../ui/Dialog';
 import { Button } from '../../ui/Button';

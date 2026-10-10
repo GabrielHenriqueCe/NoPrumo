@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useContainer } from '../../providers/containerContext';
 import { Pagination } from '../../ui/Pagination';
 import { Button } from '../../ui/Button';
@@ -14,7 +14,7 @@ export function JobRolesScreen() {
     const [size] = useState(10);
     const [totalPages, setTotalPages] = useState(1);
     const [search, setSearch] = useState('');
-    
+    const [error, setError] = useState(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingRole, setEditingRole] = useState(null);
 
@@ -36,24 +36,37 @@ export function JobRolesScreen() {
         fetchDepartments();
     }, [departments]);
 
-    const loadRoles = async () => {
+    const loadRoles = useCallback(async (signal) => {
+        setError(null);
         try {
-            const response = await jobRoles.list({ page, size, search });
+            const response = await jobRoles.list({ page, size, search }, {signal});
             setRolesList(response.items);
             setTotalPages(response.totalPages);
             setTotal(response.total);
         } catch (error) {
+            if (error.name === 'AbortError' || error.name === 'CanceledError') return;
             console.error("Error loading job roles", error);
+            setError("Error loading job roles. Please try again.");
         }
-    };
+    }, [page, size, search, jobRoles]
+);
 
     useEffect(() => {
-        loadRoles();
-    }, [page, search, jobRoles]);
+        const controller = new AbortController();
 
-    // Substitua o handleDelete antigo por este:
+        const delay = setTimeout(() => {
+            loadRoles(controller.signal);
+        }, 350);
+
+        return () => {
+            clearTimeout(delay);
+            controller.abort();
+        };
+    }, [loadRoles]);
+
     const handleToggleActive = async (item) => {
         if (item.active && !window.confirm('Are you sure you want to deactivate this record?')) return;
+        setError(null);
 
         try {
             await jobRoles.setActive(item.id, !item.active);
@@ -61,13 +74,18 @@ export function JobRolesScreen() {
             loadRoles();
         } catch (error) {
             console.error(error);
+            setError("Error updating job role status. Please try again.");
         }
     };
 
     return (
         <div className="p-6">
             <h1 className="text-2xl font-bold mb-4">Job Roles</h1>
-            
+            {error && (
+                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                    {error}
+                </div>
+            )}
             <div className="flex gap-4 mb-4">
                 <TextField 
                     placeholder="Search job roles..." 

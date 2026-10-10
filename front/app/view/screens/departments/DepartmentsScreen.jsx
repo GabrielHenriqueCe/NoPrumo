@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useContainer } from '../../providers/containerContext';
 import { Pagination } from '../../ui/Pagination';
 import { Button } from '../../ui/Button';
@@ -15,37 +15,56 @@ export function DepartmentsScreen() {
     const [search, setSearch] = useState('');
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingDepartment, setEditingDepartment] = useState(null);
+    const [error, setError] = useState(null);
 
-    const loadDepartments = async () => {
+    const loadDepartments = useCallback(async (signal) => {
+        setError(null);
         try {
-            const response = await departmentGateway.list({ page, size, search });
+            const response = await departmentGateway.list({ page, size, search }, {signal});
             setDepartments(response.items);
             setTotalPages(response.totalPages);
             setTotal(response.total);
         } catch (error) {
+            if (error.name === 'AbortError' || error.name === 'CanceledError') return;
             console.error("Error loading departments", error);
+            setError("Error loading departments. Please try again.");
         }
-    };
+    }, [page, size, search, departmentGateway]);
 
     useEffect(() => {
-        loadDepartments();
-    }, [page, search, departmentGateway]);
+        const controller = new AbortController();
+
+        const delay = setTimeout(() => {
+            loadDepartments(controller.signal);
+        }, 350);
+
+        return () => {
+            clearTimeout(delay);
+            controller.abort();
+        };
+    }, [loadDepartments]);
 
     const handleToggleActive = async (item) => {
         if (item.active && !window.confirm('Are you sure you want to deactivate this record?')) return;
+        setError(null);
 
         try {
-            await departmentGateway.setActive(item.id, !item.active); // <-- Aqui foi alterado
+            await departmentGateway.setActive(item.id, !item.active);
             loadDepartments();
         } catch (error) {
             console.error(error);
+            setError("Error updating department status. Please try again.");
         }
     };
 
     return (
         <div className="p-6">
             <h1 className="text-2xl font-bold mb-4">Departments</h1>
-            
+            {error && (
+                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                    {error}
+                </div>
+            )}
             <div className="flex gap-4 mb-4">
                 <TextField 
                     placeholder="Search departments..." 
