@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using NoPrumo.Domain.Entities;
 using NoPrumo.Domain.Enums;
 using NoPrumo.Infrastructure.Data.Converters;
@@ -115,7 +115,8 @@ public class AppDbContext : DbContext
                 .HasMaxLength(220);
             entity.Property(e => e.Type)
                 .HasMaxLength(20)
-                .HasDefaultValueSql("'project'");
+                .HasDefaultValueSql("'project'")
+                .HasConversion<SnakeCaseEnumConverter<AppointmentType>>();
             entity.Property(e => e.UpdatedAt)
                 .ValueGeneratedOnAddOrUpdate()
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")

@@ -44,6 +44,8 @@ builder.Services.AddScoped<IStageRepository, StageRepository>();
 builder.Services.AddScoped<IStageService, StageService>();
 builder.Services.AddScoped<IProjectTeamRepository, ProjectTeamRepository>();
 builder.Services.AddScoped<IProjectTeamService, ProjectTeamService>();
+builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
+builder.Services.AddScoped<IAppointmentService, AppointmentService>();
 
 var encryptionKeyBase64 = builder.Configuration["Documents:EncryptionKey"]
     ?? throw new InvalidOperationException("Falta Documents:EncryptionKey nos User Secrets. Veja o README para gerar.");
@@ -99,6 +101,12 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("manage_purchases", policy => policy.RequireClaim("permission", "manage_purchases"));
     options.AddPolicy("manage_safety", policy => policy.RequireClaim("permission", "manage_safety"));
     options.AddPolicy("view_finance", policy => policy.RequireClaim("permission", "view_finance"));
+
+    // A agenda serve a obra (manage_projects) e a segurança (manage_safety, que
+    // vê os vencimentos de NR). Não há permissão própria no seed.
+    options.AddPolicy("manage_schedule", policy => policy.RequireAssertion(context =>
+        context.User.HasClaim("permission", "manage_projects") ||
+        context.User.HasClaim("permission", "manage_safety")));
 });
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
