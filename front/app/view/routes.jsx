@@ -9,7 +9,9 @@ import { EmployeesScreen } from './screens/employees/EmployeesScreen'
 import { EmployeeTrainingsScreen } from './screens/employeeTrainings/EmployeeTrainingsScreen'
 import { EmploymentRegimesScreen } from './screens/employmentRegimes/EmploymentRegimesScreen'
 import { JobRolesScreen } from './screens/jobRoles/JobRolesScreen'
+import { PortalScreen } from './screens/portal/PortalScreen'
 import { ProjectsScreen } from './screens/projects/ProjectsScreen'
+import { PurchasesScreen } from './screens/purchases/PurchasesScreen'
 import { StagesScreen } from './screens/stages/StagesScreen'
 import { StockCategoriesScreen } from './screens/stockCategories/StockCategoriesScreen'
 import { StockGroupsScreen } from './screens/stockGroups/StockGroupsScreen'
@@ -47,6 +49,7 @@ const SCREENS = [
 
   { path: '/clients', permission: 'manage_projects', element: <ClientsScreen /> },
   { path: '/suppliers', permission: 'manage_purchases', element: <SuppliersScreen /> },
+  { path: '/purchases', permission: 'manage_purchases', element: <PurchasesScreen /> },
 
   { path: '/stock-categories', permission: 'manage_stock', element: <StockCategoriesScreen /> },
   { path: '/stock-groups', permission: 'manage_stock', element: <StockGroupsScreen /> },
@@ -63,6 +66,7 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<LoginScreen />} />
+      <Route path="/portal/:token" element={<PortalScreen />} />
 
       <Route
         path="/change-password"

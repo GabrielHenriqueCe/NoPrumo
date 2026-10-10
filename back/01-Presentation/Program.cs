@@ -42,6 +42,10 @@ builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
 builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddScoped<IStageRepository, StageRepository>();
 builder.Services.AddScoped<IStageService, StageService>();
+builder.Services.AddScoped<IProjectLinkRepository, ProjectLinkRepository>();
+builder.Services.AddScoped<IProjectLinkService, ProjectLinkService>();
+builder.Services.AddScoped<IPurchaseRequestRepository, PurchaseRequestRepository>();
+builder.Services.AddScoped<IPurchaseRequestService, PurchaseRequestService>();
 
 var encryptionKeyBase64 = builder.Configuration["Documents:EncryptionKey"]
     ?? throw new InvalidOperationException("Falta Documents:EncryptionKey nos User Secrets. Veja o README para gerar.");
