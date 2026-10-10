@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NoPrumo.Application.DTOs;
+using NoPrumo.Application.DTOs.Requests;
 using NoPrumo.Domain.Entities;
 using NoPrumo.Infrastructure.Data;
 
@@ -91,20 +92,29 @@ public class DepartmentsController : ControllerBase
         }
 
         department.Name = request.Name;
-        department.Active = request.Active;
 
         await _context.SaveChangesAsync();
         return NoContent();
     }
 
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(long id)
+    [HttpPatch("{id}/activate")]
+    public async Task<IActionResult> Activate(long id)
     {
         var department = await _context.Departments.FindAsync(id);
         if (department == null) return NotFound();
 
-        department.Active = false; 
-        
+        department.Active = true;
+        await _context.SaveChangesAsync();
+        return NoContent();
+    }
+
+    [HttpPatch("{id}/deactivate")]
+    public async Task<IActionResult> Deactivate(long id)
+    {
+        var department = await _context.Departments.FindAsync(id);
+        if (department == null) return NotFound();
+
+        department.Active = false;
         await _context.SaveChangesAsync();
         return NoContent();
     }

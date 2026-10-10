@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NoPrumo.Application.DTOs;
+using NoPrumo.Application.DTOs.Requests;
 using NoPrumo.Domain.Entities;
 using NoPrumo.Infrastructure.Data;
 using NoPrumo.Application.Services;
@@ -182,7 +183,6 @@ public class EmployeesController : ControllerBase
         employee.EmploymentRegimeId = request.EmploymentRegimeId;
         employee.HireDate = request.HireDate;
         employee.Phone = request.Phone;
-        employee.Active = request.Active;
 
         // Só aplica as alterações financeiras se o utilizador tiver a claim
         if (User.HasClaim("permission", "view_finance"))
@@ -209,15 +209,26 @@ public class EmployeesController : ControllerBase
         return NoContent();
     }
 
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(long id)
+    [HttpPatch("{id}/activate")]
+    public async Task<IActionResult> Activate(long id)
+    {
+        var employee = await _context.Employees.FindAsync(id);
+        if (employee == null) return NotFound();
+
+        employee.Active = true;
+        employee.DeletedAt = null; // Remove a data de exclusão
+        await _context.SaveChangesAsync();
+        return NoContent();
+    }
+
+    [HttpPatch("{id}/deactivate")]
+    public async Task<IActionResult> Deactivate(long id)
     {
         var employee = await _context.Employees.FindAsync(id);
         if (employee == null) return NotFound();
 
         employee.Active = false;
-        employee.DeletedAt = DateTime.UtcNow;
-        
+        employee.DeletedAt = DateTime.UtcNow; // Mantemos o DateTime.UtcNow por enquanto até chegar ao Item 29
         await _context.SaveChangesAsync();
         return NoContent();
     }

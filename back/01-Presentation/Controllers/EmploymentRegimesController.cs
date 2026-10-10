@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NoPrumo.Application.DTOs;
+using NoPrumo.Application.DTOs.Requests;
 using NoPrumo.Domain.Entities;
 using NoPrumo.Infrastructure.Data;
 
@@ -109,19 +110,29 @@ public class EmploymentRegimesController : ControllerBase
         regime.Unit = request.Unit;
         regime.MonthlyHours = request.MonthlyHours;
         regime.Description = request.Description;
-        regime.Active = request.Active;
 
         await _context.SaveChangesAsync();
         return NoContent();
     }
 
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(long id)
+    [HttpPatch("{id}/activate")]
+    public async Task<IActionResult> Activate(long id)
     {
         var regime = await _context.EmploymentRegimes.FindAsync(id);
         if (regime == null) return NotFound();
 
-        regime.Active = false; 
+        regime.Active = true;
+        await _context.SaveChangesAsync();
+        return NoContent();
+    }
+
+    [HttpPatch("{id}/deactivate")]
+    public async Task<IActionResult> Deactivate(long id)
+    {
+        var regime = await _context.EmploymentRegimes.FindAsync(id);
+        if (regime == null) return NotFound();
+
+        regime.Active = false;
         await _context.SaveChangesAsync();
         return NoContent();
     }
