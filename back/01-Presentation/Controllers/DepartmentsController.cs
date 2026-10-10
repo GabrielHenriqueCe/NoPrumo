@@ -9,7 +9,7 @@ namespace NoPrumo.Presentation.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
+[Authorize(Policy = "manage_employees")]
 public class DepartmentsController : ControllerBase
 {
     private readonly AppDbContext _context;
@@ -20,8 +20,11 @@ public class DepartmentsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<PagedResult<DepartmentDto>>> Get([FromQuery] int page = 1, [FromQuery] int size = 10, [FromQuery] string? search = null)
+    public async Task<IActionResult> Get([FromQuery] int page = 1, [FromQuery] int size = 10, [FromQuery] string search = "")
     {
+        page = Math.Max(1, page);
+        size = Math.Clamp(size, 1, 100);
+
         var query = _context.Departments.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(search))
@@ -33,6 +36,8 @@ public class DepartmentsController : ControllerBase
         var totalPages = (int)Math.Ceiling(total / (double)size);
 
         var items = await query
+            .OrderBy(department => department.Name)
+            .ThenBy(department => department.Id)
             .Skip((page - 1) * size)
             .Take(size)
             .Select(d => new DepartmentDto
@@ -51,6 +56,12 @@ public class DepartmentsController : ControllerBase
     {
         if (string.IsNullOrWhiteSpace(request.Name))
             return BadRequest(new ProblemDetails { Detail = "Name is required." });
+
+        if (await _context.Departments.AnyAsync(department => department.Name == request.Name))
+        {
+            ModelState.AddModelError("name", "Name already exists.");
+            return ValidationProblem(ModelState);
+        }
 
         var department = new Department
         {
@@ -72,6 +83,12 @@ public class DepartmentsController : ControllerBase
 
         if (string.IsNullOrWhiteSpace(request.Name))
             return BadRequest(new ProblemDetails { Detail = "Name is required." });
+
+        if (await _context.Departments.AnyAsync(department => department.Name == request.Name && department.Id != id))
+        {
+            ModelState.AddModelError("name", "Name already exists.");
+            return ValidationProblem(ModelState);
+        }
 
         department.Name = request.Name;
         department.Active = request.Active;

@@ -475,7 +475,8 @@ public class AppDbContext : DbContext
             entity.Property(e => e.Quantity)
                 .HasPrecision(15, 3);
             entity.Property(e => e.Type)
-                .HasMaxLength(25);
+                .HasMaxLength(25)
+                .HasConversion<SnakeCaseEnumConverter<StockMovementType>>();
             entity.Property(e => e.Unit)
                 .HasMaxLength(30);
 

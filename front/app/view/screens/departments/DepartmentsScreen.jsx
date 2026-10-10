@@ -6,9 +6,8 @@ import { TextField } from '../../ui/TextField';
 import { DepartmentFormDialog } from './DepartmentFormDialog';
 
 export function DepartmentsScreen() {
-    // Acedemos ao gateway através do contentor de injeção de dependências
     const { departments: departmentGateway } = useContainer();
-    
+    const [total, setTotal] = useState(0);
     const [departments, setDepartments] = useState([]);
     const [page, setPage] = useState(1);
     const [size] = useState(10);
@@ -20,9 +19,9 @@ export function DepartmentsScreen() {
     const loadDepartments = async () => {
         try {
             const response = await departmentGateway.list({ page, size, search });
-            // O gateway retorna diretamente o payload (items, page, size, total, totalPages)
             setDepartments(response.items);
             setTotalPages(response.totalPages);
+            setTotal(response.total);
         } catch (error) {
             console.error("Error loading departments", error);
         }
@@ -76,7 +75,7 @@ export function DepartmentsScreen() {
                 </tbody>
             </table>
 
-            <Pagination current={page} total={totalPages} onPageChange={setPage} />
+            <Pagination page={page} totalPages={totalPages} total={total} onChange={setPage} />
 
             {isDialogOpen && (
                 <DepartmentFormDialog 
