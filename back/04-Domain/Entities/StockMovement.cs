@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using NoPrumo.Domain.Enums;
 
 namespace NoPrumo.Domain.Entities;
 
@@ -13,7 +14,7 @@ public class StockMovement
 
     public long? EmployeeId { get; set; }
 
-    public string Type { get; set; } = null!;
+    public StockMovementType Type { get; set; }
 
     public decimal Quantity { get; set; }
 
