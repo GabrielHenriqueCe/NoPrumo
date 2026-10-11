@@ -1,4 +1,4 @@
-namespace NoPrumo.Application.DTOs.Requests;
+namespace NoPrumo.Application.Requests;
 
 public sealed record CreateClientRequest(
     string Name,

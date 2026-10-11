@@ -22,4 +22,9 @@ public class PurchaseRequestItem
     public virtual StockItem StockItem { get; set; } = null!;
 
     public virtual PurchaseRequest PurchaseRequest { get; set; } = null!;
+
+    public void Fulfill(decimal quantity)
+    {
+        FulfilledQuantity += quantity;
+    }
 }

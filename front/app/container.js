@@ -8,7 +8,9 @@ import { createEmploymentRegimeGateway } from './data/gateways/employmentRegimeG
 import { createJobRoleGateway } from './data/gateways/jobRoleGateway'
 import { createPpeIssueGateway } from './data/gateways/ppeIssueGateway'
 import { createProjectGateway } from './data/gateways/projectGateway'
+import { createProjectLinkGateway } from './data/gateways/projectLinkGateway'
 import { createProjectTeamGateway } from './data/gateways/projectTeamGateway'
+import { createPurchaseRequestGateway } from './data/gateways/purchaseRequestGateway'
 import { createStageGateway } from './data/gateways/stageGateway'
 import { createStockCategoryGateway } from './data/gateways/stockCategoryGateway'
 import { createStockGroupGateway } from './data/gateways/stockGroupGateway'
@@ -59,12 +61,14 @@ export function createContainer({
 
     clients: createClientGateway(http),
     suppliers: createSupplierGateway(http),
+    purchaseRequests: createPurchaseRequestGateway(http),
 
     stockCategories: createStockCategoryGateway(http),
     stockGroups: createStockGroupGateway(http),
     stockItems: createStockItemGateway(http),
 
     projects: createProjectGateway(http),
+    projectLinks: createProjectLinkGateway(http),
     stages: createStageGateway(http),
     projectTeams: createProjectTeamGateway(http),
     appointments: createAppointmentGateway(http),

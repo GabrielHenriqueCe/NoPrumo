@@ -1,6 +1,6 @@
-namespace NoPrumo.Application.DTOs.Requests;
+namespace NoPrumo.Application.Requests;
 
-public sealed record UpdateSupplierRequest(
+public sealed record CreateSupplierRequest(
     string Name,
     string? Document,
     string? ContactName,

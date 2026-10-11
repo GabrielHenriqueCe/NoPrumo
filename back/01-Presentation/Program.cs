@@ -48,6 +48,10 @@ builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
 builder.Services.AddScoped<IAppointmentService, AppointmentService>();
 builder.Services.AddScoped<IPpeIssueRepository, PpeIssueRepository>();
 builder.Services.AddScoped<IPpeIssueService, PpeIssueService>();
+builder.Services.AddScoped<IProjectLinkRepository, ProjectLinkRepository>();
+builder.Services.AddScoped<IProjectLinkService, ProjectLinkService>();
+builder.Services.AddScoped<IPurchaseRequestRepository, PurchaseRequestRepository>();
+builder.Services.AddScoped<IPurchaseRequestService, PurchaseRequestService>();
 
 var encryptionKeyBase64 = builder.Configuration["Documents:EncryptionKey"]
     ?? throw new InvalidOperationException("Falta Documents:EncryptionKey nos User Secrets. Veja o README para gerar.");
