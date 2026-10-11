@@ -1,8 +1,8 @@
 export function createDepartmentGateway(http) {
   return {
-    list({ page = 1, size = 10, search = '' } = {}, { signal } = {}) {
-      return http.get('/departments', { params: { page, size, search }, signal })
-    },
+      list: ({ page = 1, size = 10, search = '' } = {}, { signal } = {}) => {
+          return http.get('/departments', { params: { page, size, search }, signal })
+      },
 
     getById(id, { signal } = {}) {
       return http.get(`/departments/${id}`, { signal })
@@ -16,8 +16,6 @@ export function createDepartmentGateway(http) {
       return http.put(`/departments/${id}`, item, { signal })
     },
 
-    remove(id, { signal } = {}) {
-      return http.remove(`/departments/${id}`, { signal })
-    }
+      setActive: (id, active, signal) => http.patch(`/departments/${id}/${active ? 'activate' : 'deactivate'}`, null, { signal }),
   }
 }

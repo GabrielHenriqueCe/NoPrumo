@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import { SelectField } from '../../ui/SelectField';
+import { useState } from 'react';
 import { useContainer } from '../../providers/containerContext';
 import { Dialog } from '../../ui/Dialog';
 import { Button } from '../../ui/Button';
@@ -19,12 +20,12 @@ export function EmploymentRegimeFormDialog({ regime, onClose, onSave }) {
         setFieldErrors({});
         setFormError(null);
         try {
-            const payload = { 
-                label, 
-                unit, 
+            const payload = {
+                label,
+                unit,
                 monthlyHours: monthlyHours ? Number(monthlyHours) : null,
                 description,
-                active 
+                active
             };
 
             if (regime) {
@@ -44,55 +45,53 @@ export function EmploymentRegimeFormDialog({ regime, onClose, onSave }) {
 
     return (
         <Dialog open={true} title={regime ? "Edit Regime" : "New Regime"} onClose={onClose}>
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-6">
                 {formError && <div className="p-3 bg-red-100 text-red-700 rounded text-sm">{formError}</div>}
-                <TextField 
-                    label="Label (e.g. CLT, PJ)" 
-                    value={label} 
-                    onChange={e => setLabel(e.target.value)} 
+                <TextField
+                    label="Label (e.g. CLT, PJ)"
+                    value={label}
+                    onChange={e => setLabel(e.target.value)}
                     error={fieldErrors.name}
                 />
 
-                <div className="flex flex-col gap-1">
-                    <label className="text-sm font-semibold">Unit</label>
-                    <select 
-                        value={unit} 
-                        onChange={e => setUnit(e.target.value)}
-                        className="border border-line rounded px-3 py-2 outline-none focus:border-graphite"
-                    >
-                        <option value="month">Month</option>
-                        <option value="hour">Hour</option>
-                        <option value="day">Day</option>
-                    </select>
-                    {fieldErrors.unit && <span className="text-danger text-sm">{fieldErrors.unit.join(', ')}</span>}
-                </div>
+                <SelectField
+                    label="Unit"
+                    value={unit}
+                    onChange={e => setUnit(e.target.value)}
+                    error={fieldErrors.unit}
+                    options={[
+                        { value: 'month', label: 'Month' },
+                        { value: 'hour', label: 'Hour' },
+                        { value: 'day', label: 'Day' }
+                    ]}
+                />
 
-                <TextField 
-                    label="Monthly Hours (optional)" 
+                <TextField
+                    label="Monthly Hours (optional)"
                     type="number"
                     step="0.01"
-                    value={monthlyHours} 
-                    onChange={e => setMonthlyHours(e.target.value)} 
+                    value={monthlyHours}
+                    onChange={e => setMonthlyHours(e.target.value)}
                     error={fieldErrors.monthlyHours}
                 />
 
                 <div className="flex flex-col gap-1">
                     <label className="text-sm font-semibold">Description</label>
-                    <textarea 
+                    <textarea
                         className="border border-line rounded px-3 py-2 outline-none focus:border-graphite"
                         rows={3}
                         value={description}
                         onChange={e => setDescription(e.target.value)}
                     />
                 </div>
-                
+
                 {regime && (
                     <label className="flex items-center gap-2">
                         <input type="checkbox" checked={active} onChange={e => setActive(e.target.checked)} />
                         Active
                     </label>
                 )}
-                
+
                 <div className="flex gap-2 mt-4 justify-end">
                     <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
                     <Button type="submit">Save</Button>

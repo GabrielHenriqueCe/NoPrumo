@@ -1,8 +1,8 @@
 export function createEmploymentRegimeGateway(http) {
   return {
-    list({ page = 1, size = 10, search = '' } = {}, { signal } = {}) {
-      return http.get('/employment-regimes', { params: { page, size, search }, signal })
-    },
+      list: ({ page = 1, size = 10, search = '' } = {}, { signal } = {}) => {
+          return http.get('/employment-regimes', { params: { page, size, search }, signal })
+      },
 
     getById(id, { signal } = {}) {
       return http.get(`/employment-regimes/${id}`, { signal })
@@ -16,9 +16,6 @@ export function createEmploymentRegimeGateway(http) {
       return http.put(`/employment-regimes/${id}`, item, { signal })
     },
     
-    // Adicione o método remove
-    remove(id, { signal } = {}) {
-      return http.remove(`/employment-regimes/${id}`, { signal })
-    }
+      setActive: (id, active, signal) => http.patch(`/employment-regimes/${id}/${active ? 'activate' : 'deactivate'}`, null, { signal }),
   }
 }

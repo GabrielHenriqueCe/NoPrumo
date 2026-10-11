@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NoPrumo.Application.DTOs;
+using NoPrumo.Application.DTOs.Requests;
 using NoPrumo.Domain.Entities;
 using NoPrumo.Infrastructure.Data;
 using NoPrumo.Application.Services;
@@ -28,7 +29,7 @@ public class EmployeesController : ControllerBase
         page = Math.Max(1, page);
         size = Math.Clamp(size, 1, 100);
 
-        var query = _context.Employees.AsQueryable();
+        var query = _context.Employee.AsNoTracking();
 
         if (!string.IsNullOrWhiteSpace(search))
         {
@@ -38,52 +39,107 @@ public class EmployeesController : ControllerBase
         var total = await query.CountAsync();
         var totalPages = (int)Math.Ceiling(total / (double)size);
 
-        // Fazemos o JOIN manual para trazer os nomes (caso não existam as Navigation Properties configuradas)
         var employees = await query
-            .OrderBy(employee => employee.Name)
-            .ThenBy(employee => employee.Id)
+            .Include(e => e.JobRole)
+            .Include(e => e.EmploymentRegime)
+            .OrderBy(e => e.Name)
+            .ThenBy(e => e.Id)
             .Skip((page - 1) * size)
             .Take(size)
             .ToListAsync();
 
-        var jobRoleIds = employees.Where(e => e.JobRoleId.HasValue).Select(e => e.JobRoleId!.Value).Distinct();
-        var regimeIds = employees.Where(e => e.EmploymentRegimeId.HasValue).Select(e => e.EmploymentRegimeId!.Value).Distinct();
-
-        var jobRoles = await _context.JobRoles.Where(j => jobRoleIds.Contains(j.Id)).ToDictionaryAsync(j => j.Id, j => j.Name);
-        var regimes = await _context.EmploymentRegimes.Where(r => regimeIds.Contains(r.Id)).ToDictionaryAsync(r => r.Id, r => r.Label);
-
-        // Verifica a permissão financeira
         bool canViewFinance = User.HasClaim("permission", "view_finance");
 
-        var items = employees.Select(e => 
+        var items = employees.Select(e =>
         {
-            var roleName = e.JobRoleId.HasValue && jobRoles.ContainsKey(e.JobRoleId.Value) ? jobRoles[e.JobRoleId.Value] : null;
-            var regimeLabel = e.EmploymentRegimeId.HasValue && regimes.ContainsKey(e.EmploymentRegimeId.Value) ? regimes[e.EmploymentRegimeId.Value] : null;
-
             if (canViewFinance)
             {
-                return (object)new EmployeeFinancialDto
+                return (EmployeeDto)new EmployeeFinancialDto
                 {
-                    Id = e.Id, RegistrationNumber = e.RegistrationNumber, Name = e.Name,
-                    JobRoleId = e.JobRoleId, JobRoleName = roleName,
-                    EmploymentRegimeId = e.EmploymentRegimeId, EmploymentRegimeLabel = regimeLabel,
-                    HireDate = e.HireDate, Phone = e.Phone, DocumentMasked = e.DocumentMasked,
-                    Active = e.Active ?? false, PayRate = e.PayRate, AdditionalPercentage = e.AdditionalPercentage
+                    Id = e.Id,
+                    RegistrationNumber = e.RegistrationNumber,
+                    Name = e.Name,
+                    JobRoleId = e.JobRoleId,
+                    JobRoleName = e.JobRole?.Name,
+                    EmploymentRegimeId = e.EmploymentRegimeId,
+                    EmploymentRegimeLabel = e.EmploymentRegime?.Label,
+                    HireDate = e.HireDate,
+                    Phone = e.Phone,
+                    DocumentMasked = e.DocumentMasked,
+                    Active = e.Active ?? false,
+                    PayRate = e.PayRate,
+                    AdditionalPercentage = e.AdditionalPercentage
                 };
             }
 
-            return (object)new EmployeeDto
+            return new EmployeeDto
             {
-                Id = e.Id, RegistrationNumber = e.RegistrationNumber, Name = e.Name,
-                JobRoleId = e.JobRoleId, JobRoleName = roleName,
-                EmploymentRegimeId = e.EmploymentRegimeId, EmploymentRegimeLabel = regimeLabel,
-                HireDate = e.HireDate, Phone = e.Phone, DocumentMasked = e.DocumentMasked,
+                Id = e.Id,
+                RegistrationNumber = e.RegistrationNumber,
+                Name = e.Name,
+                JobRoleId = e.JobRoleId,
+                JobRoleName = e.JobRole?.Name,
+                EmploymentRegimeId = e.EmploymentRegimeId,
+                EmploymentRegimeLabel = e.EmploymentRegime?.Label,
+                HireDate = e.HireDate,
+                Phone = e.Phone,
+                DocumentMasked = e.DocumentMasked,
                 Active = e.Active ?? false
             };
         }).ToList();
 
-        return Ok(new { items, page, size, total, totalPages });
+        return Ok(new PagedResult<EmployeeDto>(items, page, size, total, totalPages));
     }
+
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetById(long id)
+    {
+        var employee = await _context.Employee
+            .AsNoTracking()
+            .Include(e => e.JobRole)
+            .Include(e => e.EmploymentRegime)
+            .FirstOrDefaultAsync(e => e.Id == id);
+
+        if (employee == null) return NotFound();
+
+        bool canViewFinance = User.HasClaim("permission", "view_finance");
+
+        if (canViewFinance)
+        {
+            return Ok(new EmployeeFinancialDto
+            {
+                Id = employee.Id,
+                RegistrationNumber = employee.RegistrationNumber,
+                Name = employee.Name,
+                JobRoleId = employee.JobRoleId,
+                JobRoleName = employee.JobRole?.Name,
+                EmploymentRegimeId = employee.EmploymentRegimeId,
+                EmploymentRegimeLabel = employee.EmploymentRegime?.Label,
+                HireDate = employee.HireDate,
+                Phone = employee.Phone,
+                DocumentMasked = employee.DocumentMasked,
+                Active = employee.Active ?? false,
+                PayRate = employee.PayRate,
+                AdditionalPercentage = employee.AdditionalPercentage
+            });
+        }
+
+        return Ok(new EmployeeDto
+        {
+            Id = employee.Id,
+            RegistrationNumber = employee.RegistrationNumber,
+            Name = employee.Name,
+            JobRoleId = employee.JobRoleId,
+            JobRoleName = employee.JobRole?.Name,
+            EmploymentRegimeId = employee.EmploymentRegimeId,
+            EmploymentRegimeLabel = employee.EmploymentRegime?.Label,
+            HireDate = employee.HireDate,
+            Phone = employee.Phone,
+            DocumentMasked = employee.DocumentMasked,
+            Active = employee.Active ?? false
+        });
+    }
+
 
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateEmployeeRequest request)
@@ -125,7 +181,7 @@ public class EmployeesController : ControllerBase
             employee.DocumentEncrypted = processedDoc.Encrypted;
         }
 
-        _context.Employees.Add(employee);
+        _context.Employee.Add(employee);
         await _context.SaveChangesAsync();
 
         bool canViewFinance = User.HasClaim("permission", "view_finance");
@@ -146,7 +202,7 @@ public class EmployeesController : ControllerBase
                 PayRate = employee.PayRate,
                 AdditionalPercentage = employee.AdditionalPercentage
             };
-            return CreatedAtAction(nameof(Get), new { id = employee.Id }, financialDto);
+            return CreatedAtAction(nameof(GetById), new { id = employee.Id }, financialDto);
         }
 
         var dto = new EmployeeDto
@@ -161,7 +217,7 @@ public class EmployeesController : ControllerBase
             DocumentMasked = employee.DocumentMasked,
             Active = employee.Active ?? false
         };
-        return CreatedAtAction(nameof(Get), new { id = employee.Id }, dto);
+        return CreatedAtAction(nameof(GetById), new { id = employee.Id }, dto);
     }
 
     [HttpPut("{id}")]
@@ -173,7 +229,7 @@ public class EmployeesController : ControllerBase
             return ValidationProblem(ModelState);
         }
 
-        var employee = await _context.Employees.FindAsync(id);
+        var employee = await _context.Employee.FindAsync(id);
         if (employee == null) return NotFound();
 
         employee.Name = request.Name;
@@ -182,7 +238,6 @@ public class EmployeesController : ControllerBase
         employee.EmploymentRegimeId = request.EmploymentRegimeId;
         employee.HireDate = request.HireDate;
         employee.Phone = request.Phone;
-        employee.Active = request.Active;
 
         // Só aplica as alterações financeiras se o utilizador tiver a claim
         if (User.HasClaim("permission", "view_finance"))
@@ -209,15 +264,26 @@ public class EmployeesController : ControllerBase
         return NoContent();
     }
 
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(long id)
+    [HttpPatch("{id}/activate")]
+    public async Task<IActionResult> Activate(long id)
     {
-        var employee = await _context.Employees.FindAsync(id);
+        var employee = await _context.Employee.FindAsync(id);
+        if (employee == null) return NotFound();
+
+        employee.Active = true;
+        employee.DeletedAt = null; // Remove a data de exclusão
+        await _context.SaveChangesAsync();
+        return NoContent();
+    }
+
+    [HttpPatch("{id}/deactivate")]
+    public async Task<IActionResult> Deactivate(long id)
+    {
+        var employee = await _context.Employee.FindAsync(id);
         if (employee == null) return NotFound();
 
         employee.Active = false;
-        employee.DeletedAt = DateTime.UtcNow;
-        
+        employee.DeletedAt = DateTime.UtcNow; // Mantemos o DateTime.UtcNow por enquanto até chegar ao Item 29
         await _context.SaveChangesAsync();
         return NoContent();
     }

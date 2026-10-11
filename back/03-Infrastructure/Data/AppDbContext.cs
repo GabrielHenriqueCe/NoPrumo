@@ -44,9 +44,9 @@ public class AppDbContext : DbContext
 
     public virtual DbSet<EmployeeTeam> EmployeeTeam { get; set; }
 
-    public virtual DbSet<Employee> Employees { get; set; }
+    public virtual DbSet<Employee> Employee { get; set; }
 
-    public virtual DbSet<JobRole> JobRoles { get; set; }
+    public virtual DbSet<JobRole> JobRole { get; set; }
 
     public virtual DbSet<StockGroup> StockGroup { get; set; }
 
@@ -70,7 +70,7 @@ public class AppDbContext : DbContext
 
     public virtual DbSet<TimeEntry> TimeEntry { get; set; }
 
-    public virtual DbSet<EmploymentRegime> EmploymentRegimes { get; set; }
+    public virtual DbSet<EmploymentRegime> EmploymentRegime { get; set; }
 
     public virtual DbSet<Department> Department { get; set; }
 
@@ -84,7 +84,6 @@ public class AppDbContext : DbContext
 
     public virtual DbSet<User> User { get; set; }
 
-    public DbSet<Department> Departments { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
