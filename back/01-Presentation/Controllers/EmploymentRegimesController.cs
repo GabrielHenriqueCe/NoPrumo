@@ -6,18 +6,18 @@ using NoPrumo.Application.DTOs.Requests;
 using NoPrumo.Domain.Entities;
 using NoPrumo.Infrastructure.Data;
 
-namespace NoPrumo.Presentation.Controllers;
+namespace NoPrumo.Controllers;
 
 [ApiController]
 [Route("api/employment-regimes")]
 [Authorize(Policy = "manage_employees")]
 public class EmploymentRegimesController : ControllerBase
 {
-    private readonly AppDbContext _context;
+    private readonly AppDbContext appDbContext;
 
     public EmploymentRegimesController(AppDbContext context)
     {
-        _context = context;
+        appDbContext = context;
     }
 
     [HttpGet]
@@ -25,7 +25,7 @@ public class EmploymentRegimesController : ControllerBase
     {
         page = Math.Max(1, page);
         size = Math.Clamp(size, 1, 100);
-        var query = _context.EmploymentRegime.AsNoTracking();
+        var query = appDbContext.EmploymentRegime.AsNoTracking();
 
         if (!string.IsNullOrWhiteSpace(search))
         {
@@ -57,25 +57,32 @@ public class EmploymentRegimesController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(long id)
     {
-        var regime = await _context.EmploymentRegime.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
+        var regime = await appDbContext.EmploymentRegime.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
         if (regime == null) return NotFound();
         return Ok(new EmploymentRegimeDto { Id = regime.Id, Label = regime.Label, Unit = regime.Unit, MonthlyHours = regime.MonthlyHours, Description = regime.Description, Active = regime.Active });
     }
 
     [HttpPost]
-    public async Task<ActionResult<EmploymentRegimeDto>> Create([FromBody] CreateEmploymentRegimeRequest request)
+    public async Task<IActionResult> Create([FromBody] CreateEmploymentRegimeRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Label))
-            return BadRequest(new ProblemDetails { Detail = "Label is required." });
-
-        if (await _context.EmploymentRegime.AnyAsync(regime => regime.Label == request.Label))
+        {
+            ModelState.AddModelError("label", "Label is required.");
+        }
+        else if (await appDbContext.EmploymentRegime.AnyAsync(regime => regime.Label == request.Label))
         {
             ModelState.AddModelError("label", "Label already exists.");
-            return ValidationProblem(ModelState);
         }
 
         if (string.IsNullOrWhiteSpace(request.Unit))
-            return BadRequest(new ProblemDetails { Detail = "Unit is required." });
+        {
+            ModelState.AddModelError("unit", "Unit is required.");
+        }
+
+        if (!ModelState.IsValid)
+        {
+            return ValidationProblem(ModelState);
+        }
 
         var regime = new EmploymentRegime
         {
@@ -86,62 +93,73 @@ public class EmploymentRegimesController : ControllerBase
             Active = true
         };
 
-        _context.EmploymentRegime.Add(regime);
-        await _context.SaveChangesAsync();
+        appDbContext.EmploymentRegime.Add(regime);
+        await appDbContext.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(GetById), new { id = regime.Id }, new EmploymentRegimeDto 
-        { 
-            Id = regime.Id, Label = regime.Label, Unit = regime.Unit, 
-            MonthlyHours = regime.MonthlyHours, Description = regime.Description, Active = regime.Active 
+        return CreatedAtAction(nameof(GetById), new { id = regime.Id }, new EmploymentRegimeDto
+        {
+            Id = regime.Id,
+            Label = regime.Label,
+            Unit = regime.Unit,
+            MonthlyHours = regime.MonthlyHours,
+            Description = regime.Description,
+            Active = regime.Active
         });
     }
 
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(long id, [FromBody] UpdateEmploymentRegimeRequest request)
     {
-        var regime = await _context.EmploymentRegime.FindAsync(id);
+        var regime = await appDbContext.EmploymentRegime.FindAsync(id);
         if (regime == null) return NotFound();
 
         if (string.IsNullOrWhiteSpace(request.Label))
-            return BadRequest(new ProblemDetails { Detail = "Label is required." });
-
-        if (await _context.EmploymentRegime.AnyAsync(regime => regime.Label == request.Label && regime.Id != id))
+        {
+            ModelState.AddModelError("label", "Label is required.");
+        }
+        else if (await appDbContext.EmploymentRegime.AnyAsync(regime => regime.Label == request.Label && regime.Id != id))
         {
             ModelState.AddModelError("label", "Label already exists.");
-            return ValidationProblem(ModelState);
         }
 
         if (string.IsNullOrWhiteSpace(request.Unit))
-            return BadRequest(new ProblemDetails { Detail = "Unit is required." });
+        {
+            ModelState.AddModelError("unit", "Unit is required.");
+        }
+
+        if (!ModelState.IsValid)
+        {
+            return ValidationProblem(ModelState);
+        }
 
         regime.Label = request.Label;
         regime.Unit = request.Unit;
         regime.MonthlyHours = request.MonthlyHours;
         regime.Description = request.Description;
 
-        await _context.SaveChangesAsync();
+        await appDbContext.SaveChangesAsync();
         return NoContent();
     }
 
     [HttpPatch("{id}/activate")]
     public async Task<IActionResult> Activate(long id)
     {
-        var regime = await _context.EmploymentRegime.FindAsync(id);
+        var regime = await appDbContext.EmploymentRegime.FindAsync(id);
         if (regime == null) return NotFound();
 
         regime.Active = true;
-        await _context.SaveChangesAsync();
+        await appDbContext.SaveChangesAsync();
         return NoContent();
     }
 
     [HttpPatch("{id}/deactivate")]
     public async Task<IActionResult> Deactivate(long id)
     {
-        var regime = await _context.EmploymentRegime.FindAsync(id);
+        var regime = await appDbContext.EmploymentRegime.FindAsync(id);
         if (regime == null) return NotFound();
 
         regime.Active = false;
-        await _context.SaveChangesAsync();
+        await appDbContext.SaveChangesAsync();
         return NoContent();
     }
 }
