@@ -51,7 +51,7 @@ export function EmploymentRegimeFormDialog({ regime, onClose, onSave }) {
                     label="Label (e.g. CLT, PJ)"
                     value={label}
                     onChange={e => setLabel(e.target.value)}
-                    error={fieldErrors.name}
+                    error={fieldErrors.label}
                 />
 
                 <SelectField

@@ -35,8 +35,12 @@ export function EmployeeFormDialog({ employee, onClose, onSave, canViewFinance }
                     jobRoles.list({ size: 100 }),
                     employmentRegimes.list({ size: 100 })
                 ]);
-                setRolesList(rolesRes.items);
-                setRegimesList(regimesRes.items);
+
+                const activeRoles = rolesRes.items.filter(r => r.active || (employee && r.id === employee.jobRoleId));
+                const activeRegimes = regimesRes.items.filter(r => r.active || (employee && r.id === employee.employmentRegimeId));
+
+                setRolesList(activeRoles);
+                setRegimesList(activeRegimes);
             } catch (error) {
                 console.error("Error loading dependencies for form", error);
             }
@@ -86,7 +90,12 @@ export function EmployeeFormDialog({ employee, onClose, onSave, canViewFinance }
                 {formError && <div className="p-3 bg-red-100 text-red-700 rounded text-sm">{formError}</div>}
                 <div className="grid grid-cols-2 gap-4">
                     <TextField label="Name" value={name} onChange={e => setName(e.target.value)} error={fieldErrors.name} />
-                    <TextField label="Registration Number" value={registrationNumber} onChange={e => setRegistrationNumber(e.target.value)} />
+                    <TextField
+                        label="Registration Number"
+                        value={registrationNumber}
+                        onChange={e => setRegistrationNumber(e.target.value)}
+                        error={fieldErrors.registrationNumber}
+                    />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -123,7 +132,13 @@ export function EmployeeFormDialog({ employee, onClose, onSave, canViewFinance }
                 <div className="grid grid-cols-3 gap-4">
                     <TextField label="Hire Date" type="date" value={hireDate} onChange={e => setHireDate(e.target.value)} />
                     <TextField label="Phone" value={phone} onChange={e => setPhone(e.target.value)} />
-                    <TextField label="Document (CPF/RG)" value={document} onChange={e => setDocument(e.target.value)} placeholder={employee?.documentMasked || ''} />
+                    <TextField
+                        label="Document (CPF/RG)"
+                        value={document}
+                        onChange={e => setDocument(e.target.value)}
+                        placeholder={employee?.documentMasked || ''}
+                        error={fieldErrors.document}
+                    />
                 </div>
 
                 {employee && (
