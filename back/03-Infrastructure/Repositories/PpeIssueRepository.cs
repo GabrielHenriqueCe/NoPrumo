@@ -56,7 +56,7 @@ public class PpeIssueRepository(AppDbContext appDbContext) : IPpeIssueRepository
             .FirstOrDefaultAsync(issue => issue.Id == id, cancellationToken);
 
     public Task<Employee?> GetEmployeeAsync(long employeeId, CancellationToken cancellationToken) =>
-        appDbContext.Employees.AsNoTracking().FirstOrDefaultAsync(employee => employee.Id == employeeId, cancellationToken);
+        appDbContext.Employee.AsNoTracking().FirstOrDefaultAsync(employee => employee.Id == employeeId, cancellationToken);
 
     public Task<bool> ActiveProjectExistsAsync(long projectId, CancellationToken cancellationToken) =>
         appDbContext.Project.AnyAsync(project => project.Id == projectId && project.DeletedAt == null, cancellationToken);
@@ -80,15 +80,13 @@ public class PpeIssueRepository(AppDbContext appDbContext) : IPpeIssueRepository
             .ToListAsync(cancellationToken);
 
     public async Task<IReadOnlyList<Employee>> ListActiveEmployeesAsync(CancellationToken cancellationToken) =>
-        await appDbContext.Employees
+        await appDbContext.Employee
             .AsNoTracking()
             .Where(employee => employee.Active == true)
             .OrderBy(employee => employee.Name)
             .ThenBy(employee => employee.Id)
             .ToListAsync(cancellationToken);
 
-    // A ficha e as saídas de estoque entram juntas ou nenhuma entra. São dois
-    // SaveChanges porque a saída leva o Id da ficha (SourceId).
     public async Task AddWithStockExitsAsync(PpeIssue issue, DateTime now, long? recordedBy, CancellationToken cancellationToken)
     {
         await using var transaction = await appDbContext.Database.BeginTransactionAsync(cancellationToken);

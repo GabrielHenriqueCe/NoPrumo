@@ -180,7 +180,7 @@ public sealed class StockMovementsController(AppDbContext appDbContext) : Contro
         {
             employee = request.EmployeeId is null
                 ? null
-                : await appDbContext.Employees.SingleOrDefaultAsync(employee => employee.Id == request.EmployeeId);
+                : await appDbContext.Employee.SingleOrDefaultAsync(employee => employee.Id == request.EmployeeId);
 
             // Só é obrigatório na saída: é aí que a ferramenta fica com alguém. Numa
             // entrada (compra inicial, ou devolução sem registrar quem devolveu),
