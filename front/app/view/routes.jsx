@@ -18,6 +18,9 @@ import { SuppliersScreen } from './screens/suppliers/SuppliersScreen'
 import { TeamsScreen } from './screens/teams/TeamsScreen'
 import { TrainingTypesScreen } from './screens/trainingTypes/TrainingTypesScreen'
 import { UsersScreen } from './screens/users/UsersScreen'
+import { ProjectScreen } from './screens/projects/ProjectScreen'
+import { SettingsScreen } from './screens/settings/SettingsScreen'
+import { SETTINGS_PERMISSIONS } from './shell/settings'
 import { AppShell } from './shell/AppShell'
 import { MENU } from './shell/menu'
 
@@ -37,6 +40,8 @@ import { MENU } from './shell/menu'
 */
 
 const SCREENS = [
+  { path: '/settings', permission: SETTINGS_PERMISSIONS, element: <SettingsScreen /> },
+
   { path: '/users', permission: 'manage_users', element: <UsersScreen /> },
 
   { path: '/departments', permission: 'manage_employees', element: <DepartmentsScreen /> },
@@ -53,6 +58,7 @@ const SCREENS = [
   { path: '/stock-items', permission: 'manage_stock', element: <StockItemsScreen /> },
 
   { path: '/projects', permission: 'manage_projects', element: <ProjectsScreen /> },
+  { path: '/projects/:projectId/:tab?', permission: 'manage_projects', element: <ProjectScreen /> },
   { path: '/stages', permission: 'manage_projects', element: <StagesScreen /> },
 
   { path: '/training-types', permission: 'manage_safety', element: <TrainingTypesScreen /> },

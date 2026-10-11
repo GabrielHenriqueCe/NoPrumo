@@ -34,8 +34,8 @@ export function AppShell() {
 
         <nav className="flex flex-col">
           {groups.map((group) => (
-            <div key={group.heading} className="mb-1">
-              <p className="label px-[18px] pt-3 pb-1.5 text-muted-dark">{group.heading}</p>
+            <div key={group.heading ?? group.items[0].to} className="mb-1">
+              {group.heading && <p className="label px-[18px] pt-3 pb-1.5 text-muted-dark">{group.heading}</p>}
 
               {group.items.map((item) => (
                 <NavLink

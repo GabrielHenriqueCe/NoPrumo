@@ -89,7 +89,8 @@ export function SessionProvider({ children }) {
         UI for `role === 'admin'`. This only hides controls; the API is what
         actually refuses.
       */
-      can: (permission) => Boolean(user?.permissions?.includes(permission)),
+      // A list means any of them: the schedule opens for manage_projects or manage_safety.
+      can: (permission) => [].concat(permission).some((code) => Boolean(user?.permissions?.includes(code))),
     }),
     [user, status, signIn, endSession, changePassword],
   )
