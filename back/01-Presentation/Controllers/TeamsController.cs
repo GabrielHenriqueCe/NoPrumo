@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NoPrumo.Application.DTOs;
+using NoPrumo.Application.Extensions;
 using NoPrumo.Application.Requests;
 using NoPrumo.Domain.Entities;
 using NoPrumo.Infrastructure.Data;
@@ -24,7 +25,7 @@ namespace NoPrumo.Controllers;
 [ApiController]
 [Route("api/[controller]")] // vira /api/teams
 [Authorize(Policy = "manage_employees")]
-public sealed class TeamsController(AppDbContext appDbContext) : ControllerBase
+public sealed class TeamsController(AppDbContext appDbContext, TimeProvider timeProvider) : ControllerBase
 {
     private const int MaxPageSize = 100;
     private const int MaxNameLength = 120;
@@ -183,7 +184,7 @@ public sealed class TeamsController(AppDbContext appDbContext) : ControllerBase
                 detail: $"This team still has {members}. End their stints before deactivating it.");
         }
 
-        team.DeletedAt = DateTime.UtcNow;
+        team.DeletedAt = timeProvider.Now();
         await appDbContext.SaveChangesAsync();
 
         return NoContent();

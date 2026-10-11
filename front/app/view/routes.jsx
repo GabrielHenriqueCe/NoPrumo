@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { RequireSession } from './guards/RequireSession'
 import { useSession } from './providers/sessionContext'
+import { AppointmentsScreen } from './screens/appointments/AppointmentsScreen'
 import { ChangePasswordScreen } from './screens/auth/ChangePasswordScreen'
 import { LoginScreen } from './screens/auth/LoginScreen'
 import { ClientsScreen } from './screens/clients/ClientsScreen'
@@ -21,7 +22,7 @@ import { TeamsScreen } from './screens/teams/TeamsScreen'
 import { TrainingTypesScreen } from './screens/trainingTypes/TrainingTypesScreen'
 import { UsersScreen } from './screens/users/UsersScreen'
 import { AppShell } from './shell/AppShell'
-import { MENU } from './shell/menu'
+import { MENU, SCHEDULE_PERMISSIONS } from './shell/menu'
 
 /*
   Every screen in the app, in one readable list.
@@ -57,6 +58,8 @@ const SCREENS = [
 
   { path: '/projects', permission: 'manage_projects', element: <ProjectsScreen /> },
   { path: '/stages', permission: 'manage_projects', element: <StagesScreen /> },
+
+  { path: '/schedule', permission: SCHEDULE_PERMISSIONS, element: <AppointmentsScreen /> },
 
   { path: '/training-types', permission: 'manage_safety', element: <TrainingTypesScreen /> },
   { path: '/trainings', permission: 'manage_safety', element: <EmployeeTrainingsScreen /> },

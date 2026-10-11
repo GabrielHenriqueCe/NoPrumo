@@ -1,4 +1,4 @@
-using System.IdentityModel.Tokens.Jwt;
+﻿using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -42,6 +42,12 @@ builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
 builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddScoped<IStageRepository, StageRepository>();
 builder.Services.AddScoped<IStageService, StageService>();
+builder.Services.AddScoped<IProjectTeamRepository, ProjectTeamRepository>();
+builder.Services.AddScoped<IProjectTeamService, ProjectTeamService>();
+builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
+builder.Services.AddScoped<IAppointmentService, AppointmentService>();
+builder.Services.AddScoped<IPpeIssueRepository, PpeIssueRepository>();
+builder.Services.AddScoped<IPpeIssueService, PpeIssueService>();
 builder.Services.AddScoped<IProjectLinkRepository, ProjectLinkRepository>();
 builder.Services.AddScoped<IProjectLinkService, ProjectLinkService>();
 builder.Services.AddScoped<IPurchaseRequestRepository, PurchaseRequestRepository>();
@@ -101,6 +107,17 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("manage_purchases", policy => policy.RequireClaim("permission", "manage_purchases"));
     options.AddPolicy("manage_safety", policy => policy.RequireClaim("permission", "manage_safety"));
     options.AddPolicy("view_finance", policy => policy.RequireClaim("permission", "view_finance"));
+
+    // A agenda serve a obra (manage_projects) e a segurança (manage_safety, que
+    // vê os vencimentos de NR). Não há permissão própria no seed.
+    options.AddPolicy("manage_schedule", policy => policy.RequireAssertion(context =>
+        context.User.HasClaim("permission", "manage_projects") ||
+        context.User.HasClaim("permission", "manage_safety")));
+
+    // Ficha de EPI: o técnico de segurança entrega; mestre e almoxarife (view_stock) só leem.
+    options.AddPolicy("view_ppe", policy => policy.RequireAssertion(context =>
+        context.User.HasClaim("permission", "manage_safety") ||
+        context.User.HasClaim("permission", "view_stock")));
 });
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");

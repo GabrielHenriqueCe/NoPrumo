@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 
+using NoPrumo.Domain.Enums;
+
 namespace NoPrumo.Domain.Entities;
 
 public class Appointment
@@ -19,7 +21,7 @@ public class Appointment
 
     public long? AssignedToId { get; set; }
 
-    public string Type { get; set; } = null!;
+    public AppointmentType Type { get; set; }
 
     public bool Completed { get; set; }
 
@@ -32,4 +34,17 @@ public class Appointment
     public virtual Project? Project { get; set; }
 
     public virtual User? AssignedTo { get; set; }
+
+    // Concluir de novo não mexe na data: vale a primeira conclusão.
+    public void Complete(DateTime now)
+    {
+        Completed = true;
+        CompletedAt ??= now;
+    }
+
+    public void Reopen()
+    {
+        Completed = false;
+        CompletedAt = null;
+    }
 }

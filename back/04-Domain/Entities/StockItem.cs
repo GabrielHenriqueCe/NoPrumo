@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 
+using NoPrumo.Domain.Enums;
+
 namespace NoPrumo.Domain.Entities;
 
 public class StockItem
@@ -40,4 +42,18 @@ public class StockItem
     public virtual StockGroup StockGroup { get; set; } = null!;
 
     public virtual ICollection<PurchaseRequestItem> PurchaseRequestItems { get; set; } = new List<PurchaseRequestItem>();
+
+    public bool IsCaExpiredOn(DateOnly today) => CaExpiryDate < today;
+
+    // Nome e CA são copiados: o comprovante não muda se o cadastro do item mudar.
+    public PpeIssueItem IssueAsPpe(decimal quantity, DateOnly issueDate) => new()
+    {
+        StockItemId = Id,
+        ItemNameSnapshot = Name,
+        CaSnapshot = Ca,
+        Quantity = quantity,
+        Unit = Unit,
+        Status = PpeItemStatus.Issued,
+        IssueDate = issueDate,
+    };
 }

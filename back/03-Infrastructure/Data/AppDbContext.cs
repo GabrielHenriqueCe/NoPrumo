@@ -115,7 +115,8 @@ public class AppDbContext : DbContext
                 .HasMaxLength(220);
             entity.Property(e => e.Type)
                 .HasMaxLength(20)
-                .HasDefaultValueSql("'project'");
+                .HasDefaultValueSql("'project'")
+                .HasConversion<SnakeCaseEnumConverter<AppointmentType>>();
             entity.Property(e => e.UpdatedAt)
                 .ValueGeneratedOnAddOrUpdate()
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
@@ -584,7 +585,8 @@ public class AppDbContext : DbContext
                 .HasDefaultValueSql("'1.000'");
             entity.Property(e => e.Status)
                 .HasMaxLength(20)
-                .HasDefaultValueSql("'issued'");
+                .HasDefaultValueSql("'issued'")
+                .HasConversion<SnakeCaseEnumConverter<PpeItemStatus>>();
             entity.Property(e => e.Unit)
                 .HasMaxLength(30);
             entity.Property(e => e.UpdatedAt)
