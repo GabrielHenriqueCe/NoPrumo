@@ -7,7 +7,7 @@ using NoPrumo.Domain.Entities;
 using NoPrumo.Infrastructure.Data;
 using NoPrumo.Application.Services;
 
-namespace NoPrumo.Controllers;
+namespace NoPrumo.Presentation.Controllers;
 
 [ApiController]
 [Route("api/employees")]
@@ -33,58 +33,58 @@ public class EmployeesController : ControllerBase
 
         if (!string.IsNullOrWhiteSpace(search))
         {
-            query = query.Where(e => e.Name.Contains(search) || e.RegistrationNumber == search);
+            query = query.Where(employee => employee.Name.Contains(search) || employee.RegistrationNumber == search);
         }
 
         var total = await query.CountAsync();
         var totalPages = (int)Math.Ceiling(total / (double)size);
 
         var employees = await query
-            .Include(e => e.JobRole)
-            .Include(e => e.EmploymentRegime)
-            .OrderBy(e => e.Name)
-            .ThenBy(e => e.Id)
+            .Include(employee => employee.JobRole)
+            .Include(employee => employee.EmploymentRegime)
+            .OrderBy(employee => employee.Name)
+            .ThenBy(employee => employee.Id)
             .Skip((page - 1) * size)
             .Take(size)
             .ToListAsync();
 
         bool canViewFinance = User.HasClaim("permission", "view_finance");
 
-        var items = employees.Select<Employee, object>(e =>
+        var items = employees.Select<Employee, object>(employee =>
         {
             if (canViewFinance)
             {
                 return new EmployeeFinancialDto
                 {
-                    Id = e.Id,
-                    RegistrationNumber = e.RegistrationNumber,
-                    Name = e.Name,
-                    JobRoleId = e.JobRoleId,
-                    JobRoleName = e.JobRole?.Name,
-                    EmploymentRegimeId = e.EmploymentRegimeId,
-                    EmploymentRegimeLabel = e.EmploymentRegime?.Label,
-                    HireDate = e.HireDate,
-                    Phone = e.Phone,
-                    DocumentMasked = e.DocumentMasked,
-                    Active = e.Active ?? false,
-                    PayRate = e.PayRate,
-                    AdditionalPercentage = e.AdditionalPercentage
+                    Id = employee.Id,
+                    RegistrationNumber = employee.RegistrationNumber,
+                    Name = employee.Name,
+                    JobRoleId = employee.JobRoleId,
+                    JobRoleName = employee.JobRole?.Name,
+                    EmploymentRegimeId = employee.EmploymentRegimeId,
+                    EmploymentRegimeLabel = employee.EmploymentRegime?.Label,
+                    HireDate = employee.HireDate,
+                    Phone = employee.Phone,
+                    DocumentMasked = employee.DocumentMasked,
+                    Active = employee.Active ?? false,
+                    PayRate = employee.PayRate,
+                    AdditionalPercentage = employee.AdditionalPercentage
                 };
             }
 
             return new EmployeeDto
             {
-                Id = e.Id,
-                RegistrationNumber = e.RegistrationNumber,
-                Name = e.Name,
-                JobRoleId = e.JobRoleId,
-                JobRoleName = e.JobRole?.Name,
-                EmploymentRegimeId = e.EmploymentRegimeId,
-                EmploymentRegimeLabel = e.EmploymentRegime?.Label,
-                HireDate = e.HireDate,
-                Phone = e.Phone,
-                DocumentMasked = e.DocumentMasked,
-                Active = e.Active ?? false
+                Id = employee.Id,
+                RegistrationNumber = employee.RegistrationNumber,
+                Name = employee.Name,
+                JobRoleId = employee.JobRoleId,
+                JobRoleName = employee.JobRole?.Name,
+                EmploymentRegimeId = employee.EmploymentRegimeId,
+                EmploymentRegimeLabel = employee.EmploymentRegime?.Label,
+                HireDate = employee.HireDate,
+                Phone = employee.Phone,
+                DocumentMasked = employee.DocumentMasked,
+                Active = employee.Active ?? false
             };
         }).ToList();
 
@@ -94,19 +94,82 @@ public class EmployeesController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(long id)
     {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
         var employee = await appDbContext.Employee
             .AsNoTracking()
-            .Include(e => e.JobRole)
-            .Include(e => e.EmploymentRegime)
-            .FirstOrDefaultAsync(e => e.Id == id);
+            .Include(employee => employee.JobRole)
+            .Include(employee => employee.EmploymentRegime)
+            // Equipe atual (EmployeeTeam sem EndDate)
+            .Include(employee => employee.EmployeeTeams.Where(employeeTeam => employeeTeam.EndDate == null))
+                .ThenInclude(employeeTeam => employeeTeam.Team)
+                    .ThenInclude(team => team.TeamProjects)
+                        .ThenInclude(teamProject => teamProject.Project)
+                            .ThenInclude(project => project.Client)
+            .Include(employee => employee.EmployeeTeams.Where(employeeTeam => employeeTeam.EndDate == null))
+                .ThenInclude(employeeTeam => employeeTeam.Team)
+                    .ThenInclude(team => team.TeamProjects)
+                        .ThenInclude(teamProject => teamProject.Project)
+                            .ThenInclude(project => project.Supervisor)
+            // Treinamentos para a função LatestTrainings funcionar
+            .Include(employee => employee.EmployeeTrainings)
+                .ThenInclude(training => training.TrainingType)
+            .FirstOrDefaultAsync(employee => employee.Id == id);
 
         if (employee == null) return NotFound();
+
+        var currentEmployeeTeam = employee.EmployeeTeams.FirstOrDefault();
+        var currentTeam = currentEmployeeTeam?.Team;
+
+        var currentProjects = currentTeam?.TeamProjects
+            .Select(teamProject => teamProject.Project)
+            .Where(project => project != null)
+            .Select(project => new ProjectDto
+            {
+                Id = project.Id,
+                Code = project.Code,
+                Name = project.Name,
+                Description = project.Description,
+                ClientId = project.ClientId,
+                ClientName = project.Client?.Name,
+                Cno = project.Cno,
+                Street = project.Street,
+                Number = project.Number,
+                Complement = project.Complement,
+                District = project.District,
+                City = project.City,
+                State = project.State,
+                PostalCode = project.PostalCode,
+                Status = project.Status,
+                SupervisorId = project.SupervisorId,
+                SupervisorName = project.Supervisor?.Name,
+                TechnicalManager = project.TechnicalManager,
+                CreaRt = project.CreaRt,
+                StartDate = project.StartDate,
+                ForecastDate = project.ForecastDate,
+                CompletionDate = project.CompletionDate,
+                Notes = project.Notes,
+                Late = project.IsLate(today),
+                Active = project.DeletedAt == null
+            })
+            .ToList() ?? new List<ProjectDto>();
+
+        var latestTrainings = employee.LatestTrainings()
+            .Select(training => new EmployeeTrainingDetailDto
+            {
+                Id = training.Id,
+                TypeName = training.TrainingType?.Name ?? string.Empty,
+                IssueDate = training.IssueDate,
+                ExpiryDate = training.ExpiryDate,
+                Status = training.StatusOn(today)
+            })
+            .ToList();
 
         bool canViewFinance = User.HasClaim("permission", "view_finance");
 
         if (canViewFinance)
         {
-            return Ok(new EmployeeFinancialDto
+            return Ok(new EmployeeDetailFinanceDto
             {
                 Id = employee.Id,
                 RegistrationNumber = employee.RegistrationNumber,
@@ -120,11 +183,15 @@ public class EmployeesController : ControllerBase
                 DocumentMasked = employee.DocumentMasked,
                 Active = employee.Active ?? false,
                 PayRate = employee.PayRate,
-                AdditionalPercentage = employee.AdditionalPercentage
+                AdditionalPercentage = employee.AdditionalPercentage,
+                CurrentTeamName = currentTeam?.Name,
+                TeamAllocationDate = currentEmployeeTeam?.StartDate,
+                CurrentProjects = currentProjects,
+                Trainings = latestTrainings
             });
         }
 
-        return Ok(new EmployeeDto
+        return Ok(new EmployeeDetailDto
         {
             Id = employee.Id,
             RegistrationNumber = employee.RegistrationNumber,
@@ -136,7 +203,11 @@ public class EmployeesController : ControllerBase
             HireDate = employee.HireDate,
             Phone = employee.Phone,
             DocumentMasked = employee.DocumentMasked,
-            Active = employee.Active ?? false
+            Active = employee.Active ?? false,
+            CurrentTeamName = currentTeam?.Name,
+            TeamAllocationDate = currentEmployeeTeam?.StartDate,
+            CurrentProjects = currentProjects,
+            Trainings = latestTrainings
         });
     }
 
@@ -147,7 +218,7 @@ public class EmployeesController : ControllerBase
         {
             ModelState.AddModelError("name", "The Name field is required.");
         }
-        else if (await appDbContext.Employee.AnyAsync(e => e.Name == request.Name))
+        else if (await appDbContext.Employee.AnyAsync(employee => employee.Name == request.Name))
         {
             ModelState.AddModelError("name", "This Name is already registered to another employee.");
         }
@@ -156,7 +227,7 @@ public class EmployeesController : ControllerBase
         {
             ModelState.AddModelError("registrationNumber", "The Registration Number field is required.");
         }
-        else if (await appDbContext.Employee.AnyAsync(e => e.RegistrationNumber == request.RegistrationNumber))
+        else if (await appDbContext.Employee.AnyAsync(employee => employee.RegistrationNumber == request.RegistrationNumber))
         {
             ModelState.AddModelError("registrationNumber", "This Registration Number already exists.");
         }
@@ -170,7 +241,7 @@ public class EmployeesController : ControllerBase
             else
             {
                 var processedDoc = _documentProcessor.Process(request.Document);
-                if (await appDbContext.Employee.AnyAsync(e => e.DocumentHash == processedDoc.Hash))
+                if (await appDbContext.Employee.AnyAsync(employee => employee.DocumentHash == processedDoc.Hash))
                 {
                     ModelState.AddModelError("document", "This document is already registered to another employee.");
                 }
@@ -274,7 +345,7 @@ public class EmployeesController : ControllerBase
         {
             ModelState.AddModelError("name", "The Name field is required.");
         }
-        else if (await appDbContext.Employee.AnyAsync(e => e.Name == request.Name && e.Id != id))
+        else if (await appDbContext.Employee.AnyAsync(employeeCheck => employeeCheck.Name == request.Name && employeeCheck.Id != id))
         {
             ModelState.AddModelError("name", "An Employee with this Name already exists.");
         }
@@ -283,7 +354,7 @@ public class EmployeesController : ControllerBase
         {
             ModelState.AddModelError("registrationNumber", "The Registration Number field is required.");
         }
-        else if (await appDbContext.Employee.AnyAsync(e => e.RegistrationNumber == request.RegistrationNumber && e.Id != id))
+        else if (await appDbContext.Employee.AnyAsync(employeeCheck => employeeCheck.RegistrationNumber == request.RegistrationNumber && employeeCheck.Id != id))
         {
             ModelState.AddModelError("registrationNumber", "This Registration Number already exists.");
         }
@@ -297,7 +368,7 @@ public class EmployeesController : ControllerBase
             else
             {
                 var processedDoc = _documentProcessor.Process(request.Document);
-                if (await appDbContext.Employee.AnyAsync(e => e.DocumentHash == processedDoc.Hash && e.Id != id))
+                if (await appDbContext.Employee.AnyAsync(employeeCheck => employeeCheck.DocumentHash == processedDoc.Hash && employeeCheck.Id != id))
                 {
                     ModelState.AddModelError("document", "This document is already registered to another employee.");
                 }
