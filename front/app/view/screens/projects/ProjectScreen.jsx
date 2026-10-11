@@ -19,13 +19,13 @@ const PROJECT_TABS = [
   {
     key: 'overview',
     label: 'Overview',
-    permission: 'manage_projects',
+    permission: 'view_projects',
     render: (project) => <ProjectOverview project={project} />,
   },
   {
     key: 'stages',
     label: 'Stages',
-    permission: 'manage_projects',
+    permission: 'view_projects',
     render: (project) => <StagesScreen projectId={project.id} />,
   },
 ]

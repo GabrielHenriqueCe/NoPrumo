@@ -57,8 +57,8 @@ const SCREENS = [
   { path: '/stock-groups', permission: 'manage_stock', element: <StockGroupsScreen /> },
   { path: '/stock-items', permission: 'manage_stock', element: <StockItemsScreen /> },
 
-  { path: '/projects', permission: 'manage_projects', element: <ProjectsScreen /> },
-  { path: '/projects/:projectId/:tab?', permission: 'manage_projects', element: <ProjectScreen /> },
+  { path: '/projects', permission: 'view_projects', element: <ProjectsScreen /> },
+  { path: '/projects/:projectId/:tab?', permission: 'view_projects', element: <ProjectScreen /> },
   { path: '/stages', permission: 'manage_projects', element: <StagesScreen /> },
 
   { path: '/training-types', permission: 'manage_safety', element: <TrainingTypesScreen /> },

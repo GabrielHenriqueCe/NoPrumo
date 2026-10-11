@@ -17,7 +17,7 @@ import { SETTINGS_PERMISSIONS } from './settings'
 export const MENU = [
   {
     heading: null,
-    items: [{ to: '/projects', label: 'Projects', permission: 'manage_projects' }],
+    items: [{ to: '/projects', label: 'Projects', permission: 'view_projects' }],
   },
   {
     heading: 'People',

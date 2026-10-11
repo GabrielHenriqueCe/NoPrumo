@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useContainer } from '../../providers/containerContext'
+import { useSession } from '../../providers/sessionContext'
 import { Badge } from '../../ui/Badge'
 import { Button } from '../../ui/Button'
 import { Pagination } from '../../ui/Pagination'
@@ -23,6 +24,8 @@ function formatDate(value) {
 // With a projectId it is the Stages tab of the project page: no page header, no project column.
 export function StagesScreen({ projectId }) {
   const { stages, projects, teams, employees } = useContainer()
+  const { can } = useSession()
+  const canManage = can('manage_projects')
   const insideProject = projectId != null
 
   const [data, setData] = useState(EMPTY_PAGE)
@@ -70,6 +73,9 @@ export function StagesScreen({ projectId }) {
   }, [stages, page, appliedSearch, projectId, reloadToken])
 
   useEffect(() => {
+    // The lookups only feed the form, and their endpoints refuse whoever cannot open it.
+    if (!canManage) return undefined
+
     const controller = new AbortController()
     const options = { signal: controller.signal }
     const activeOptions = (items, toLabel) =>
@@ -93,7 +99,7 @@ export function StagesScreen({ projectId }) {
       .catch(() => {})
 
     return () => controller.abort()
-  }, [projects, teams, employees, insideProject])
+  }, [projects, teams, employees, insideProject, canManage])
 
   const openForm = (stage) => {
     setEditingStage(stage)
@@ -130,7 +136,7 @@ export function StagesScreen({ projectId }) {
         className="w-72 border border-line bg-white px-3 py-2 text-sm outline-none focus:border-gold"
       />
 
-      <Button onClick={() => openForm(null)}>New stage</Button>
+      {canManage && <Button onClick={() => openForm(null)}>New stage</Button>}
     </div>
   )
 
@@ -194,7 +200,7 @@ export function StagesScreen({ projectId }) {
                   <HeaderCell>Planned</HeaderCell>
                   <HeaderCell>Progress</HeaderCell>
                   <HeaderCell>Status</HeaderCell>
-                  <th className="px-4 py-3" />
+                  {canManage && <th className="px-4 py-3" />}
                 </tr>
               </thead>
 
@@ -223,13 +229,15 @@ export function StagesScreen({ projectId }) {
                       </div>
                     </td>
 
-                    <td className="px-4 py-3">
-                      <div className="flex justify-end">
-                        <Button variant="outline" className="px-3 py-1.5" onClick={() => openForm(stage)}>
-                          Edit
-                        </Button>
-                      </div>
-                    </td>
+                    {canManage && (
+                      <td className="px-4 py-3">
+                        <div className="flex justify-end">
+                          <Button variant="outline" className="px-3 py-1.5" onClick={() => openForm(stage)}>
+                            Edit
+                          </Button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
