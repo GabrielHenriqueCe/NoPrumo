@@ -4,8 +4,11 @@ import { Pagination } from '../../ui/Pagination';
 import { Button } from '../../ui/Button';
 import { TextField } from '../../ui/TextField';
 import { EmployeeFormDialog } from './EmployeeFormDialog';
+import { useSession } from '../../providers/sessionContext';
 
 export function EmployeesScreen() {
+    const { can } = useSession();
+    const canViewFinance = can('view_finance');
     const { employees } = useContainer();
     const [employeesList, setEmployeesList] = useState([]);
     const [page, setPage] = useState(1);
@@ -14,12 +17,14 @@ export function EmployeesScreen() {
     const [search, setSearch] = useState('');
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingEmployee, setEditingEmployee] = useState(null);
+    const [total, setTotal] = useState(0);
 
     const loadEmployees = async () => {
         try {
             const response = await employees.list({ page, size, search });
             setEmployeesList(response.items);
             setTotalPages(response.totalPages);
+            setTotal(response.total);
         } catch (error) {
             console.error("Error loading employees", error);
         }
@@ -79,13 +84,14 @@ export function EmployeesScreen() {
                 </tbody>
             </table>
 
-            <Pagination current={page} total={totalPages} onPageChange={setPage} />
+            <Pagination page={page} totalPages={totalPages} total={total} onChange={setPage} />
 
             {isDialogOpen && (
                 <EmployeeFormDialog 
                     employee={editingEmployee} 
                     onClose={() => setIsDialogOpen(false)} 
                     onSave={() => { setIsDialogOpen(false); loadEmployees(); }} 
+                    canViewFinance={canViewFinance}
                 />
             )}
         </div>

@@ -14,12 +14,14 @@ export function EmploymentRegimesScreen() {
     const [search, setSearch] = useState('');
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingRegime, setEditingRegime] = useState(null);
+    const [total, setTotal] = useState(0);
 
     const loadRegimes = async () => {
         try {
             const response = await employmentRegimes.list({ page, size, search });
             setRegimes(response.items);
             setTotalPages(response.totalPages);
+            setTotal(response.total);
         } catch (error) {
             console.error("Error loading employment regimes", error);
         }
@@ -77,7 +79,7 @@ export function EmploymentRegimesScreen() {
                 </tbody>
             </table>
 
-            <Pagination current={page} total={totalPages} onPageChange={setPage} />
+            <Pagination page={page} totalPages={totalPages} total={total} onChange={setPage} />
 
             {isDialogOpen && (
                 <EmploymentRegimeFormDialog 
