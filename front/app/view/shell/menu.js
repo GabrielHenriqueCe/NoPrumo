@@ -30,6 +30,7 @@ export const MENU = [
 
       { to: '/clients', label: 'Clients', permission: 'manage_projects' },
       { to: '/suppliers', label: 'Suppliers', permission: 'manage_purchases' },
+      { to: '/purchases', label: 'Purchases', permission: 'manage_purchases' },
 
       { to: '/stock-categories', label: 'Stock categories', permission: 'manage_stock' },
       { to: '/stock-groups', label: 'Stock groups', permission: 'manage_stock' },

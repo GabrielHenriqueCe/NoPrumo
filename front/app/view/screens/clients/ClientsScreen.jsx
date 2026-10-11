@@ -4,6 +4,7 @@ import { Badge } from '../../ui/Badge'
 import { Button } from '../../ui/Button'
 import { Pagination } from '../../ui/Pagination'
 import { ClientFormDialog } from './ClientFormDialog'
+import { ClientPortalLinksDialog } from './ClientPortalLinksDialog'
 
 const PAGE_SIZE = 10
 const SEARCH_DEBOUNCE_MS = 350
@@ -24,6 +25,7 @@ export function ClientsScreen() {
 
   const [formOpen, setFormOpen] = useState(false)
   const [editingClient, setEditingClient] = useState(null)
+  const [linksClient, setLinksClient] = useState(null)
 
   const reload = useCallback(() => setReloadToken((value) => value + 1), [])
 
@@ -194,6 +196,15 @@ export function ClientsScreen() {
                             variant="outline"
                             className="px-3 py-1.5"
                             disabled={busy}
+                            onClick={() => setLinksClient(client)}
+                          >
+                            Portal
+                          </Button>
+
+                          <Button
+                            variant="outline"
+                            className="px-3 py-1.5"
+                            disabled={busy}
                             onClick={() => {
                               setEditingClient(client)
                               setFormOpen(true)
@@ -241,6 +252,12 @@ export function ClientsScreen() {
           setEditingClient(null)
         }}
         onSubmit={saveClient}
+      />
+
+      <ClientPortalLinksDialog
+        open={!!linksClient}
+        client={linksClient}
+        onClose={() => setLinksClient(null)}
       />
     </>
   )

@@ -28,4 +28,24 @@ public class ProjectLink
     public virtual User? CreatedByUser { get; set; }
 
     public virtual Project Project { get; set; } = null!;
+
+    public bool IsValid(DateTime now) =>
+        RevokedAt is null && (ExpiresAt is null || ExpiresAt > now);
+
+    public bool Revoke(DateTime now)
+    {
+        if (RevokedAt is not null)
+        {
+            return false;
+        }
+
+        RevokedAt = now;
+        return true;
+    }
+
+    public void RecordAccess(DateTime now)
+    {
+        AccessCount++;
+        LastAccessAt = now;
+    }
 }

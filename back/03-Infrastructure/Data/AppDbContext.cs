@@ -1357,6 +1357,7 @@ public class AppDbContext : DbContext
             entity.Property(e => e.Notes)
                 .HasColumnType("text");
             entity.Property(e => e.Status)
+                .HasConversion<SnakeCaseEnumConverter<PurchaseRequestStatus>>()
                 .HasMaxLength(20)
                 .HasDefaultValueSql("'pending'");
             entity.Property(e => e.UpdatedAt)
