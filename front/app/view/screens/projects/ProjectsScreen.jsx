@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useContainer } from '../../providers/containerContext'
 import { useSession } from '../../providers/sessionContext'
 import { Badge } from '../../ui/Badge'
@@ -214,7 +215,9 @@ export function ProjectsScreen() {
                   return (
                     <tr key={project.id} className="border-b border-line-soft last:border-0">
                       <td className="px-4 py-3">
-                        <div className="font-medium">{project.name}</div>
+                        <Link to={`/projects/${project.id}`} className="font-medium hover:text-bronze hover:underline">
+                          {project.name}
+                        </Link>
                         <div className="font-mono text-[12.5px] text-muted">
                           {project.code}
                           {project.city ? ` · ${project.city}${project.state ? ` / ${project.state}` : ''}` : ''}

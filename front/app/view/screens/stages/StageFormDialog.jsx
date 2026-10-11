@@ -24,8 +24,19 @@ function fromStage(stage) {
 
 const idOrNull = (value) => (value ? Number(value) : null)
 
-export function StageFormDialog({ open, stage, projectOptions, teamOptions, supervisorOptions, onClose, onSubmit }) {
+// With a projectId the project is already chosen (Stages tab of the project page) and has no select.
+export function StageFormDialog({
+  open,
+  stage,
+  projectId,
+  projectOptions,
+  teamOptions,
+  supervisorOptions,
+  onClose,
+  onSubmit,
+}) {
   const editing = Boolean(stage)
+  const projectFixed = projectId != null
 
   const [form, setForm] = useState(EMPTY)
   const [fieldErrors, setFieldErrors] = useState({})
@@ -36,10 +47,11 @@ export function StageFormDialog({ open, stage, projectOptions, teamOptions, supe
 
   useEffect(() => {
     if (!open) return
-    setForm(stage ? fromStage(stage) : EMPTY)
+    if (stage) setForm(fromStage(stage))
+    else setForm(projectFixed ? { ...EMPTY, projectId: String(projectId) } : EMPTY)
     setFieldErrors({})
     setFormError(null)
-  }, [open, stage])
+  }, [open, stage, projectFixed, projectId])
 
   const update = (field) => (event) => {
     setForm((current) => ({ ...current, [field]: event.target.value }))
@@ -66,8 +78,13 @@ export function StageFormDialog({ open, stage, projectOptions, teamOptions, supe
     try {
       await onSubmit(values)
     } catch (error) {
-      if (error.isValidation) setFieldErrors(error.fieldErrors)
-      else setFormError(error.message ?? 'Could not save the stage.')
+      if (error.isValidation) {
+        setFieldErrors(error.fieldErrors)
+        // With no project select on screen, its error (e.g. an inactive project) has nowhere else to show.
+        if (projectFixed && error.fieldErrors.projectId) setFormError(error.fieldErrors.projectId)
+      } else {
+        setFormError(error.message ?? 'Could not save the stage.')
+      }
     } finally {
       setBusy(false)
     }
@@ -81,16 +98,18 @@ export function StageFormDialog({ open, stage, projectOptions, teamOptions, supe
       description="A step of a project's schedule, in the order it is built."
     >
       <form onSubmit={submit} noValidate className="flex flex-col gap-4 p-6">
-        <SelectField
-          label="Project"
-          name="projectId"
-          required
-          value={form.projectId}
-          onChange={update('projectId')}
-          error={fieldErrors.projectId}
-          placeholder={projectOptions.length ? 'Select a project…' : 'No active project registered'}
-          options={projectOptions}
-        />
+        {!projectFixed && (
+          <SelectField
+            label="Project"
+            name="projectId"
+            required
+            value={form.projectId}
+            onChange={update('projectId')}
+            error={fieldErrors.projectId}
+            placeholder={projectOptions.length ? 'Select a project…' : 'No active project registered'}
+            options={projectOptions}
+          />
+        )}
 
         <fieldset disabled={!projectChosen} className="flex flex-col gap-4 disabled:opacity-50">
           {!projectChosen && (
