@@ -226,7 +226,7 @@ public sealed class PurchaseRequestService(
                 UnitCost = purchaseItem.UnitCost,
                 SupplierId = purchaseItem.SupplierId ?? request.SupplierId,
                 InvoiceNumber = purchaseItem.InvoiceNumber ?? request.InvoiceNumber,
-                Type = "purchase",
+                Type = StockMovementType.Entry,
                 SourceType = "purchase_request",
                 SourceId = purchaseRequest.Id,
                 Date = now,
