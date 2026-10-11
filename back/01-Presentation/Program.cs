@@ -92,6 +92,7 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("manage_users", policy => policy.RequireClaim("permission", "manage_users"));
     options.AddPolicy("view_stock", policy => policy.RequireClaim("permission", "view_stock"));
     options.AddPolicy("manage_stock", policy => policy.RequireClaim("permission", "manage_stock"));
+    options.AddPolicy("view_projects", policy => policy.RequireClaim("permission", "view_projects"));
     options.AddPolicy("manage_projects", policy => policy.RequireClaim("permission", "manage_projects"));
     options.AddPolicy("manage_employees", policy => policy.RequireClaim("permission", "manage_employees"));
     options.AddPolicy("manage_purchases", policy => policy.RequireClaim("permission", "manage_purchases"));

@@ -8,7 +8,7 @@ namespace NoPrumo.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Policy = "manage_projects")]
+[Authorize(Policy = "view_projects")]
 public sealed class StagesController(IStageService stageService) : ControllerBase
 {
     [HttpGet]
@@ -28,6 +28,7 @@ public sealed class StagesController(IStageService stageService) : ControllerBas
     }
 
     [HttpPost]
+    [Authorize(Policy = "manage_projects")]
     public async Task<ActionResult<StageDto>> Create(SaveStageRequest request, CancellationToken cancellationToken)
     {
         var result = await stageService.CreateAsync(request, cancellationToken);
@@ -40,6 +41,7 @@ public sealed class StagesController(IStageService stageService) : ControllerBas
     }
 
     [HttpPut("{id:long}")]
+    [Authorize(Policy = "manage_projects")]
     public async Task<ActionResult<StageDto>> Update(long id, SaveStageRequest request, CancellationToken cancellationToken)
     {
         var result = await stageService.UpdateAsync(id, request, cancellationToken);

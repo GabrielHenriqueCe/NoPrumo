@@ -9,7 +9,7 @@ namespace NoPrumo.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Policy = "manage_projects")]
+[Authorize(Policy = "view_projects")]
 public sealed class ProjectsController(IProjectService projectService) : ControllerBase
 {
     private bool CanViewFinance => User.HasClaim("permission", "view_finance");
@@ -30,6 +30,7 @@ public sealed class ProjectsController(IProjectService projectService) : Control
     }
 
     [HttpPost]
+    [Authorize(Policy = "manage_projects")]
     public async Task<ActionResult<ProjectDto>> Create(SaveProjectRequest request, CancellationToken cancellationToken)
     {
         var result = await projectService.CreateAsync(request, CanViewFinance, cancellationToken);
@@ -42,6 +43,7 @@ public sealed class ProjectsController(IProjectService projectService) : Control
     }
 
     [HttpPut("{id:long}")]
+    [Authorize(Policy = "manage_projects")]
     public async Task<ActionResult<ProjectDto>> Update(long id, SaveProjectRequest request, CancellationToken cancellationToken)
     {
         var result = await projectService.UpdateAsync(id, request, CanViewFinance, cancellationToken);
@@ -59,10 +61,12 @@ public sealed class ProjectsController(IProjectService projectService) : Control
     }
 
     [HttpPatch("{id:long}/activate")]
+    [Authorize(Policy = "manage_projects")]
     public async Task<IActionResult> Activate(long id, CancellationToken cancellationToken) =>
         await projectService.ActivateAsync(id, cancellationToken) ? NoContent() : NotFound();
 
     [HttpPatch("{id:long}/deactivate")]
+    [Authorize(Policy = "manage_projects")]
     public async Task<IActionResult> Deactivate(long id, CancellationToken cancellationToken) =>
         await projectService.DeactivateAsync(id, cancellationToken) ? NoContent() : NotFound();
 
