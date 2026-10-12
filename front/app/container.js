@@ -10,12 +10,13 @@ import { createPpeIssueGateway } from './data/gateways/ppeIssueGateway'
 import { createProjectGateway } from './data/gateways/projectGateway'
 import { createProjectLinkGateway } from './data/gateways/projectLinkGateway'
 import { createProjectTeamGateway } from './data/gateways/projectTeamGateway'
-import { createTimeEntryGateway } from './data/gateways/timeEntryGateway' // <-- ADICIONAR ESTA LINHA
+import { createTimeEntryGateway } from './data/gateways/timeEntryGateway'
 import { createPurchaseRequestGateway } from './data/gateways/purchaseRequestGateway'
 import { createStageGateway } from './data/gateways/stageGateway'
 import { createStockCategoryGateway } from './data/gateways/stockCategoryGateway'
 import { createStockGroupGateway } from './data/gateways/stockGroupGateway'
 import { createStockItemGateway } from './data/gateways/stockItemGateway'
+import { createStockMovementGateway } from './data/gateways/stockMovementGateway'
 import { createSupplierGateway } from './data/gateways/supplierGateway'
 import { createTeamGateway } from './data/gateways/teamGateway'
 import { createTrainingTypeGateway } from './data/gateways/trainingTypeGateway'
@@ -68,12 +69,13 @@ export function createContainer({
     stockCategories: createStockCategoryGateway(http),
     stockGroups: createStockGroupGateway(http),
     stockItems: createStockItemGateway(http),
+    stockMovements: createStockMovementGateway(http),
 
     projects: createProjectGateway(http),
     projectLinks: createProjectLinkGateway(http),
     stages: createStageGateway(http),
     projectTeams: createProjectTeamGateway(http),
-    timeEntries: createTimeEntryGateway(http), // <-- ADICIONAR ESTA LINHA
+    timeEntries: createTimeEntryGateway(http),
     appointments: createAppointmentGateway(http),
 
     trainingTypes: createTrainingTypeGateway(http),

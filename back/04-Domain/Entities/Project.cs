@@ -99,7 +99,30 @@ public class Project
 
     public bool IsForecastBeforeStart() => ForecastDate < StartDate;
 
+    // Em andamento para o painel: ativa no cadastro e ainda não terminada nem cancelada.
+    public bool IsUnderway() =>
+        DeletedAt is null
+        && Status is not (ProjectStatus.Completed or ProjectStatus.Cancelled);
+
     public void Deactivate(DateTime now) => DeletedAt ??= now;
 
     public void Activate() => DeletedAt = null;
+
+    // Exige Amendments carregado.
+    public decimal RevisedContractAmount() => ContractAmount + Amendments.Sum(amendment => amendment.Amount);
+
+    // Avanço físico: média simples das etapas, que não têm peso no cadastro. Exige Stages carregado.
+    public decimal ProgressPercentage() =>
+        Stages.Count == 0 ? 0m : Math.Round(Stages.Average(stage => stage.Percentage), 2);
+
+    public decimal SpentPercentage(decimal totalCost)
+    {
+        var revisedContract = RevisedContractAmount();
+        return revisedContract <= 0 ? 0m : Math.Round(totalCost / revisedContract * 100, 2);
+    }
+
+    // Gastou uma fatia maior do contrato do que a fatia da obra que ficou pronta.
+    public bool IsCostAheadOfProgress(decimal totalCost) => SpentPercentage(totalCost) > ProgressPercentage();
+
+    public decimal Margin(decimal totalCost) => RevisedContractAmount() - totalCost;
 }

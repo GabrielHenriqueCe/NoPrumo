@@ -18,4 +18,7 @@ public sealed class UpdateUserRequest
 
     [Range(1, long.MaxValue, ErrorMessage = "Pick a role.")]
     public long RoleId { get; init; }
+
+    // O funcionário que esta pessoa é. Para o mestre, define as obras que ele enxerga.
+    public long? EmployeeId { get; init; }
 }

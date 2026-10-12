@@ -16,6 +16,8 @@ public sealed class DatabaseSeeder(AppDbContext appDbContext)
     private static readonly (string Code, string Description)[] PermissionCatalog =
     [
         ("manage_users",     "Criar e editar usuários do sistema"),
+        ("view_projects",    "Ver obras e etapas"),
+        ("view_all_projects", "Ver todas as obras, não só as que supervisiona"),
         ("manage_projects",  "Cadastrar obras, etapas e prazos"),
         ("manage_employees", "Cadastrar funcionários e equipes"),
         ("view_stock",       "Ver saldo e movimentação de estoque"),
@@ -44,12 +46,13 @@ public sealed class DatabaseSeeder(AppDbContext appDbContext)
         return
         [
             ("admin",             "Administrador",        all),
-            ("engineer",          "Engenheiro",           ["manage_projects", "manage_employees", "view_finance"]),
-            // Mestre enxerga quantidade, administração enxerga dinheiro.
-            ("foreman",           "Mestre de obras",      ["view_stock", "manage_stock"]),
-            ("safety_technician", "Técnico de segurança", ["manage_safety"]),
-            ("warehouse_keeper",  "Almoxarife",           ["view_stock", "manage_stock"]),
-            ("purchasing",        "Compras",              ["manage_purchases"]),
+            ("engineer",          "Engenheiro",           ["view_projects", "view_all_projects", "manage_projects", "manage_employees", "view_stock", "view_finance"]),
+            // Mestre enxerga quantidade, administração enxerga dinheiro. Sem
+            // view_all_projects: só as obras que ele supervisiona.
+            ("foreman",           "Mestre de obras",      ["view_projects", "view_stock", "manage_stock"]),
+            ("safety_technician", "Técnico de segurança", ["view_projects", "view_all_projects", "manage_safety", "view_stock"]),
+            ("warehouse_keeper",  "Almoxarife",           ["view_projects", "view_all_projects", "view_stock", "manage_stock"]),
+            ("purchasing",        "Compras",              ["view_projects", "view_all_projects", "manage_purchases", "view_stock"]),
         ];
     }
 

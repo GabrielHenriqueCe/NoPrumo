@@ -40,6 +40,10 @@ builder.Services.AddScoped<DatabaseSeeder>();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
 builder.Services.AddScoped<IProjectService, ProjectService>();
+builder.Services.AddScoped<IProjectFinanceRepository, ProjectFinanceRepository>();
+builder.Services.AddScoped<IProjectFinanceService, ProjectFinanceService>();
+builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<IStageRepository, StageRepository>();
 builder.Services.AddScoped<IStageService, StageService>();
 builder.Services.AddScoped<IProjectTeamRepository, ProjectTeamRepository>();
@@ -107,6 +111,7 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("manage_users", policy => policy.RequireClaim("permission", "manage_users"));
     options.AddPolicy("view_stock", policy => policy.RequireClaim("permission", "view_stock"));
     options.AddPolicy("manage_stock", policy => policy.RequireClaim("permission", "manage_stock"));
+    options.AddPolicy("view_projects", policy => policy.RequireClaim("permission", "view_projects"));
     options.AddPolicy("manage_projects", policy => policy.RequireClaim("permission", "manage_projects"));
     options.AddPolicy("manage_employees", policy => policy.RequireClaim("permission", "manage_employees"));
     options.AddPolicy("manage_purchases", policy => policy.RequireClaim("permission", "manage_purchases"));

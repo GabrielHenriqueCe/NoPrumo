@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using NoPrumo.Application.Access;
 using NoPrumo.Application.DTOs;
 using NoPrumo.Application.Interfaces;
 using NoPrumo.Domain.Entities;
@@ -8,9 +9,9 @@ namespace NoPrumo.Infrastructure.Repositories;
 
 public class ProjectRepository(AppDbContext appDbContext) : IProjectRepository
 {
-    public async Task<PagedResult<Project>> ListAsync(int page, int size, string? search, CancellationToken cancellationToken)
+    public async Task<PagedResult<Project>> ListAsync(int page, int size, string? search, ProjectAccess access, CancellationToken cancellationToken)
     {
-        var query = appDbContext.Project.AsNoTracking();
+        var query = VisibleTo(appDbContext.Project.AsNoTracking(), access);
 
         if (!string.IsNullOrWhiteSpace(search))
         {
@@ -36,12 +37,14 @@ public class ProjectRepository(AppDbContext appDbContext) : IProjectRepository
         return new PagedResult<Project>(projects, page, size, total, totalPages);
     }
 
-    public Task<Project?> GetByIdAsync(long id, CancellationToken cancellationToken) =>
-        appDbContext.Project
-            .AsNoTracking()
+    public Task<Project?> GetByIdAsync(long id, ProjectAccess access, CancellationToken cancellationToken) =>
+        VisibleTo(appDbContext.Project.AsNoTracking(), access)
             .Include(project => project.Client)
             .Include(project => project.Supervisor)
             .FirstOrDefaultAsync(project => project.Id == id, cancellationToken);
+
+    public Task<Project?> GetByIdAsync(long id, CancellationToken cancellationToken) =>
+        GetByIdAsync(id, ProjectAccess.AllProjects, cancellationToken);
 
     public Task<Project?> GetForUpdateAsync(long id, CancellationToken cancellationToken) =>
     appDbContext.Project.FirstOrDefaultAsync(project => project.Id == id, cancellationToken);
@@ -56,5 +59,12 @@ public class ProjectRepository(AppDbContext appDbContext) : IProjectRepository
 
     public Task SaveChangesAsync(CancellationToken cancellationToken) =>
         appDbContext.SaveChangesAsync(cancellationToken);
+
+    // O único lugar que decide quais obras alguém enxerga. Sem funcionário ligado,
+    // o EmployeeId é null e a comparação não casa com nenhuma obra, nem com as sem supervisor.
+    private static IQueryable<Project> VisibleTo(IQueryable<Project> query, ProjectAccess access) =>
+        access.SeesAllProjects
+            ? query
+            : query.Where(project => project.SupervisorId != null && project.SupervisorId == access.EmployeeId);
 
 }

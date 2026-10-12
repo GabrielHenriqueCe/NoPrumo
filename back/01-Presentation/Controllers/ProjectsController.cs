@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using NoPrumo.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using NoPrumo.Application.DTOs;
 using NoPrumo.Application.Interfaces;
@@ -9,8 +10,11 @@ namespace NoPrumo.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Policy = "manage_projects")]
-public sealed class ProjectsController(IProjectService projectService, ITimeEntryService timeEntryService) : ControllerBase
+[Authorize(Policy = "view_projects")]
+public sealed class ProjectsController(
+    IProjectService projectService,
+    ITimeEntryService timeEntryService,
+    IProjectFinanceService projectFinanceService) : ControllerBase
 {
     private bool CanViewFinance => User.HasClaim("permission", "view_finance");
 
@@ -20,12 +24,12 @@ public sealed class ProjectsController(IProjectService projectService, ITimeEntr
         [FromQuery] int size = 10,
         [FromQuery] string? search = null,
         CancellationToken cancellationToken = default) =>
-        Ok(await projectService.ListAsync(page, size, search, CanViewFinance, cancellationToken));
+        Ok(await projectService.ListAsync(page, size, search, User.ProjectAccess(), CanViewFinance, cancellationToken));
 
     [HttpGet("{id:long}")]
     public async Task<ActionResult<ProjectDto>> GetById(long id, CancellationToken cancellationToken)
     {
-        var project = await projectService.GetByIdAsync(id, CanViewFinance, cancellationToken);
+        var project = await projectService.GetByIdAsync(id, User.ProjectAccess(), CanViewFinance, cancellationToken);
         return project is null ? NotFound() : Ok(project);
     }
 
@@ -39,7 +43,16 @@ public sealed class ProjectsController(IProjectService projectService, ITimeEntr
         return Ok(new { ProjectId = id, TotalLaborCost = totalCost });
     }
 
+    [HttpGet("{id:long}/finance")]
+    [Authorize(Policy = "view_finance")]
+    public async Task<ActionResult<ProjectFinancialsDto>> GetFinance(long id, CancellationToken cancellationToken)
+    {
+        var financials = await projectFinanceService.GetAsync(id, cancellationToken);
+        return financials is null ? NotFound() : Ok(financials);
+    }
+
     [HttpPost]
+    [Authorize(Policy = "manage_projects")]
     public async Task<ActionResult<ProjectDto>> Create(SaveProjectRequest request, CancellationToken cancellationToken)
     {
         var result = await projectService.CreateAsync(request, CanViewFinance, cancellationToken);
@@ -52,6 +65,7 @@ public sealed class ProjectsController(IProjectService projectService, ITimeEntr
     }
 
     [HttpPut("{id:long}")]
+    [Authorize(Policy = "manage_projects")]
     public async Task<ActionResult<ProjectDto>> Update(long id, SaveProjectRequest request, CancellationToken cancellationToken)
     {
         var result = await projectService.UpdateAsync(id, request, CanViewFinance, cancellationToken);
@@ -69,10 +83,12 @@ public sealed class ProjectsController(IProjectService projectService, ITimeEntr
     }
 
     [HttpPatch("{id:long}/activate")]
+    [Authorize(Policy = "manage_projects")]
     public async Task<IActionResult> Activate(long id, CancellationToken cancellationToken) =>
         await projectService.ActivateAsync(id, cancellationToken) ? NoContent() : NotFound();
 
     [HttpPatch("{id:long}/deactivate")]
+    [Authorize(Policy = "manage_projects")]
     public async Task<IActionResult> Deactivate(long id, CancellationToken cancellationToken) =>
         await projectService.DeactivateAsync(id, cancellationToken) ? NoContent() : NotFound();
 

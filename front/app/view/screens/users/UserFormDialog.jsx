@@ -16,9 +16,9 @@ import { TextField } from '../../ui/TextField'
   trail, and renaming it would orphan the history.
 */
 
-const EMPTY = { name: '', username: '', email: '', roleId: '' }
+const EMPTY = { name: '', username: '', email: '', roleId: '', employeeId: '' }
 
-export function UserFormDialog({ open, user, roles, onClose, onSubmit }) {
+export function UserFormDialog({ open, user, roles, employeeOptions, onClose, onSubmit }) {
   const editing = Boolean(user)
 
   const [form, setForm] = useState(EMPTY)
@@ -35,6 +35,7 @@ export function UserFormDialog({ open, user, roles, onClose, onSubmit }) {
             username: user.username ?? '',
             email: user.email ?? '',
             roleId: String(user.roleId ?? ''),
+            employeeId: user.employeeId != null ? String(user.employeeId) : '',
           }
         : EMPTY,
     )
@@ -59,6 +60,7 @@ export function UserFormDialog({ open, user, roles, onClose, onSubmit }) {
         username: form.username.trim(),
         email: form.email.trim(),
         roleId: Number(form.roleId),
+        employeeId: form.employeeId ? Number(form.employeeId) : null,
       })
     } catch (error) {
       // The API is the one that validates. The form only shows where it hurt.
@@ -123,6 +125,19 @@ export function UserFormDialog({ open, user, roles, onClose, onSubmit }) {
           placeholder="Select a role…"
           options={roles.map((role) => ({ value: role.id, label: role.label }))}
         />
+
+        <SelectField
+          label="Employee"
+          name="employeeId"
+          value={form.employeeId}
+          onChange={update('employeeId')}
+          error={fieldErrors.employeeId}
+          placeholder={employeeOptions.length ? 'Not linked to an employee' : 'No active employee registered'}
+          options={employeeOptions}
+        />
+        <p className="-mt-2 text-[12.5px] text-muted">
+          A foreman sees only the projects where this employee is the supervisor.
+        </p>
 
         {formError && (
           <p role="alert" className="border border-danger-soft bg-[#faefea] px-3 py-2 text-[12.5px] text-danger">

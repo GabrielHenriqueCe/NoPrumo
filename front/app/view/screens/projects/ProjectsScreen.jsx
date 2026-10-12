@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useContainer } from '../../providers/containerContext'
 import { useSession } from '../../providers/sessionContext'
 import { Badge } from '../../ui/Badge'
@@ -28,6 +29,7 @@ export function ProjectsScreen() {
   const { projects, clients, employees } = useContainer()
   const { can } = useSession()
   const canSeeAmount = can('view_finance')
+  const canManage = can('manage_projects')
 
   const [data, setData] = useState(EMPTY_PAGE)
   const [page, setPage] = useState(1)
@@ -77,6 +79,9 @@ export function ProjectsScreen() {
 
   // A failed lookup leaves its select empty; the list still works.
   useEffect(() => {
+    // The lookups only feed the form, and their endpoints refuse whoever cannot open it.
+    if (!canManage) return undefined
+
     const controller = new AbortController()
     const options = { signal: controller.signal }
 
@@ -101,7 +106,7 @@ export function ProjectsScreen() {
       .catch(() => {})
 
     return () => controller.abort()
-  }, [clients, employees])
+  }, [clients, employees, canManage])
 
   const runAction = async (id, action) => {
     setPendingId(id)
@@ -150,14 +155,16 @@ export function ProjectsScreen() {
             className="w-72 border border-line bg-white px-3 py-2 text-sm outline-none focus:border-gold"
           />
 
-          <Button
-            onClick={() => {
-              setEditingProject(null)
-              setFormOpen(true)
-            }}
-          >
-            New project
-          </Button>
+          {canManage && (
+            <Button
+              onClick={() => {
+                setEditingProject(null)
+                setFormOpen(true)
+              }}
+            >
+              New project
+            </Button>
+          )}
         </div>
       </header>
 
@@ -205,7 +212,7 @@ export function ProjectsScreen() {
                   <HeaderCell>Forecast</HeaderCell>
                   {canSeeAmount && <HeaderCell>Contract</HeaderCell>}
                   <HeaderCell>Status</HeaderCell>
-                  <th className="px-4 py-3" />
+                  {canManage && <th className="px-4 py-3" />}
                 </tr>
               </thead>
 
@@ -216,7 +223,9 @@ export function ProjectsScreen() {
                   return (
                     <tr key={project.id} className="border-b border-line-soft last:border-0">
                       <td className="px-4 py-3">
-                        <div className="font-medium">{project.name}</div>
+                        <Link to={`/projects/${project.id}`} className="font-medium hover:text-bronze hover:underline">
+                          {project.name}
+                        </Link>
                         <div className="font-mono text-[12.5px] text-muted">
                           {project.code}
                           {project.city ? ` · ${project.city}${project.state ? ` / ${project.state}` : ''}` : ''}
@@ -246,6 +255,7 @@ export function ProjectsScreen() {
                         </div>
                       </td>
 
+                      {canManage && (
                       <td className="px-4 py-3">
                         <div className="flex flex-wrap items-center justify-end gap-2">
                           <Button
@@ -281,6 +291,7 @@ export function ProjectsScreen() {
                           </Button>
                         </div>
                       </td>
+                      )}
                     </tr>
                   )
                 })}

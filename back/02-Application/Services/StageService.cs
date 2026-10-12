@@ -1,4 +1,5 @@
-﻿using NoPrumo.Application.DTOs;
+﻿using NoPrumo.Application.Access;
+using NoPrumo.Application.DTOs;
 using NoPrumo.Application.Extensions;
 using NoPrumo.Application.Interfaces;
 using NoPrumo.Domain.Entities;
@@ -7,14 +8,24 @@ using NoPrumo.Application.Results;
 
 namespace NoPrumo.Application.Services;
 
-public sealed class StageService(IStageRepository stageRepository, TimeProvider timeProvider) : IStageService
+public sealed class StageService(
+    IStageRepository stageRepository,
+    IProjectRepository projectRepository,
+    TimeProvider timeProvider) : IStageService
 {
     private const int MaxPageSize = 100;
 
-    public async Task<PagedResult<StageDto>> ListAsync(int page, int size, string? search, long? projectId, CancellationToken cancellationToken)
+    public async Task<PagedResult<StageDto>> ListAsync(int page, int size, string? search, long? projectId, ProjectAccess access, CancellationToken cancellationToken)
     {
         page = Math.Max(1, page);
         size = Math.Clamp(size, 1, MaxPageSize);
+
+        // Quem não vê todas as obras só lista etapas de uma obra dele, nunca a lista geral.
+        if (!access.SeesAllProjects
+            && (projectId is null || await projectRepository.GetByIdAsync(projectId.Value, access, cancellationToken) is null))
+        {
+            return new PagedResult<StageDto>([], page, size, 0, 1);
+        }
 
         var stagePage = await stageRepository.ListAsync(page, size, search, projectId, cancellationToken);
         var today = timeProvider.Today();
@@ -26,10 +37,21 @@ public sealed class StageService(IStageRepository stageRepository, TimeProvider 
         return new PagedResult<StageDto>(items, stagePage.Page, stagePage.Size, stagePage.Total, stagePage.TotalPages);
     }
 
-    public async Task<StageDto?> GetByIdAsync(long id, CancellationToken cancellationToken)
+    public async Task<StageDto?> GetByIdAsync(long id, ProjectAccess access, CancellationToken cancellationToken)
     {
         var stage = await stageRepository.GetByIdAsync(id, cancellationToken);
-        return stage is null ? null : ToDto(stage, timeProvider.Today());
+        if (stage is null)
+        {
+            return null;
+        }
+
+        // Etapa de obra que não é dele: 404, como se não existisse.
+        if (!access.SeesAllProjects && await projectRepository.GetByIdAsync(stage.ProjectId, access, cancellationToken) is null)
+        {
+            return null;
+        }
+
+        return ToDto(stage, timeProvider.Today());
     }
 
     public async Task<SaveStageResult> CreateAsync(SaveStageRequest request, CancellationToken cancellationToken)
@@ -46,7 +68,7 @@ public sealed class StageService(IStageRepository stageRepository, TimeProvider 
         stageRepository.Add(stage);
         await stageRepository.SaveChangesAsync(cancellationToken);
 
-        return new SaveStageResult(await GetByIdAsync(stage.Id, cancellationToken), errors);
+        return new SaveStageResult(await GetByIdAsync(stage.Id, ProjectAccess.AllProjects, cancellationToken), errors);
     }
 
     public async Task<SaveStageResult?> UpdateAsync(long id, SaveStageRequest request, CancellationToken cancellationToken)
@@ -67,7 +89,7 @@ public sealed class StageService(IStageRepository stageRepository, TimeProvider 
 
         await stageRepository.SaveChangesAsync(cancellationToken);
 
-        return new SaveStageResult(await GetByIdAsync(id, cancellationToken), errors);
+        return new SaveStageResult(await GetByIdAsync(id, ProjectAccess.AllProjects, cancellationToken), errors);
     }
 
     private async Task<Dictionary<string, string>> ValidateAsync(Stage stage, CancellationToken cancellationToken)

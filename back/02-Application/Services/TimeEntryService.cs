@@ -40,7 +40,7 @@ public class TimeEntryService(ITimeEntryRepository repository) : ITimeEntryServi
             RecordedBy = userId,
 
             // Congela o salário atual no snapshot!
-            HourlyRateSnapshot = employee.PayRate,
+            HourlyRateSnapshot = employee.EmploymentRegime?.HourlyRate(employee.PayRate) ?? employee.PayRate,
             AdditionalSnapshot = employee.AdditionalPercentage,
             ChargesSnapshot = activeCharge?.Percentage ?? 0m
         };

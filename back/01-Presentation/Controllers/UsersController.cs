@@ -91,6 +91,12 @@ public sealed class UsersController(AppDbContext appDbContext, PasswordGenerator
             return ValidationProblem(ModelState);
         }
 
+        if (await EmployeeErrorAsync(request.EmployeeId, null) is string employeeError)
+        {
+            ModelState.AddModelError("employeeId", employeeError);
+            return ValidationProblem(ModelState);
+        }
+
         // Quem cria não escolhe a senha: escolher significaria conhecê-la, e a
         // conta deixaria de ser só da pessoa dona dela.
         var temporaryPassword = passwordGenerator.Create();
@@ -101,6 +107,7 @@ public sealed class UsersController(AppDbContext appDbContext, PasswordGenerator
             Name = request.Name.Trim(),
             Email = email,
             RoleId = request.RoleId,
+            EmployeeId = request.EmployeeId,
             Active = true,
             MustChangePassword = true,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(temporaryPassword, workFactor: 12),
@@ -145,9 +152,16 @@ public sealed class UsersController(AppDbContext appDbContext, PasswordGenerator
             return ValidationProblem(ModelState);
         }
 
+        if (await EmployeeErrorAsync(request.EmployeeId, id) is string employeeError)
+        {
+            ModelState.AddModelError("employeeId", employeeError);
+            return ValidationProblem(ModelState);
+        }
+
         user.Name = request.Name.Trim();
         user.Email = email;
         user.RoleId = request.RoleId;
+        user.EmployeeId = request.EmployeeId;
 
         await appDbContext.SaveChangesAsync();
 
@@ -217,5 +231,23 @@ public sealed class UsersController(AppDbContext appDbContext, PasswordGenerator
                       ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         return long.TryParse(subject, out var id) ? id : null;
+    }
+
+    // Um funcionário é uma pessoa só: dois logins nele dividiriam as obras e a assinatura.
+    private async Task<string?> EmployeeErrorAsync(long? employeeId, long? ignoredUserId)
+    {
+        if (employeeId is null) return null;
+
+        if (!await appDbContext.Employee.AnyAsync(employee => employee.Id == employeeId && employee.Active == true))
+        {
+            return "Pick an active employee.";
+        }
+
+        if (await appDbContext.User.AnyAsync(user => user.EmployeeId == employeeId && user.Id != ignoredUserId))
+        {
+            return "Another user is already linked to this employee.";
+        }
+
+        return null;
     }
 }

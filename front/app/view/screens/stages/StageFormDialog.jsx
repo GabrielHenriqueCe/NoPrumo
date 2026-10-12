@@ -6,7 +6,6 @@ import { TextField } from '../../ui/TextField'
 import { STAGE_STATUSES } from './stageStatus'
 
 const EMPTY = {
-  projectId: '',
   name: '',
   sortOrder: '',
   status: 'planned',
@@ -24,15 +23,14 @@ function fromStage(stage) {
 
 const idOrNull = (value) => (value ? Number(value) : null)
 
-export function StageFormDialog({ open, stage, projectOptions, teamOptions, supervisorOptions, onClose, onSubmit }) {
+// The project is the page the form opened from; it has no select.
+export function StageFormDialog({ open, stage, projectId, teamOptions, supervisorOptions, onClose, onSubmit }) {
   const editing = Boolean(stage)
 
   const [form, setForm] = useState(EMPTY)
   const [fieldErrors, setFieldErrors] = useState({})
   const [formError, setFormError] = useState(null)
   const [busy, setBusy] = useState(false)
-
-  const projectChosen = Boolean(form.projectId)
 
   useEffect(() => {
     if (!open) return
@@ -53,7 +51,7 @@ export function StageFormDialog({ open, stage, projectOptions, teamOptions, supe
     setFormError(null)
 
     const values = {
-      projectId: Number(form.projectId),
+      projectId: Number(projectId),
       name: form.name.trim(),
       sortOrder: form.sortOrder === '' ? 0 : Number(form.sortOrder),
       status: form.status,
@@ -66,8 +64,13 @@ export function StageFormDialog({ open, stage, projectOptions, teamOptions, supe
     try {
       await onSubmit(values)
     } catch (error) {
-      if (error.isValidation) setFieldErrors(error.fieldErrors)
-      else setFormError(error.message ?? 'Could not save the stage.')
+      if (error.isValidation) {
+        setFieldErrors(error.fieldErrors)
+        // There is no project field on screen, so its error (e.g. an inactive project) goes here.
+        if (error.fieldErrors.projectId) setFormError(error.fieldErrors.projectId)
+      } else {
+        setFormError(error.message ?? 'Could not save the stage.')
+      }
     } finally {
       setBusy(false)
     }
@@ -81,106 +84,89 @@ export function StageFormDialog({ open, stage, projectOptions, teamOptions, supe
       description="A step of a project's schedule, in the order it is built."
     >
       <form onSubmit={submit} noValidate className="flex flex-col gap-4 p-6">
-        <SelectField
-          label="Project"
-          name="projectId"
-          required
-          value={form.projectId}
-          onChange={update('projectId')}
-          error={fieldErrors.projectId}
-          placeholder={projectOptions.length ? 'Select a project…' : 'No active project registered'}
-          options={projectOptions}
-        />
-
-        <fieldset disabled={!projectChosen} className="flex flex-col gap-4 disabled:opacity-50">
-          {!projectChosen && (
-            <legend className="mb-4 text-[12.5px] text-muted">Pick the project first.</legend>
-          )}
-
-          <div className="grid grid-cols-3 gap-4">
-            <TextField
-              className="col-span-2"
-              label="Name"
-              name="name"
-              placeholder="e.g. Foundation"
-              required
-              value={form.name}
-              onChange={update('name')}
-              error={fieldErrors.name}
-            />
-
-            <TextField
-              label="Order"
-              name="sortOrder"
-              type="number"
-              min="0"
-              step="1"
-              inputMode="numeric"
-              placeholder="1"
-              value={form.sortOrder}
-              onChange={update('sortOrder')}
-              error={fieldErrors.sortOrder}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <SelectField
-              label="Status"
-              name="status"
-              required
-              value={form.status}
-              onChange={update('status')}
-              error={fieldErrors.status}
-              options={STAGE_STATUSES}
-            />
-
-            <TextField
-              label="Progress (%)"
-              name="percentage"
-              type="number"
-              min="0"
-              max="100"
-              step="0.01"
-              inputMode="decimal"
-              value={form.percentage}
-              onChange={update('percentage')}
-              error={fieldErrors.percentage}
-              hint="A completed stage must be at 100%."
-            />
-          </div>
-
+        <div className="grid grid-cols-3 gap-4">
           <TextField
-            label="Planned date"
-            name="plannedDate"
-            type="date"
-            value={form.plannedDate}
-            onChange={update('plannedDate')}
-            error={fieldErrors.plannedDate}
-            hint="The stage shows as late once this date has passed."
+            className="col-span-2"
+            label="Name"
+            name="name"
+            placeholder="e.g. Foundation"
+            required
+            value={form.name}
+            onChange={update('name')}
+            error={fieldErrors.name}
           />
 
-          <div className="grid grid-cols-2 gap-4">
-            <SelectField
-              label="Team"
-              name="teamId"
-              value={form.teamId}
-              onChange={update('teamId')}
-              error={fieldErrors.teamId}
-              placeholder={teamOptions.length ? 'Select a team…' : 'No team registered'}
-              options={teamOptions}
-            />
+          <TextField
+            label="Order"
+            name="sortOrder"
+            type="number"
+            min="0"
+            step="1"
+            inputMode="numeric"
+            placeholder="1"
+            value={form.sortOrder}
+            onChange={update('sortOrder')}
+            error={fieldErrors.sortOrder}
+          />
+        </div>
 
-            <SelectField
-              label="Supervisor"
-              name="supervisorId"
-              value={form.supervisorId}
-              onChange={update('supervisorId')}
-              error={fieldErrors.supervisorId}
-              placeholder={supervisorOptions.length ? 'Select an employee…' : 'No employee registered'}
-              options={supervisorOptions}
-            />
-          </div>
-        </fieldset>
+        <div className="grid grid-cols-2 gap-4">
+          <SelectField
+            label="Status"
+            name="status"
+            required
+            value={form.status}
+            onChange={update('status')}
+            error={fieldErrors.status}
+            options={STAGE_STATUSES}
+          />
+
+          <TextField
+            label="Progress (%)"
+            name="percentage"
+            type="number"
+            min="0"
+            max="100"
+            step="0.01"
+            inputMode="decimal"
+            value={form.percentage}
+            onChange={update('percentage')}
+            error={fieldErrors.percentage}
+            hint="A completed stage must be at 100%."
+          />
+        </div>
+
+        <TextField
+          label="Planned date"
+          name="plannedDate"
+          type="date"
+          value={form.plannedDate}
+          onChange={update('plannedDate')}
+          error={fieldErrors.plannedDate}
+          hint="The stage shows as late once this date has passed."
+        />
+
+        <div className="grid grid-cols-2 gap-4">
+          <SelectField
+            label="Team"
+            name="teamId"
+            value={form.teamId}
+            onChange={update('teamId')}
+            error={fieldErrors.teamId}
+            placeholder={teamOptions.length ? 'Select a team…' : 'No team registered'}
+            options={teamOptions}
+          />
+
+          <SelectField
+            label="Supervisor"
+            name="supervisorId"
+            value={form.supervisorId}
+            onChange={update('supervisorId')}
+            error={fieldErrors.supervisorId}
+            placeholder={supervisorOptions.length ? 'Select an employee…' : 'No employee registered'}
+            options={supervisorOptions}
+          />
+        </div>
 
         {formError && (
           <p role="alert" className="border border-danger-soft bg-[#faefea] px-3 py-2 text-[12.5px] text-danger">
@@ -189,7 +175,7 @@ export function StageFormDialog({ open, stage, projectOptions, teamOptions, supe
         )}
 
         <div className="mt-2 flex items-center gap-2.5">
-          <Button type="submit" busy={busy} busyLabel="Saving…" disabled={!projectChosen}>
+          <Button type="submit" busy={busy} busyLabel="Saving…">
             {editing ? 'Save changes' : 'Create stage'}
           </Button>
           <Button type="button" variant="outline" onClick={onClose} disabled={busy}>

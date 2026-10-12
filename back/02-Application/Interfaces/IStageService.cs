@@ -1,4 +1,5 @@
-﻿using NoPrumo.Application.DTOs;
+﻿using NoPrumo.Application.Access;
+using NoPrumo.Application.DTOs;
 using NoPrumo.Application.Requests;
 using NoPrumo.Application.Results;
 
@@ -6,9 +7,9 @@ namespace NoPrumo.Application.Interfaces;
 
 public interface IStageService
 {
-    Task<PagedResult<StageDto>> ListAsync(int page, int size, string? search, long? projectId, CancellationToken cancellationToken);
+    Task<PagedResult<StageDto>> ListAsync(int page, int size, string? search, long? projectId, ProjectAccess access, CancellationToken cancellationToken);
 
-    Task<StageDto?> GetByIdAsync(long id, CancellationToken cancellationToken);
+    Task<StageDto?> GetByIdAsync(long id, ProjectAccess access, CancellationToken cancellationToken);
 
     Task<SaveStageResult> CreateAsync(SaveStageRequest request, CancellationToken cancellationToken);
 

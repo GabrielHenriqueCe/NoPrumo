@@ -11,9 +11,10 @@ import { EmployeeTrainingsScreen } from './screens/employeeTrainings/EmployeeTra
 import { EmploymentRegimesScreen } from './screens/employmentRegimes/EmploymentRegimesScreen'
 import { JobRolesScreen } from './screens/jobRoles/JobRolesScreen'
 import { PortalScreen } from './screens/portal/PortalScreen'
+import { ProjectScreen } from './screens/projects/ProjectScreen'
 import { ProjectsScreen } from './screens/projects/ProjectsScreen'
 import { PurchasesScreen } from './screens/purchases/PurchasesScreen'
-import { StagesScreen } from './screens/stages/StagesScreen'
+import { SettingsScreen } from './screens/settings/SettingsScreen'
 import { StockCategoriesScreen } from './screens/stockCategories/StockCategoriesScreen'
 import { StockGroupsScreen } from './screens/stockGroups/StockGroupsScreen'
 import { StockItemsScreen } from './screens/stockItems/StockItemsScreen'
@@ -23,7 +24,7 @@ import { TrainingTypesScreen } from './screens/trainingTypes/TrainingTypesScreen
 import { UsersScreen } from './screens/users/UsersScreen'
 import { AppShell } from './shell/AppShell'
 import { MENU, SCHEDULE_PERMISSIONS } from './shell/menu'
-import { ProjectTeamsPanel } from './screens/projectTeams/ProjectTeamsPanel'
+import { SETTINGS_PERMISSIONS } from './shell/settings'
 
 /*
   Every screen in the app, in one readable list.
@@ -41,6 +42,8 @@ import { ProjectTeamsPanel } from './screens/projectTeams/ProjectTeamsPanel'
 */
 
 const SCREENS = [
+  { path: '/settings', permission: SETTINGS_PERMISSIONS, element: <SettingsScreen /> },
+
   { path: '/users', permission: 'manage_users', element: <UsersScreen /> },
 
   { path: '/departments', permission: 'manage_employees', element: <DepartmentsScreen /> },
@@ -57,9 +60,8 @@ const SCREENS = [
   { path: '/stock-groups', permission: 'manage_stock', element: <StockGroupsScreen /> },
   { path: '/stock-items', permission: 'manage_stock', element: <StockItemsScreen /> },
 
-    { path: '/projects', permission: 'manage_projects', element: <ProjectsScreen /> },
-    { path: '/projects/1/team', permission: 'manage_projects', element: <div className="p-8"><ProjectTeamsPanel projectId={1} /></div> },
-  { path: '/stages', permission: 'manage_projects', element: <StagesScreen /> },
+  { path: '/projects', permission: 'view_projects', element: <ProjectsScreen /> },
+  { path: '/projects/:projectId/:tab?', permission: 'view_projects', element: <ProjectScreen /> },
 
   { path: '/schedule', permission: SCHEDULE_PERMISSIONS, element: <AppointmentsScreen /> },
 
