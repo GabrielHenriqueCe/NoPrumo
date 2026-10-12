@@ -58,7 +58,7 @@ const SCREENS = [
   { path: '/stock-items', permission: 'manage_stock', element: <StockItemsScreen /> },
 
     { path: '/projects', permission: 'manage_projects', element: <ProjectsScreen /> },
-    { path: '/projects/1/team', permission: 'manage_projects', element: <ProjectTeamsPanel projectId={1} /> },
+    { path: '/projects/1/team', permission: 'manage_projects', element: <div className="p-8"><ProjectTeamsPanel projectId={1} /></div> },
   { path: '/stages', permission: 'manage_projects', element: <StagesScreen /> },
 
   { path: '/schedule', permission: SCHEDULE_PERMISSIONS, element: <AppointmentsScreen /> },
