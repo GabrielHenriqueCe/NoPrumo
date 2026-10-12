@@ -6,6 +6,7 @@ import { Badge } from '../../ui/Badge'
 import { Button } from '../../ui/Button'
 import { SelectField } from '../../ui/SelectField'
 import { TextField } from '../../ui/TextField'
+import { TimeEntryPanel } from '../timeEntries/TimeEntryPanel'
 
 // The "Team" tab of a project. The project page (Gabriel's frame) passes projectId.
 export function ProjectTeamsPanel({ projectId }) {
@@ -86,8 +87,20 @@ export function ProjectTeamsPanel({ projectId }) {
 
       {loaded && !loadError && (
         <>
-          <section>
-            <h3 className="label mb-2">On the project · {current.length}</h3>
+            <section>
+                <h3 className="label mb-2">On the project · {current.length}</h3>
+
+                {/* Extrair os funcionários de todas as equipas atualmente na obra para o dropdown do ponto */}
+                <TimeEntryPanel
+                    projectId={projectId}
+                    employees={current.flatMap(allocation =>
+                        allocation.members.map(m => ({
+                            id: m.employeeId,
+                            name: m.employeeName,
+                            registrationNumber: m.registrationNumber
+                        }))
+                    )}
+                />
 
             {current.length === 0 ? (
               <p className="border border-line bg-white px-6 py-8 text-center text-sm text-muted">

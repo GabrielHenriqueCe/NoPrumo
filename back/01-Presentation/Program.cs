@@ -52,6 +52,8 @@ builder.Services.AddScoped<IProjectLinkRepository, ProjectLinkRepository>();
 builder.Services.AddScoped<IProjectLinkService, ProjectLinkService>();
 builder.Services.AddScoped<IPurchaseRequestRepository, PurchaseRequestRepository>();
 builder.Services.AddScoped<IPurchaseRequestService, PurchaseRequestService>();
+builder.Services.AddScoped<ITimeEntryRepository, TimeEntryRepository>();
+builder.Services.AddScoped<ITimeEntryService, TimeEntryService>();
 
 builder.Services.AddScoped<IStockMovementRepository, StockMovementRepository>();
 builder.Services.AddScoped<IStockMovementService, StockMovementService>();
