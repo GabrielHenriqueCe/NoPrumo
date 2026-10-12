@@ -20,13 +20,16 @@ const PAGE_SIZE = 10
 const SEARCH_DEBOUNCE_MS = 350
 
 const EMPTY_PAGE = { items: [], page: 1, totalPages: 1, total: 0 }
+// 100 is the API's page cap.
+const EMPLOYEE_LOOKUP_SIZE = 100
 
 export function UsersScreen() {
-  const { users } = useContainer()
+  const { users, employees } = useContainer()
   const { user: signedInUser } = useSession()
 
   const [data, setData] = useState(EMPTY_PAGE)
   const [roles, setRoles] = useState([])
+  const [employeeOptions, setEmployeeOptions] = useState([])
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
   const [appliedSearch, setAppliedSearch] = useState('')
@@ -71,7 +74,7 @@ export function UsersScreen() {
     return () => controller.abort()
   }, [users, page, appliedSearch, reloadToken])
 
-  // Roles fill a fixed dropdown; fetched once, not on every list refresh.
+  // Roles and employees fill fixed dropdowns; fetched once, not on every list refresh.
   useEffect(() => {
     const controller = new AbortController()
 
@@ -82,8 +85,19 @@ export function UsersScreen() {
         if (!controller.signal.aborted) setRoles([])
       })
 
+    employees
+      .list({ page: 1, size: EMPLOYEE_LOOKUP_SIZE }, { signal: controller.signal })
+      .then((result) =>
+        setEmployeeOptions(
+          result.items
+            .filter((employee) => employee.active)
+            .map((employee) => ({ value: employee.id, label: employee.name })),
+        ),
+      )
+      .catch(() => {})
+
     return () => controller.abort()
-  }, [users])
+  }, [users, employees])
 
   const runAction = async (id, action) => {
     setPendingId(id)
@@ -289,6 +303,7 @@ export function UsersScreen() {
         open={formOpen}
         user={editingUser}
         roles={roles}
+        employeeOptions={employeeOptions}
         onClose={() => {
           setFormOpen(false)
           setEditingUser(null)

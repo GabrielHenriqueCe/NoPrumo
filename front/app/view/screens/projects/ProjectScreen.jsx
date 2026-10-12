@@ -5,7 +5,10 @@ import { useContainer } from '../../providers/containerContext'
 import { useSession } from '../../providers/sessionContext'
 import { Badge } from '../../ui/Badge'
 import { Button } from '../../ui/Button'
-import { StagesScreen } from '../stages/StagesScreen'
+import { ProjectPpePanel } from '../ppeIssues/ProjectPpePanel'
+import { ProjectTeamsPanel } from '../projectTeams/ProjectTeamsPanel'
+import { ProjectStagesPanel } from '../stages/ProjectStagesPanel'
+import { ProjectMaterialPanel } from './ProjectMaterialPanel'
 import { ProjectOverview } from './ProjectOverview'
 import { projectStatusLabel } from './projectStatus'
 
@@ -26,7 +29,34 @@ const PROJECT_TABS = [
     key: 'stages',
     label: 'Stages',
     permission: 'view_projects',
-    render: (project) => <StagesScreen projectId={project.id} />,
+    render: (project) => <ProjectStagesPanel projectId={project.id} />,
+  },
+  {
+    key: 'team',
+    label: 'Team',
+    permission: 'manage_projects',
+    render: (project) => (
+      <div className="p-8">
+        <ProjectTeamsPanel projectId={project.id} />
+      </div>
+    ),
+  },
+  {
+    key: 'material',
+    label: 'Material',
+    permission: 'view_stock',
+    render: (project) => <ProjectMaterialPanel projectId={project.id} />,
+  },
+  {
+    // The API's view_ppe: whoever issues PPE, and whoever only reads it on site.
+    key: 'ppe',
+    label: 'PPE',
+    permission: ['manage_safety', 'view_stock'],
+    render: (project) => (
+      <div className="p-8">
+        <ProjectPpePanel projectId={project.id} />
+      </div>
+    ),
   },
 ]
 
