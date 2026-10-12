@@ -1,7 +1,7 @@
 namespace NoPrumo.Application.DTOs;
 
 /// <summary>
-/// O mesmo item, mas para quem tem view_finance (admin, engineer, purchasing).
+/// O mesmo item, mas para quem tem view_finance ou manage_purchases (admin, engineer, purchasing).
 /// Único DTO com ReferencePrice — nunca um campo anulável no DTO de cima.
 /// </summary>
 public sealed record StockItemWithPriceDto(

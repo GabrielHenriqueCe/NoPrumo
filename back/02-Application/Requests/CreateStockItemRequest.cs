@@ -1,7 +1,7 @@
 namespace NoPrumo.Application.Requests;
 
 // Quem só tem manage_stock nunca manda ReferencePrice — o campo nem existe
-// aqui. Quem tem view_finance também manda pelo mesmo request; o controller
+// aqui. Quem tem view_finance ou manage_purchases também manda pelo mesmo request; o controller
 // decide se aplica o valor, olhando a claim de quem está autenticado.
 public sealed record CreateStockItemRequest(
     long StockGroupId,

@@ -49,7 +49,7 @@ public sealed class DatabaseSeeder(AppDbContext appDbContext)
             ("foreman",           "Mestre de obras",      ["view_stock", "manage_stock"]),
             ("safety_technician", "Técnico de segurança", ["manage_safety"]),
             ("warehouse_keeper",  "Almoxarife",           ["view_stock", "manage_stock"]),
-            ("purchasing",        "Compras",              ["manage_purchases", "view_finance"]),
+            ("purchasing",        "Compras",              ["manage_purchases"]),
         ];
     }
 

@@ -1,7 +1,7 @@
 ﻿namespace NoPrumo.Application.DTOs;
 
 /// <summary>
-/// O item de estoque para quem NÃO tem view_finance (foreman, warehouse_keeper).
+/// O item de estoque para quem NÃO tem view_finance nem manage_purchases (foreman, warehouse_keeper).
 /// Sem ReferencePrice: a regra é "mestre enxerga quantidade, admin enxerga
 /// dinheiro" — o campo não existe aqui, não é escondido na tela.
 /// </summary>
