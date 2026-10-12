@@ -10,6 +10,7 @@ import { createPpeIssueGateway } from './data/gateways/ppeIssueGateway'
 import { createProjectGateway } from './data/gateways/projectGateway'
 import { createProjectLinkGateway } from './data/gateways/projectLinkGateway'
 import { createProjectTeamGateway } from './data/gateways/projectTeamGateway'
+import { createTimeEntryGateway } from './data/gateways/timeEntryGateway' // <-- ADICIONAR ESTA LINHA
 import { createPurchaseRequestGateway } from './data/gateways/purchaseRequestGateway'
 import { createStageGateway } from './data/gateways/stageGateway'
 import { createStockCategoryGateway } from './data/gateways/stockCategoryGateway'
@@ -21,6 +22,7 @@ import { createTrainingTypeGateway } from './data/gateways/trainingTypeGateway'
 import { createUserGateway } from './data/gateways/userGateway'
 import { createHttpClient } from './data/http/httpClient'
 import { tokenStorage } from './data/storage/tokenStorage'
+
 
 /*
   Composition root: the one file that knows how the app is wired.
@@ -71,6 +73,7 @@ export function createContainer({
     projectLinks: createProjectLinkGateway(http),
     stages: createStageGateway(http),
     projectTeams: createProjectTeamGateway(http),
+    timeEntries: createTimeEntryGateway(http), // <-- ADICIONAR ESTA LINHA
     appointments: createAppointmentGateway(http),
 
     trainingTypes: createTrainingTypeGateway(http),
