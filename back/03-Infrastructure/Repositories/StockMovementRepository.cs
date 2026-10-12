@@ -52,7 +52,7 @@ public class StockMovementRepository(AppDbContext appDbContext) : IStockMovement
         .FirstOrDefaultAsync(project => project.Id == projectId, cancellationToken);
 
     public Task<Employee?> GetEmployeeAsync(long employeeId, CancellationToken cancellationToken) =>
-        appDbContext.Employees
+        appDbContext.Employee
         .FirstOrDefaultAsync(employee => employee.Id == employeeId, cancellationToken);
 
     public async Task<decimal> GetBalanceAsync(long stockItemId, long? projectId, CancellationToken cancellationToken)
