@@ -11,6 +11,8 @@ public interface ITimeEntryRepository
     // Consulta de um ponto específico
     Task<TimeEntry?> GetByIdAsync(long id, CancellationToken cancellationToken);
 
+    Task<decimal> GetTotalLaborCostAsync(long projectId, CancellationToken cancellationToken);
+
     // Permite buscar as entidades associadas (para cálculos e snapshot) no momento da criação do ponto
     Task<Employee?> GetEmployeeAsync(long employeeId, CancellationToken cancellationToken);
     Task<bool> ActiveProjectExistsAsync(long projectId, CancellationToken cancellationToken);

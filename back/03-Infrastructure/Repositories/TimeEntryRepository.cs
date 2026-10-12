@@ -19,7 +19,7 @@ public class TimeEntryRepository(AppDbContext appDbContext) : ITimeEntryReposito
         var entries = await query
             .Include(t => t.Employee)
             .OrderByDescending(t => t.Date)
-            .ThenByDescending(t => t.ClockIn) // Baseado nas propriedades do seu modelo original
+            .ThenByDescending(t => t.ClockIn)
             .Skip((page - 1) * size)
             .Take(size)
             .ToListAsync(cancellationToken);
@@ -28,6 +28,11 @@ public class TimeEntryRepository(AppDbContext appDbContext) : ITimeEntryReposito
 
         return new PagedResult<TimeEntry>(entries, page, size, total, totalPages);
     }
+
+    public Task<decimal> GetTotalLaborCostAsync(long projectId, CancellationToken cancellationToken) =>
+        appDbContext.TimeEntry
+            .Where(t => t.ProjectId == projectId)
+            .SumAsync(t => t.Cost, cancellationToken); // Corrigido o CS0019
 
     public Task<TimeEntry?> GetByIdAsync(long id, CancellationToken cancellationToken) =>
         appDbContext.TimeEntry
@@ -40,7 +45,7 @@ public class TimeEntryRepository(AppDbContext appDbContext) : ITimeEntryReposito
         appDbContext.Employee
             .AsNoTracking()
             .Include(e => e.EmploymentRegime)
-                .ThenInclude(r => r.PayrollChargeRates) // Precisamos disto para o Snapshot do custo!
+                .ThenInclude(r => r!.PayrollChargeRates) // Corrigido o CS8602 com o '!'
             .FirstOrDefaultAsync(e => e.Id == employeeId, cancellationToken);
 
     public Task<bool> ActiveProjectExistsAsync(long projectId, CancellationToken cancellationToken) =>

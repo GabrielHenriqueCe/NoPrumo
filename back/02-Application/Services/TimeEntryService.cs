@@ -64,6 +64,9 @@ public class TimeEntryService(ITimeEntryRepository repository) : ITimeEntryServi
         return new PagedResult<TimeEntryDto>(dtos, result.Page, result.Size, result.Total, result.TotalPages);
     }
 
+    public Task<decimal> GetTotalLaborCostAsync(long projectId, CancellationToken cancellationToken) =>
+    repository.GetTotalLaborCostAsync(projectId, cancellationToken);
+
     private static TimeEntryDto MapToDto(TimeEntry timeEntry, bool canViewFinance)
     {
         return new TimeEntryDto
