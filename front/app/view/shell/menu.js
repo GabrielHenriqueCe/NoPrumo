@@ -14,6 +14,8 @@ import { SETTINGS_PERMISSIONS } from './settings'
   advertise what the person cannot open.
 */
 
+export const SCHEDULE_PERMISSIONS = ['manage_projects', 'manage_safety']
+
 export const MENU = [
   {
     heading: null,
@@ -28,6 +30,10 @@ export const MENU = [
     ],
   },
   {
+    heading: 'Planning',
+    items: [{ to: '/schedule', label: 'Schedule', permission: SCHEDULE_PERMISSIONS }],
+  },
+  {
     heading: 'Materials',
     items: [{ to: '/stock-items', label: 'Stock items', permission: 'manage_stock' }],
   },
@@ -36,7 +42,7 @@ export const MENU = [
     items: [
       { to: '/clients', label: 'Clients', permission: 'manage_projects' },
       { to: '/suppliers', label: 'Suppliers', permission: 'manage_purchases' },
-
+      { to: '/purchases', label: 'Purchases', permission: 'manage_purchases' },
     ],
   },
   {

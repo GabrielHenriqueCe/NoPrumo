@@ -1,5 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using NoPrumo.Domain.Entities;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace NoPrumo.Infrastructure.Data;
 
@@ -46,7 +50,7 @@ public sealed class DatabaseSeeder(AppDbContext appDbContext)
             ("foreman",           "Mestre de obras",      ["view_projects", "view_stock", "manage_stock"]),
             ("safety_technician", "Técnico de segurança", ["view_projects", "manage_safety", "view_stock"]),
             ("warehouse_keeper",  "Almoxarife",           ["view_projects", "view_stock", "manage_stock"]),
-            ("purchasing",        "Compras",              ["view_projects", "manage_purchases", "view_stock", "view_finance"]),
+            ("purchasing",        "Compras",              ["view_projects", "manage_purchases", "view_stock"]),
         ];
     }
 
@@ -56,6 +60,7 @@ public sealed class DatabaseSeeder(AppDbContext appDbContext)
         await SeedRolesAsync();
         await SeedStockCategoriesAsync();
         await SeedFirstAdminAsync();
+        await SeedEmploymentRegimesAndChargesAsync();
     }
 
     private async Task SeedPermissionsAsync()
@@ -150,6 +155,36 @@ public sealed class DatabaseSeeder(AppDbContext appDbContext)
             MustChangePassword = true,
         });
 
+        await appDbContext.SaveChangesAsync();
+    }
+
+    private async Task SeedEmploymentRegimesAndChargesAsync()
+    {
+        // Só insere se não existir nenhum regime
+        if (await appDbContext.EmploymentRegime.AnyAsync()) return;
+
+        var dataHoje = DateOnly.FromDateTime(DateTime.UtcNow);
+
+        var regimes = new List<EmploymentRegime>
+        {
+            new EmploymentRegime
+            {
+                Label = "CLT Mensalista", Unit = "month", MonthlyHours = 220, Active = true, Description = "Regime CLT Padrão Mensal",
+                PayrollChargeRates = new List<PayrollChargeRate> { new PayrollChargeRate { EffectiveStart = dataHoje, Percentage = 71.80m, Source = "Seed" } }
+            },
+            new EmploymentRegime
+            {
+                Label = "CLT Horista", Unit = "hour", Active = true, Description = "Regime CLT Pagamento por Hora",
+                PayrollChargeRates = new List<PayrollChargeRate> { new PayrollChargeRate { EffectiveStart = dataHoje, Percentage = 115.60m, Source = "Seed" } }
+            },
+            new EmploymentRegime
+            {
+                Label = "Diarista (PJ)", Unit = "day", Active = true, Description = "Prestador de Serviço Pessoa Jurídica",
+                PayrollChargeRates = new List<PayrollChargeRate> { new PayrollChargeRate { EffectiveStart = dataHoje, Percentage = 0m, Source = "Seed" } }
+            }
+        };
+
+        appDbContext.EmploymentRegime.AddRange(regimes);
         await appDbContext.SaveChangesAsync();
     }
 }

@@ -264,6 +264,7 @@ export function TeamsScreen() {
 
         {!loading && !loadError && (
           <Pagination
+            noun="team"
             page={data.page}
             totalPages={data.totalPages}
             total={data.total}

@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using NoPrumo.Domain.Enums;
 
 namespace NoPrumo.Domain.Entities;
 
@@ -34,4 +36,32 @@ public class PpeIssue
     public virtual Project? Project { get; set; }
 
     public virtual User? IssuedBy { get; set; }
+
+    private const string StockSourceType = "ppe_issue";
+
+    public bool IsSigned() => SignedAt is not null;
+
+    public void Sign(DateTime signedAt, string signatureHash)
+    {
+        SignedAt = signedAt;
+        SignatureHash = signatureHash;
+    }
+
+    // Cada item entregue é uma saída do depósito para o funcionário. Exige Id:
+    // a ficha já precisa estar gravada.
+    public IEnumerable<StockMovement> StockExits(DateTime now, long? recordedBy) =>
+        Items.Select(item => new StockMovement
+        {
+            StockItemId = item.StockItemId!.Value,
+            ProjectId = ProjectId,
+            EmployeeId = EmployeeId,
+            Type = StockMovementType.Exit,
+            Quantity = item.Quantity,
+            Unit = item.Unit,
+            SourceType = StockSourceType,
+            SourceId = Id,
+            Notes = $"PPE issue #{Id}",
+            Date = now,
+            RecordedBy = recordedBy,
+        });
 }

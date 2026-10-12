@@ -6,6 +6,7 @@ import { Badge } from '../../ui/Badge'
 import { Button } from '../../ui/Button'
 import { Pagination } from '../../ui/Pagination'
 import { ProjectFormDialog } from './ProjectFormDialog'
+import { ProjectLinksDialog } from './ProjectLinksDialog'
 import { projectStatusLabel } from './projectStatus'
 
 // Without view_finance the API sends a DTO with no contractAmount, so the column is not drawn.
@@ -45,6 +46,7 @@ export function ProjectsScreen() {
 
   const [formOpen, setFormOpen] = useState(false)
   const [editingProject, setEditingProject] = useState(null)
+  const [linksProject, setLinksProject] = useState(null)
 
   const reload = useCallback(() => setReloadToken((value) => value + 1), [])
 
@@ -260,6 +262,15 @@ export function ProjectsScreen() {
                             variant="outline"
                             className="px-3 py-1.5"
                             disabled={busy}
+                            onClick={() => setLinksProject(project)}
+                          >
+                            Portal
+                          </Button>
+
+                          <Button
+                            variant="outline"
+                            className="px-3 py-1.5"
+                            disabled={busy}
                             onClick={() => {
                               setEditingProject(project)
                               setFormOpen(true)
@@ -312,6 +323,13 @@ export function ProjectsScreen() {
           setEditingProject(null)
         }}
         onSubmit={saveProject}
+      />
+
+      <ProjectLinksDialog
+        open={!!linksProject}
+        projectId={linksProject?.id}
+        projectName={linksProject?.name}
+        onClose={() => setLinksProject(null)}
       />
     </>
   )

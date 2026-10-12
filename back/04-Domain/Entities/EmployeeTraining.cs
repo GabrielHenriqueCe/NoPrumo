@@ -46,4 +46,7 @@ public class EmployeeTraining
         { } expiryDate when expiryDate <= today.AddDays(ExpiringWindowDays) => TrainingStatus.Expiring,
         _ => TrainingStatus.Valid,
     };
+
+    public bool NeedsAttentionOn(DateOnly today) =>
+        StatusOn(today) is TrainingStatus.Expired or TrainingStatus.Expiring;
 }

@@ -251,7 +251,7 @@ export function EmployeeTrainingsScreen() {
         </div>
 
         {!loading && !loadError && (
-          <Pagination page={data.page} totalPages={data.totalPages} total={data.total} onChange={setPage} />
+          <Pagination noun="training" page={data.page} totalPages={data.totalPages} total={data.total} onChange={setPage} />
         )}
       </div>
 

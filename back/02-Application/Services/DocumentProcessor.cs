@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
-using NoPrumo.Application.DTOs;
+using NoPrumo.Application.Results;
 
 namespace NoPrumo.Application.Services;
 

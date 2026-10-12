@@ -10,7 +10,7 @@ namespace NoPrumo.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize(Policy = "view_projects")]
-public sealed class ProjectsController(IProjectService projectService) : ControllerBase
+public sealed class ProjectsController(IProjectService projectService, ITimeEntryService timeEntryService) : ControllerBase
 {
     private bool CanViewFinance => User.HasClaim("permission", "view_finance");
 
@@ -27,6 +27,16 @@ public sealed class ProjectsController(IProjectService projectService) : Control
     {
         var project = await projectService.GetByIdAsync(id, CanViewFinance, cancellationToken);
         return project is null ? NotFound() : Ok(project);
+    }
+
+    [HttpGet("{id:long}/labor-cost")]
+    public async Task<IActionResult> GetLaborCost(long id, CancellationToken cancellationToken)
+    {
+        // Proteção total: O Gabriel ou o Admin podem ver o custo. Um mestre de obras recebe 403 Forbidden.
+        if (!CanViewFinance) return Forbid();
+
+        var totalCost = await timeEntryService.GetTotalLaborCostAsync(id, cancellationToken);
+        return Ok(new { ProjectId = id, TotalLaborCost = totalCost });
     }
 
     [HttpPost]

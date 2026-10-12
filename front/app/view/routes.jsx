@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { RequireSession } from './guards/RequireSession'
 import { useSession } from './providers/sessionContext'
+import { AppointmentsScreen } from './screens/appointments/AppointmentsScreen'
 import { ChangePasswordScreen } from './screens/auth/ChangePasswordScreen'
 import { LoginScreen } from './screens/auth/LoginScreen'
 import { ClientsScreen } from './screens/clients/ClientsScreen'
@@ -9,8 +10,11 @@ import { EmployeesScreen } from './screens/employees/EmployeesScreen'
 import { EmployeeTrainingsScreen } from './screens/employeeTrainings/EmployeeTrainingsScreen'
 import { EmploymentRegimesScreen } from './screens/employmentRegimes/EmploymentRegimesScreen'
 import { JobRolesScreen } from './screens/jobRoles/JobRolesScreen'
+import { PortalScreen } from './screens/portal/PortalScreen'
+import { ProjectScreen } from './screens/projects/ProjectScreen'
 import { ProjectsScreen } from './screens/projects/ProjectsScreen'
-import { StagesScreen } from './screens/stages/StagesScreen'
+import { PurchasesScreen } from './screens/purchases/PurchasesScreen'
+import { SettingsScreen } from './screens/settings/SettingsScreen'
 import { StockCategoriesScreen } from './screens/stockCategories/StockCategoriesScreen'
 import { StockGroupsScreen } from './screens/stockGroups/StockGroupsScreen'
 import { StockItemsScreen } from './screens/stockItems/StockItemsScreen'
@@ -18,11 +22,9 @@ import { SuppliersScreen } from './screens/suppliers/SuppliersScreen'
 import { TeamsScreen } from './screens/teams/TeamsScreen'
 import { TrainingTypesScreen } from './screens/trainingTypes/TrainingTypesScreen'
 import { UsersScreen } from './screens/users/UsersScreen'
-import { ProjectScreen } from './screens/projects/ProjectScreen'
-import { SettingsScreen } from './screens/settings/SettingsScreen'
-import { SETTINGS_PERMISSIONS } from './shell/settings'
 import { AppShell } from './shell/AppShell'
-import { MENU } from './shell/menu'
+import { MENU, SCHEDULE_PERMISSIONS } from './shell/menu'
+import { SETTINGS_PERMISSIONS } from './shell/settings'
 
 /*
   Every screen in the app, in one readable list.
@@ -52,6 +54,7 @@ const SCREENS = [
 
   { path: '/clients', permission: 'manage_projects', element: <ClientsScreen /> },
   { path: '/suppliers', permission: 'manage_purchases', element: <SuppliersScreen /> },
+  { path: '/purchases', permission: 'manage_purchases', element: <PurchasesScreen /> },
 
   { path: '/stock-categories', permission: 'manage_stock', element: <StockCategoriesScreen /> },
   { path: '/stock-groups', permission: 'manage_stock', element: <StockGroupsScreen /> },
@@ -59,7 +62,8 @@ const SCREENS = [
 
   { path: '/projects', permission: 'view_projects', element: <ProjectsScreen /> },
   { path: '/projects/:projectId/:tab?', permission: 'view_projects', element: <ProjectScreen /> },
-  { path: '/stages', permission: 'manage_projects', element: <StagesScreen /> },
+
+  { path: '/schedule', permission: SCHEDULE_PERMISSIONS, element: <AppointmentsScreen /> },
 
   { path: '/training-types', permission: 'manage_safety', element: <TrainingTypesScreen /> },
   { path: '/trainings', permission: 'manage_safety', element: <EmployeeTrainingsScreen /> },
@@ -69,6 +73,7 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<LoginScreen />} />
+      <Route path="/portal/:token" element={<PortalScreen />} />
 
       <Route
         path="/change-password"

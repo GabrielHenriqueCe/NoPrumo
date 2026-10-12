@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 
+using System.Linq;
+
 namespace NoPrumo.Domain.Entities;
 
 public class Employee
@@ -62,4 +64,29 @@ public class Employee
     public virtual EmploymentRegime? EmploymentRegime { get; set; }
 
     public virtual ICollection<User> Users { get; set; } = new List<User>();
+
+    // Só o certificado mais recente de cada tipo vale: um NR-35 vencido que já
+    // foi renovado não está mais vencendo. Exige EmployeeTrainings carregado.
+    public IEnumerable<EmployeeTraining> LatestTrainings() =>
+        EmployeeTrainings
+            .GroupBy(training => training.TrainingTypeId)
+            .Select(trainings => trainings
+                .OrderByDescending(training => training.IssueDate)
+                .ThenByDescending(training => training.Id)
+                .First());
+
+    // Confirmação da entrega de EPI: o nome digitado tem que ser o do cadastro,
+    // sem diferença de maiúscula, acento ou espaço sobrando.
+    public bool IsNamed(string typedName) => Normalize(typedName) == Normalize(Name);
+
+    private static string Normalize(string name)
+    {
+        var withoutAccents = new string(name
+            .Normalize(System.Text.NormalizationForm.FormD)
+            .Where(character => System.Globalization.CharUnicodeInfo.GetUnicodeCategory(character)
+                != System.Globalization.UnicodeCategory.NonSpacingMark)
+            .ToArray());
+
+        return string.Join(' ', withoutAccents.Split(' ', StringSplitOptions.RemoveEmptyEntries)).ToUpperInvariant();
+    }
 }

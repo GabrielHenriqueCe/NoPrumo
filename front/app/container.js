@@ -1,3 +1,4 @@
+import { createAppointmentGateway } from './data/gateways/appointmentGateway'
 import { createAuthGateway } from './data/gateways/authGateway'
 import { createClientGateway } from './data/gateways/clientGateway'
 import { createDepartmentGateway } from './data/gateways/departmentGateway'
@@ -5,7 +6,12 @@ import { createEmployeeGateway } from './data/gateways/employeeGateway'
 import { createEmployeeTrainingGateway } from './data/gateways/employeeTrainingGateway'
 import { createEmploymentRegimeGateway } from './data/gateways/employmentRegimeGateway'
 import { createJobRoleGateway } from './data/gateways/jobRoleGateway'
+import { createPpeIssueGateway } from './data/gateways/ppeIssueGateway'
 import { createProjectGateway } from './data/gateways/projectGateway'
+import { createProjectLinkGateway } from './data/gateways/projectLinkGateway'
+import { createProjectTeamGateway } from './data/gateways/projectTeamGateway'
+import { createTimeEntryGateway } from './data/gateways/timeEntryGateway' // <-- ADICIONAR ESTA LINHA
+import { createPurchaseRequestGateway } from './data/gateways/purchaseRequestGateway'
 import { createStageGateway } from './data/gateways/stageGateway'
 import { createStockCategoryGateway } from './data/gateways/stockCategoryGateway'
 import { createStockGroupGateway } from './data/gateways/stockGroupGateway'
@@ -16,6 +22,7 @@ import { createTrainingTypeGateway } from './data/gateways/trainingTypeGateway'
 import { createUserGateway } from './data/gateways/userGateway'
 import { createHttpClient } from './data/http/httpClient'
 import { tokenStorage } from './data/storage/tokenStorage'
+
 
 /*
   Composition root: the one file that knows how the app is wired.
@@ -56,16 +63,22 @@ export function createContainer({
 
     clients: createClientGateway(http),
     suppliers: createSupplierGateway(http),
+    purchaseRequests: createPurchaseRequestGateway(http),
 
     stockCategories: createStockCategoryGateway(http),
     stockGroups: createStockGroupGateway(http),
     stockItems: createStockItemGateway(http),
 
     projects: createProjectGateway(http),
+    projectLinks: createProjectLinkGateway(http),
     stages: createStageGateway(http),
+    projectTeams: createProjectTeamGateway(http),
+    timeEntries: createTimeEntryGateway(http), // <-- ADICIONAR ESTA LINHA
+    appointments: createAppointmentGateway(http),
 
     trainingTypes: createTrainingTypeGateway(http),
     employeeTrainings: createEmployeeTrainingGateway(http),
+    ppeIssues: createPpeIssueGateway(http),
 
     tokenStorage,
     baseUrl,

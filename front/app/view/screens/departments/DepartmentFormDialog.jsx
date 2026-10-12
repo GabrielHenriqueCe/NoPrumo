@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useContainer } from '../../providers/containerContext';
 import { Dialog } from '../../ui/Dialog';
 import { Button } from '../../ui/Button';
@@ -33,22 +33,22 @@ export function DepartmentFormDialog({ department, onClose, onSave }) {
 
     return (
         <Dialog open={true} title={department ? "Edit Department" : "New Department"} onClose={onClose}>
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-6">
                 {formError && <div className="p-3 bg-red-100 text-red-700 rounded text-sm">{formError}</div>}
-                <TextField 
-                    label="Name" 
-                    value={name} 
-                    onChange={e => setName(e.target.value)} 
+                <TextField
+                    label="Name"
+                    value={name}
+                    onChange={e => setName(e.target.value)}
                     error={fieldErrors.name}
                 />
-                
+
                 {department && (
                     <label className="flex items-center gap-2">
                         <input type="checkbox" checked={active} onChange={e => setActive(e.target.checked)} />
                         Active
                     </label>
                 )}
-                
+
                 <div className="flex gap-2 mt-4 justify-end">
                     <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
                     <Button type="submit">Save</Button>

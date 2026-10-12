@@ -48,4 +48,36 @@ public class TimeEntry
     public virtual Project Project { get; set; } = null!;
 
     public virtual User? RecordedByUser { get; set; }
+
+    // --- Métodos de Lógica de Negócio (Domínio) ---
+
+    public decimal CalculateHours()
+    {
+        if (!ClockIn.HasValue || !ClockOut.HasValue) return 0;
+
+        // Calcula as horas trabalhadas: (Saída - Entrada) - (Fim do Intervalo - Início do Intervalo)
+        var totalTime = ClockOut.Value - ClockIn.Value;
+
+        var breakTime = TimeSpan.Zero;
+        if (BreakStart.HasValue && BreakEnd.HasValue)
+        {
+            breakTime = BreakEnd.Value - BreakStart.Value;
+        }
+
+        var workedTime = totalTime - breakTime;
+        var totalHours = (decimal)workedTime.TotalHours;
+
+        return totalHours > 0 ? totalHours : 0m;
+    }
+
+    public decimal CalculateCost()
+    {
+        var hours = Hours ?? CalculateHours();
+
+        // Fórmula: horas * valor-hora * (1 + adicional%) * (1 + encargos%)
+        var additionalMultiplier = 1m + (AdditionalSnapshot / 100m);
+        var chargesMultiplier = 1m + (ChargesSnapshot / 100m);
+
+        return hours * HourlyRateSnapshot * additionalMultiplier * chargesMultiplier;
+    }
 }

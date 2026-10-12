@@ -183,7 +183,7 @@ export function TrainingTypesScreen() {
         </div>
 
         {!loading && !loadError && (
-          <Pagination page={data.page} totalPages={data.totalPages} total={data.total} onChange={setPage} />
+          <Pagination noun="training type" page={data.page} totalPages={data.totalPages} total={data.total} onChange={setPage} />
         )}
       </div>
 

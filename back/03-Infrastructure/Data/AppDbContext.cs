@@ -44,9 +44,9 @@ public class AppDbContext : DbContext
 
     public virtual DbSet<EmployeeTeam> EmployeeTeam { get; set; }
 
-    public virtual DbSet<Employee> Employees { get; set; }
+    public virtual DbSet<Employee> Employee { get; set; }
 
-    public virtual DbSet<JobRole> JobRoles { get; set; }
+    public virtual DbSet<JobRole> JobRole { get; set; }
 
     public virtual DbSet<StockGroup> StockGroup { get; set; }
 
@@ -70,7 +70,7 @@ public class AppDbContext : DbContext
 
     public virtual DbSet<TimeEntry> TimeEntry { get; set; }
 
-    public virtual DbSet<EmploymentRegime> EmploymentRegimes { get; set; }
+    public virtual DbSet<EmploymentRegime> EmploymentRegime { get; set; }
 
     public virtual DbSet<Department> Department { get; set; }
 
@@ -84,7 +84,6 @@ public class AppDbContext : DbContext
 
     public virtual DbSet<User> User { get; set; }
 
-    public DbSet<Department> Departments { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -115,7 +114,8 @@ public class AppDbContext : DbContext
                 .HasMaxLength(220);
             entity.Property(e => e.Type)
                 .HasMaxLength(20)
-                .HasDefaultValueSql("'project'");
+                .HasDefaultValueSql("'project'")
+                .HasConversion<SnakeCaseEnumConverter<AppointmentType>>();
             entity.Property(e => e.UpdatedAt)
                 .ValueGeneratedOnAddOrUpdate()
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
@@ -584,7 +584,8 @@ public class AppDbContext : DbContext
                 .HasDefaultValueSql("'1.000'");
             entity.Property(e => e.Status)
                 .HasMaxLength(20)
-                .HasDefaultValueSql("'issued'");
+                .HasDefaultValueSql("'issued'")
+                .HasConversion<SnakeCaseEnumConverter<PpeItemStatus>>();
             entity.Property(e => e.Unit)
                 .HasMaxLength(30);
             entity.Property(e => e.UpdatedAt)
@@ -1357,6 +1358,7 @@ public class AppDbContext : DbContext
             entity.Property(e => e.Notes)
                 .HasColumnType("text");
             entity.Property(e => e.Status)
+                .HasConversion<SnakeCaseEnumConverter<PurchaseRequestStatus>>()
                 .HasMaxLength(20)
                 .HasDefaultValueSql("'pending'");
             entity.Property(e => e.UpdatedAt)
