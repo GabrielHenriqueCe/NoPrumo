@@ -156,7 +156,7 @@ Ao iniciar, a API semeia permissões, perfis e categorias iniciais de estoque. E
 | Campo | Valor inicial |
 |---|---|
 | Usuário | `admin` |
-| Senha | `admin` |
+| Senha | `admin123` |
 
 No primeiro acesso, a troca da senha é obrigatória. Essa credencial é apenas para a inicialização local: troque-a imediatamente e nunca a reutilize em ambientes compartilhados ou de produção.
 
