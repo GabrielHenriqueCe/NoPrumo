@@ -53,6 +53,9 @@ builder.Services.AddScoped<IProjectLinkService, ProjectLinkService>();
 builder.Services.AddScoped<IPurchaseRequestRepository, PurchaseRequestRepository>();
 builder.Services.AddScoped<IPurchaseRequestService, PurchaseRequestService>();
 
+builder.Services.AddScoped<IStockMovementRepository, StockMovementRepository>();
+builder.Services.AddScoped<IStockMovementService, StockMovementService>();
+
 var encryptionKeyBase64 = builder.Configuration["Documents:EncryptionKey"]
     ?? throw new InvalidOperationException("Falta Documents:EncryptionKey nos User Secrets. Veja o README para gerar.");
 var hmacKeyBase64 = builder.Configuration["Documents:HmacKey"]

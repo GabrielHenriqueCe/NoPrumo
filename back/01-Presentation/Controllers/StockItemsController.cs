@@ -14,7 +14,7 @@ namespace NoPrumo.Controllers;
 /// desativa: só ele tem Active e DeletedAt na entidade.
 ///
 /// Regra de preço: "mestre enxerga quantidade, admin enxerga dinheiro". Quem
-/// não tem view_finance recebe StockItemDto (sem ReferencePrice) e nunca tem
+/// não tem view_finance nem manage_purchases recebe StockItemDto (sem ReferencePrice) e nunca tem
 /// o preço aplicado em Create/Update, mesmo que o mande no corpo — o back é
 /// quem decide, a tela é só a primeira barreira.
 /// </summary>
@@ -25,7 +25,7 @@ public sealed class StockItemsController(AppDbContext appDbContext) : Controller
 {
     private const int MaxPageSize = 100;
 
-    private bool CanSeePrice => User.HasClaim("permission", "view_finance");
+    private bool CanSeePrice => User.HasClaim("permission", "view_finance") || User.HasClaim("permission", "manage_purchases");
 
     [HttpGet]
     public async Task<IActionResult> List(
@@ -94,7 +94,7 @@ public sealed class StockItemsController(AppDbContext appDbContext) : Controller
             Ca = string.IsNullOrWhiteSpace(request.Ca) ? null : request.Ca.Trim(),
             CaExpiryDate = request.CaExpiryDate,
             Active = true,
-            // Quem não tem view_finance nunca define o preço: o item nasce
+            // Quem não tem view_finance nem manage_purchases nunca define o preço: o item nasce
             // com 0, e fica para quem tem a permissão editar depois.
             ReferencePrice = CanSeePrice ? (request.ReferencePrice ?? 0) : 0,
         };
@@ -128,7 +128,7 @@ public sealed class StockItemsController(AppDbContext appDbContext) : Controller
         item.Ca = string.IsNullOrWhiteSpace(request.Ca) ? null : request.Ca.Trim();
         item.CaExpiryDate = request.CaExpiryDate;
 
-        // Quem não tem view_finance manda o request sem esse campo (ou com
+        // Quem não tem view_finance nem manage_purchases manda o request sem esse campo (ou com
         // qualquer coisa nele) — o valor é sempre ignorado, o preço atual
         // fica como estava.
         if (CanSeePrice && request.ReferencePrice is not null)

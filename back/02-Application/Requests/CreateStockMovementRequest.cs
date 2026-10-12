@@ -11,4 +11,5 @@ public sealed record CreateStockMovementRequest(
     decimal Quantity,
     long? ProjectId,
     long? EmployeeId,
-    string? Notes);
+    string? Notes,
+    decimal? UnitCost);
