@@ -1,4 +1,5 @@
-﻿using NoPrumo.Application.DTOs;
+﻿using NoPrumo.Application.Access;
+using NoPrumo.Application.DTOs;
 using NoPrumo.Application.Extensions;
 using NoPrumo.Application.Interfaces;
 using NoPrumo.Application.Requests;
@@ -11,12 +12,12 @@ public sealed class ProjectService(IProjectRepository projectRepository, TimePro
 {
     private const int MaxPageSize = 100;
 
-    public async Task<PagedResult<ProjectDto>> ListAsync(int page, int size, string? search, bool canViewFinance, CancellationToken cancellationToken)
+    public async Task<PagedResult<ProjectDto>> ListAsync(int page, int size, string? search, ProjectAccess access, bool canViewFinance, CancellationToken cancellationToken)
     {
         page = Math.Max(1, page);
         size = Math.Clamp(size, 1, MaxPageSize);
 
-        var projectPage = await projectRepository.ListAsync(page, size, search, cancellationToken);
+        var projectPage = await projectRepository.ListAsync(page, size, search, access, cancellationToken);
         var today = timeProvider.Today();
 
         var items = projectPage.Items
@@ -26,9 +27,9 @@ public sealed class ProjectService(IProjectRepository projectRepository, TimePro
         return new PagedResult<ProjectDto>(items, projectPage.Page, projectPage.Size, projectPage.Total, projectPage.TotalPages);
     }
 
-    public async Task<ProjectDto?> GetByIdAsync(long id, bool canViewFinance, CancellationToken cancellationToken)
+    public async Task<ProjectDto?> GetByIdAsync(long id, ProjectAccess access, bool canViewFinance, CancellationToken cancellationToken)
     {
-        var project = await projectRepository.GetByIdAsync(id, cancellationToken);
+        var project = await projectRepository.GetByIdAsync(id, access, cancellationToken);
         return project is null ? null : ToDto(project, timeProvider.Today(), canViewFinance);
     }
 
@@ -46,7 +47,7 @@ public sealed class ProjectService(IProjectRepository projectRepository, TimePro
         projectRepository.Add(project);
         await projectRepository.SaveChangesAsync(cancellationToken);
 
-        return new SaveProjectResult(await GetByIdAsync(project.Id, canViewFinance, cancellationToken), errors);
+        return new SaveProjectResult(await GetByIdAsync(project.Id, ProjectAccess.AllProjects, canViewFinance, cancellationToken), errors);
     }
 
     public async Task<SaveProjectResult?> UpdateAsync(long id, SaveProjectRequest request, bool canViewFinance, CancellationToken cancellationToken)
@@ -67,7 +68,7 @@ public sealed class ProjectService(IProjectRepository projectRepository, TimePro
 
         await projectRepository.SaveChangesAsync(cancellationToken);
 
-        return new SaveProjectResult(await GetByIdAsync(id, canViewFinance, cancellationToken), errors);
+        return new SaveProjectResult(await GetByIdAsync(id, ProjectAccess.AllProjects, canViewFinance, cancellationToken), errors);
     }
 
     public async Task<bool> ActivateAsync(long id, CancellationToken cancellationToken)

@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using NoPrumo.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using NoPrumo.Application.DTOs;
 using NoPrumo.Application.Interfaces;
@@ -18,12 +19,12 @@ public sealed class StagesController(IStageService stageService) : ControllerBas
         [FromQuery] string? search = null,
         [FromQuery] long? projectId = null,
         CancellationToken cancellationToken = default) =>
-        Ok(await stageService.ListAsync(page, size, search, projectId, cancellationToken));
+        Ok(await stageService.ListAsync(page, size, search, projectId, User.ProjectAccess(), cancellationToken));
 
     [HttpGet("{id:long}")]
     public async Task<ActionResult<StageDto>> GetById(long id, CancellationToken cancellationToken)
     {
-        var stage = await stageService.GetByIdAsync(id, cancellationToken);
+        var stage = await stageService.GetByIdAsync(id, User.ProjectAccess(), cancellationToken);
         return stage is null ? NotFound() : Ok(stage);
     }
 

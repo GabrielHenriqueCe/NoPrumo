@@ -25,6 +25,12 @@ public sealed class TokenService(JwtSettings settings)
         // Uma claim por permissão — a autorização pergunta o que pode fazer, não quem é.
         claims.AddRange(user.Permissions.Select(code => new Claim("permission", code)));
 
+        // Sem view_all_projects, é por ele que se sabe quais obras a pessoa supervisiona.
+        if (user.EmployeeId is long employeeId)
+        {
+            claims.Add(new Claim("employee_id", employeeId.ToString()));
+        }
+
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(settings.Key));
 
         var token = new JwtSecurityToken(

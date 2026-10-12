@@ -17,7 +17,8 @@ public sealed record UserDto(
     IReadOnlyList<string> Permissions,
     bool Active,
     bool MustChangePassword,
-    DateTime? LastLoginAt)
+    DateTime? LastLoginAt,
+    long? EmployeeId)
 {
     /// <summary>
     /// Exige que o User venha com Role e Role.Permissions carregados
@@ -34,5 +35,6 @@ public sealed record UserDto(
         user.Role.Permissions.Select(p => p.Code).ToArray(),
         user.Active ?? true,
         user.MustChangePassword,
-        user.LastLoginAt);
+        user.LastLoginAt,
+        user.EmployeeId);
 }
