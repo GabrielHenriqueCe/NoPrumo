@@ -24,4 +24,16 @@ public class EmploymentRegime
     public virtual ICollection<Employee> Employees { get; set; } = new List<Employee>();
 
     public virtual ICollection<PayrollChargeRate> PayrollChargeRates { get; set; } = new List<PayrollChargeRate>();
+
+    // Jornada CLT: 220 h/mês quando o regime mensal não informa, 8 h/dia para diarista.
+    private const decimal DefaultMonthlyHours = 220m;
+    private const decimal DailyHours = 8m;
+
+    // O PayRate do funcionário está na unidade do regime: salário do mês, diária ou valor-hora.
+    public decimal HourlyRate(decimal payRate) => Unit switch
+    {
+        "month" => payRate / (MonthlyHours ?? DefaultMonthlyHours),
+        "day" => payRate / DailyHours,
+        _ => payRate,
+    };
 }
