@@ -7,9 +7,9 @@ public record CreateTimeEntryRequest
     public long EmployeeId { get; init; }
     public long ProjectId { get; init; }
     public DateOnly Date { get; init; }
-    public TimeOnly ClockIn { get; init; }
-    public TimeOnly? BreakStart { get; init; }
-    public TimeOnly? BreakEnd { get; init; }
-    public TimeOnly? ClockOut { get; init; }
+    public string ClockIn { get; init; } = string.Empty;
+    public string? BreakStart { get; init; }
+    public string? BreakEnd { get; init; }
+    public string? ClockOut { get; init; }
     public string? Notes { get; init; }
 }

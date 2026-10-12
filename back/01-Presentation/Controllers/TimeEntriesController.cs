@@ -39,7 +39,7 @@ public class TimeEntriesController(ITimeEntryService timeEntryService) : Control
         if (request.ProjectId <= 0 || request.EmployeeId <= 0)
             return BadRequest(new { Message = "ProjectId e EmployeeId são obrigatórios." });
 
-        if (request.ClockOut.HasValue && request.ClockOut < request.ClockIn)
+        if (!string.IsNullOrEmpty(request.ClockOut) && string.Compare(request.ClockOut, request.ClockIn) < 0)
             return BadRequest(new { Message = "A hora de saída (ClockOut) não pode ser inferior à entrada (ClockIn)." });
 
         try
