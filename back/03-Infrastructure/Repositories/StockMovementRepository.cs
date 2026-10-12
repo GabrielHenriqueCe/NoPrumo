@@ -94,6 +94,47 @@ public class StockMovementRepository(AppDbContext appDbContext) : IStockMovement
             .ThenBy(stockItem => stockItem.Id)
             .ToListAsync(cancellationToken);
 
+    public async Task<IReadOnlyList<StockItem>> ListProjectBalanceItemsAsync(CancellationToken cancellationToken)
+    {
+        // Só leitura, então AsNoTracking. Só categorias com saldo por obra (consumable material)
+        return await appDbContext.StockItem
+            .AsNoTracking()
+            .Where(item => item.Active == true && item.StockGroup.StockCategory.TracksProjectBalance)
+            .OrderBy(item => item.Name)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<MaterialCostItemDto>> ListMaterialCostAsync(
+        long projectId,
+        DateTime? from,
+        DateTime? toExclusive,
+        CancellationToken cancellationToken)
+    {
+        // Só entradas na obra, de categoria com saldo por obra. O custo vem do UnitCost gravado na entrada
+        var rows = await appDbContext.StockMovement
+            .AsNoTracking()
+            .Where(movement => movement.ProjectId == projectId
+                && movement.Type == StockMovementType.Entry
+                && movement.StockItem.StockGroup.StockCategory.TracksProjectBalance
+                && (from == null || movement.Date >= from)
+                && (toExclusive == null || movement.Date < toExclusive))
+            .GroupBy(movement => new { movement.StockItemId, movement.StockItem.Name, movement.Unit })
+            .Select(group => new
+            {
+                group.Key.StockItemId,
+                group.Key.Name,
+                group.Key.Unit,
+                Quantity = group.Sum(movement => movement.Quantity),
+                Total = group.Sum(movement => movement.Quantity * movement.UnitCost),
+            })
+            .OrderBy(row => row.Name)
+            .ToListAsync(cancellationToken);
+
+        return rows
+            .Select(row => new MaterialCostItemDto(row.StockItemId, row.Name, row.Unit, row.Quantity, row.Total))
+            .ToArray();
+    }
+
     public async Task AddAsync(StockMovement movement, CancellationToken cancellationToken)
     {
         appDbContext.StockMovement.Add(movement);

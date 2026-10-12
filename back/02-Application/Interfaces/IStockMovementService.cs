@@ -12,5 +12,9 @@ public interface IStockMovementService
 
     Task<IReadOnlyList<StockBelowMinimumDto>> ListBelowMinimumAsync(CancellationToken cancellationToken);
 
+    Task<IReadOnlyList<StockProjectBalanceDto>?> GetProjectBalanceAsync(long projectId, CancellationToken cancellationToken);
+
+    Task<MaterialCostDto?> GetMaterialCostAsync(long projectId, DateTime? from, DateTime? to, CancellationToken cancellationToken);
+
     Task<SaveStockMovementResult> CreateAsync(CreateStockMovementRequest request, CancellationToken cancellationToken);
 }

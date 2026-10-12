@@ -21,5 +21,9 @@ public interface IStockMovementRepository
 
     Task<IReadOnlyList<StockItem>> ListActiveStockItemsAsync(CancellationToken cancellationToken);
 
+    Task<IReadOnlyList<StockItem>> ListProjectBalanceItemsAsync(CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<MaterialCostItemDto>> ListMaterialCostAsync(long projectId, DateTime? from, DateTime? toExclusive, CancellationToken cancellationToken);
+
     Task AddAsync(StockMovement movement, CancellationToken cancellationToken);
 }

@@ -55,6 +55,34 @@ public sealed class StockMovementsController(IStockMovementService stockMovement
         return Ok(belowMinimum);
     }
 
+    [HttpGet("project-balance")]
+    public async Task<ActionResult<IReadOnlyList<StockProjectBalanceDto>>> GetProjectBalance(
+    [FromQuery] long projectId,
+    CancellationToken cancellationToken)
+    {
+        var balances = await stockMovementService.GetProjectBalanceAsync(projectId, cancellationToken);
+
+        // null = obra não existe
+        if (balances is null) return NotFound();
+
+        return Ok(balances);
+    }
+
+    [HttpGet("material-cost")]
+    [Authorize(Policy = "view_finance")]
+    public async Task<ActionResult<MaterialCostDto>> GetMaterialCost(
+        [FromQuery] long projectId,
+        CancellationToken cancellationToken,
+        [FromQuery] DateTime? from = null,
+        [FromQuery] DateTime? to = null)
+    {
+        var cost = await stockMovementService.GetMaterialCostAsync(projectId, from, to, cancellationToken);
+
+        if (cost is null) return NotFound();
+
+        return Ok(cost);
+    }
+
     [HttpPost]
     [Authorize(Policy = "manage_stock")]
     public async Task<ActionResult<StockMovementDto>> Create(

@@ -82,6 +82,22 @@ public sealed class StockMovementService(
             }
         }
 
+        // Entrada de material na obra: o custo unitário é obrigatório e não pode ser negativo.
+        // É ele que forma o custo de material da obra
+        var isProjectEntry = request.Type == StockMovementType.Entry && category.TracksProjectBalance;
+
+        if (isProjectEntry)
+        {
+            if (request.UnitCost is null)
+            {
+                errors["unitCost"] = "Unit cost is required.";
+            }
+            else if (request.UnitCost < 0)
+            {
+                errors["unitCost"] = "Unit cost must be zero or greater.";
+            }
+        }
+
         // Se algum campo falhou, devolve o bilhete de erros e não anota nada
         if (errors.Count > 0)
         {
@@ -110,6 +126,7 @@ public sealed class StockMovementService(
             Type = request.Type,
             Quantity = request.Quantity,
             Unit = item.Unit,
+            UnitCost = isProjectEntry ? request.UnitCost!.Value : 0m,
             Project = project,
             Employee = employee,
             Notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim(),
@@ -191,6 +208,49 @@ public sealed class StockMovementService(
                 entry.item.MinQuantity,
                 entry.balance))
             .ToArray();
+    }
+
+    public async Task<IReadOnlyList<StockProjectBalanceDto>?> GetProjectBalanceAsync(
+        long projectId,
+        CancellationToken cancellationToken)
+    {
+        var project = await stockMovementRepository.GetProjectAsync(projectId, cancellationToken);
+
+        // Obra não existe: devolve null e o controller responde 404
+        if (project is null) return null;
+
+        // Duas consultas: saldos da obra por item e a lista de itens de consumo.
+        // O item sem nenhuma movimentação na obra aparece com saldo 0.
+        var balancesByItem = await stockMovementRepository.ListBalancesByItemAsync(projectId, cancellationToken);
+        var items = await stockMovementRepository.ListProjectBalanceItemsAsync(cancellationToken);
+
+        return items
+            .Select(item => new StockProjectBalanceDto(
+                item.Id,
+                item.Name,
+                item.Unit,
+                item.MinQuantity,
+                balancesByItem.GetValueOrDefault(item.Id, 0m)))
+            .ToArray();
+    }
+
+    public async Task<MaterialCostDto?> GetMaterialCostAsync(
+        long projectId,
+        DateTime? from,
+        DateTime? to,
+        CancellationToken cancellationToken)
+    {
+        var project = await stockMovementRepository.GetProjectAsync(projectId, cancellationToken);
+
+        // Obra não existe: o controller responde 404
+        if (project is null) return null;
+
+        // "to" vale até o fim do dia informado, por isso soma 1 dia e compara com "menor que"
+        var toExclusive = to?.Date.AddDays(1);
+
+        var items = await stockMovementRepository.ListMaterialCostAsync(projectId, from?.Date, toExclusive, cancellationToken);
+
+        return new MaterialCostDto(projectId, items.Sum(item => item.Total), items);
     }
 
     private static StockMovementDto ToDto(StockMovement movement) => new(
