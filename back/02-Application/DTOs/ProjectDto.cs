@@ -33,5 +33,7 @@ public record ProjectDto
     public required DateOnly? CompletionDate { get; init; }
     public required string? Notes { get; init; }
     public required bool Late { get; init; }
+    // Média das etapas, de 0 a 100 (Project.ProgressPercentage).
+    public decimal Progress { get; init; }
     public required bool Active { get; init; }
 }

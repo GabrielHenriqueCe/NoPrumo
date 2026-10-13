@@ -170,6 +170,7 @@ public sealed class ProjectService(IProjectRepository projectRepository, TimePro
             CompletionDate = project.CompletionDate,
             Notes = project.Notes,
             Late = project.IsLate(today),
+            Progress = project.ProgressPercentage(),
             Active = project.DeletedAt is null
         };
 

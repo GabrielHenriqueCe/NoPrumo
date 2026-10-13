@@ -6,7 +6,7 @@ namespace NoPrumo.Application.Interfaces;
 
 public interface IProjectRepository
 {
-    // Client e Supervisor vêm carregados: o service precisa dos nomes.
+    // Client, Supervisor e Stages vêm carregados: o service precisa dos nomes e do avanço.
     // Obra fora do alcance de quem pergunta não aparece na lista e volta null no GetById.
     Task<PagedResult<Project>> ListAsync(int page, int size, string? search, ProjectAccess access, CancellationToken cancellationToken);
     Task<Project?> GetByIdAsync(long id, ProjectAccess access, CancellationToken cancellationToken);
