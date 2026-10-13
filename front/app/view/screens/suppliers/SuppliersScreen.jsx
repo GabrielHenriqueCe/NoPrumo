@@ -4,12 +4,14 @@ import { Badge } from '../../ui/Badge'
 import { Button } from '../../ui/Button'
 import { Pagination } from '../../ui/Pagination'
 import { SupplierFormDialog } from './SupplierFormDialog'
+import { useT } from '../../preferences/preferencesContext'
 
 const PAGE_SIZE = 10
 const SEARCH_DEBOUNCE_MS = 350
 const EMPTY_PAGE = { items: [], page: 1, totalPages: 1, total: 0 }
 
 export function SuppliersScreen() {
+  const t = useT()
   const { suppliers } = useContainer()
 
   const [data, setData] = useState(EMPTY_PAGE)
@@ -45,14 +47,14 @@ export function SuppliersScreen() {
       .list({ page, size: PAGE_SIZE, search: appliedSearch }, { signal: controller.signal })
       .then((result) => setData(result))
       .catch((error) => {
-        if (!controller.signal.aborted) setLoadError(error.message ?? 'Could not load suppliers.')
+        if (!controller.signal.aborted) setLoadError(error.message ?? t('suppliersScreen.couldNotLoadSuppliers'))
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false)
       })
 
     return () => controller.abort()
-  }, [suppliers, page, appliedSearch, reloadToken])
+  }, [suppliers, page, appliedSearch, reloadToken, t])
 
   const runAction = async (id, action) => {
     setPendingId(id)
@@ -62,7 +64,7 @@ export function SuppliersScreen() {
       await action()
       reload()
     } catch (error) {
-      setActionError(error.message ?? 'The action could not be completed.')
+      setActionError(error.message ?? t('suppliersScreen.theActionCouldNotBe'))
     } finally {
       setPendingId(null)
     }
@@ -82,23 +84,23 @@ export function SuppliersScreen() {
 
   return (
     <>
-      <header className="flex flex-wrap items-center gap-4 border-b border-line bg-white px-8 py-5">
+      <header className="flex flex-wrap items-center gap-4 px-10 pt-7">
         <div className="min-w-0">
-          <p className="label">Master data</p>
-          <h1 className="mt-1 text-xl font-semibold tracking-tight">Suppliers</h1>
+          <p className="label">{t('suppliersScreen.masterData')}</p>
+          <h1 className="display mt-1 text-[38px] leading-none">{t('suppliersScreen.suppliers')}</h1>
         </div>
 
         <div className="ml-auto flex items-center gap-3">
           <label className="sr-only" htmlFor="supplier-search">
-            Search suppliers
+            {t('suppliersScreen.searchSuppliers')}
           </label>
           <input
             id="supplier-search"
             type="search"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search by name, document or contact"
-            className="w-72 border border-line bg-white px-3 py-2 text-sm outline-none focus:border-gold"
+            placeholder={t('suppliersScreen.searchByNameDocumentOr')}
+            className="w-72 h-11 rounded-full border border-line bg-surface px-5 text-sm outline-none focus:border-accent"
           />
 
           <Button
@@ -107,31 +109,30 @@ export function SuppliersScreen() {
               setFormOpen(true)
             }}
           >
-            New supplier
+            {t('suppliersScreen.newSupplier')}
           </Button>
         </div>
       </header>
 
-      <div className="p-8">
+      <div className="px-10 pt-6 pb-10">
         <p className="mb-6 max-w-[54em] text-sm leading-relaxed text-muted">
-          Suppliers provide construction materials, subcontracts and equipment. Records are deactivated,
-          never deleted, to keep purchase and inventory history intact.
+          {t('suppliersScreen.suppliersProvideConstructionMaterialsSubcontracts')}
         </p>
 
         {actionError && (
-          <p role="alert" className="mb-4 border border-danger-soft bg-[#faefea] px-4 py-2.5 text-[13px] text-danger">
+          <p role="alert" className="mb-4 rounded-2xl bg-danger-wash px-4 py-2.5 text-[13px] text-danger">
             {actionError}
           </p>
         )}
 
-        <div className="border border-line bg-white">
+        <div className="overflow-hidden rounded-3xl border border-line bg-surface">
           {loading && <TableSkeleton />}
 
           {!loading && loadError && (
             <div className="px-6 py-10 text-center">
               <p className="text-sm text-danger">{loadError}</p>
               <Button variant="outline" onClick={reload} className="mt-4">
-                Try again
+                {t('common.tryAgain')}
               </Button>
             </div>
           )}
@@ -139,21 +140,21 @@ export function SuppliersScreen() {
           {!loading && !loadError && data.items.length === 0 && (
             <div className="px-6 py-12 text-center">
               <p className="text-sm text-muted">
-                {appliedSearch ? `No supplier matches “${appliedSearch}”.` : 'No supplier registered yet.'}
+                {appliedSearch ? t('suppliersScreen.noSupplierMatchesAppliedsearch', { appliedSearch: appliedSearch }) : t('suppliersScreen.noSupplierRegisteredYet')}
               </p>
             </div>
           )}
 
           {!loading && !loadError && data.items.length > 0 && (
             <table className="w-full border-collapse text-sm">
-              <caption className="sr-only">Registered suppliers</caption>
+              <caption className="sr-only">{t('suppliersScreen.registeredSuppliers')}</caption>
               <thead>
                 <tr className="border-b border-line bg-cream-soft text-left">
-                  <Th>Name</Th>
-                  <Th>Document</Th>
-                  <Th>Contact</Th>
-                  <Th>Location</Th>
-                  <Th>Status</Th>
+                  <Th>{t('common.name')}</Th>
+                  <Th>{t('suppliersScreen.document')}</Th>
+                  <Th>{t('suppliersScreen.contact')}</Th>
+                  <Th>{t('suppliersScreen.location')}</Th>
+                  <Th>{t('common.status')}</Th>
                   <th className="px-4 py-3" />
                 </tr>
               </thead>
@@ -184,7 +185,7 @@ export function SuppliersScreen() {
 
                       <td className="px-4 py-3">
                         <Badge tone={supplier.active ? 'active' : 'inactive'}>
-                          {supplier.active ? 'Active' : 'Inactive'}
+                          {supplier.active ? t('common.active') : t('common.inactive')}
                         </Badge>
                       </td>
 
@@ -199,7 +200,7 @@ export function SuppliersScreen() {
                               setFormOpen(true)
                             }}
                           >
-                            Edit
+                            {t('common.edit')}
                           </Button>
 
                           <Button
@@ -210,7 +211,7 @@ export function SuppliersScreen() {
                               runAction(supplier.id, () => suppliers.setActive(supplier.id, !supplier.active))
                             }
                           >
-                            {supplier.active ? 'Deactivate' : 'Activate'}
+                            {supplier.active ? t('common.deactivate') : t('common.activate')}
                           </Button>
                         </div>
                       </td>
@@ -251,10 +252,11 @@ function Th({ children }) {
 }
 
 function TableSkeleton() {
+  const t = useT()
   return (
-    <div className="p-4" role="status" aria-label="Loading suppliers">
+    <div className="p-4" role="status" aria-label={t('suppliersScreen.loadingSuppliers')}>
       {Array.from({ length: 4 }).map((_, index) => (
-        <div key={index} className="mb-2 h-11 animate-pulse bg-cream last:mb-0" />
+        <div key={index} className="mb-2 h-11 animate-pulse rounded-xl bg-sunken last:mb-0" />
       ))}
     </div>
   )

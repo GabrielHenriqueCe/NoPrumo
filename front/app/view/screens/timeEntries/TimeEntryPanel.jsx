@@ -6,6 +6,7 @@ import { Button } from '../../ui/Button'
 import { Pagination } from '../../ui/Pagination'
 import { SelectField } from '../../ui/SelectField'
 import { TextField } from '../../ui/TextField'
+import { useT } from '../../preferences/preferencesContext'
 
 const PAGE_SIZE = 10
 const EMPTY_PAGE = { items: [], page: 1, totalPages: 1, total: 0 }
@@ -28,6 +29,7 @@ function formatHours(value) {
 }
 
 export function TimeEntryPanel({ projectId, employees = [] }) {
+  const t = useT()
   const { timeEntries } = useContainer()
   const { can } = useSession()
   const canManage = can(['manage_projects', 'manage_safety', 'manage_schedule'])
@@ -77,14 +79,14 @@ export function TimeEntryPanel({ projectId, employees = [] }) {
       .list({ projectId, from, to, page, size: PAGE_SIZE }, { signal: controller.signal })
       .then((result) => setData(result))
       .catch((error) => {
-        if (!controller.signal.aborted) setLoadError(error.message || 'Could not load time entries.')
+        if (!controller.signal.aborted) setLoadError(error.message || t('timeEntryPanel.couldNotLoadTimeEntries'))
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false)
       })
 
     return () => controller.abort()
-  }, [timeEntries, projectId, from, to, page, reloadToken, canManage])
+  }, [timeEntries, projectId, from, to, page, reloadToken, canManage, t])
 
   const updateForm = (field) => (event) => {
     setForm((current) => ({ ...current, [field]: event.target.value }))
@@ -128,7 +130,7 @@ export function TimeEntryPanel({ projectId, employees = [] }) {
       reload()
     } catch (error) {
       if (error.isValidation) setFieldErrors(error.fieldErrors)
-      else setFormError(error.message || 'Could not register the time entry.')
+      else setFormError(error.message || t('timeEntryPanel.couldNotRegisterTheTime'))
     } finally {
       setSaving(false)
     }
@@ -143,9 +145,9 @@ export function TimeEntryPanel({ projectId, employees = [] }) {
 
   if (!canManage) {
     return (
-      <section className="border border-line bg-white p-4">
-        <p className="label">Time entry</p>
-        <p className="mt-2 text-sm text-muted">You do not have permission to view time entries on this project.</p>
+      <section className="border border-line bg-surface p-4">
+        <p className="label">{t('timeEntryPanel.timeEntry')}</p>
+        <p className="mt-2 text-sm text-muted">{t('timeEntryPanel.youDoNotHavePermission')}</p>
       </section>
     )
   }
@@ -153,18 +155,18 @@ export function TimeEntryPanel({ projectId, employees = [] }) {
   return (
     <section className="flex flex-col gap-4">
       <div>
-        <p className="label">Project team</p>
-        <h3 className="mt-1 text-lg font-semibold text-graphite">Time entry</h3>
+        <p className="label">{t('timeEntryPanel.projectTeam')}</p>
+        <h3 className="mt-1 text-lg font-semibold text-graphite">{t('timeEntryPanel.timeEntry')}</h3>
         <p className="mt-1 max-w-[54em] text-sm leading-relaxed text-muted">
-          Record the hours worked by employees currently assigned to this project.
+          {t('timeEntryPanel.recordTheHoursWorkedBy')}
         </p>
       </div>
 
-      <div className="border border-line bg-white p-4">
-        <p className="label">Register hours</p>
+      <div className="border border-line bg-surface p-4">
+        <p className="label">{t('timeEntryPanel.registerHours')}</p>
         <form onSubmit={submit} noValidate className="mt-3 grid grid-cols-1 items-start gap-3 sm:grid-cols-2 xl:grid-cols-5">
           <TextField
-            label="Date"
+            label={t('timeEntryPanel.date')}
             name="date"
             type="date"
             required
@@ -174,18 +176,18 @@ export function TimeEntryPanel({ projectId, employees = [] }) {
           />
 
           <SelectField
-            label="Employee"
+            label={t('timeEntryPanel.employee')}
             name="employeeId"
             required
             value={form.employeeId}
             onChange={updateForm('employeeId')}
             error={fieldErrors.employeeId}
-            placeholder={employeeOptions.length ? 'Select an employee…' : 'No current team members'}
+            placeholder={employeeOptions.length ? t('timeEntryPanel.selectAnEmployee') : t('timeEntryPanel.noCurrentTeamMembers')}
             options={employeeOptions}
           />
 
           <TextField
-            label="Clock-in"
+            label={t('timeEntryPanel.clockIn')}
             name="clockIn"
             type="time"
             required
@@ -195,7 +197,7 @@ export function TimeEntryPanel({ projectId, employees = [] }) {
           />
 
           <TextField
-            label="Clock-out"
+            label={t('timeEntryPanel.clockOut')}
             name="clockOut"
             type="time"
             required
@@ -205,19 +207,19 @@ export function TimeEntryPanel({ projectId, employees = [] }) {
           />
 
           <div className="pt-5">
-            <Button type="submit" busy={saving} busyLabel="Saving…" disabled={employeeOptions.length === 0}>
-              Register
+            <Button type="submit" busy={saving} busyLabel={t('common.saving')} disabled={employeeOptions.length === 0}>
+              {t('timeEntryPanel.register')}
             </Button>
           </div>
         </form>
 
         {!employeeOptions.length && (
           <p className="mt-3 text-[12.5px] text-muted">
-            Allocate a team to the project and add current members before registering time.
+            {t('timeEntryPanel.allocateATeamToThe')}
           </p>
         )}
         {formError && (
-          <p role="alert" className="mt-3 border border-danger-soft bg-[#faefea] px-3 py-2 text-[12.5px] text-danger">
+          <p role="alert" className="mt-3 rounded-2xl bg-danger-wash px-3 py-2 text-[12.5px] text-danger">
             {formError}
           </p>
         )}
@@ -230,12 +232,12 @@ export function TimeEntryPanel({ projectId, employees = [] }) {
 
       <div className="flex flex-wrap items-end gap-3">
         <div>
-          <p className="label">History</p>
-          <h4 className="mt-1 font-semibold text-graphite">Recorded hours</h4>
+          <p className="label">{t('timeEntryPanel.history')}</p>
+          <h4 className="mt-1 font-semibold text-graphite">{t('timeEntryPanel.recordedHours')}</h4>
         </div>
         <div className="ml-auto grid grid-cols-1 gap-3 sm:grid-cols-2">
           <TextField
-            label="From"
+            label={t('timeEntryPanel.from')}
             name="from"
             type="date"
             required
@@ -247,7 +249,7 @@ export function TimeEntryPanel({ projectId, employees = [] }) {
             className="w-44"
           />
           <TextField
-            label="To"
+            label={t('timeEntryPanel.to')}
             name="to"
             type="date"
             required
@@ -261,33 +263,33 @@ export function TimeEntryPanel({ projectId, employees = [] }) {
         </div>
       </div>
 
-      <div className="overflow-x-auto border border-line bg-white">
+      <div className="overflow-x-auto border border-line bg-surface">
         {loading ? (
-          <div className="p-4" role="status" aria-label="Loading time entries">
+          <div className="p-4" role="status" aria-label={t('timeEntryPanel.loadingTimeEntries')}>
             {Array.from({ length: 3 }).map((_, index) => (
-              <div key={index} className="mb-2 h-10 animate-pulse bg-cream last:mb-0" />
+              <div key={index} className="mb-2 h-10 animate-pulse rounded-xl bg-sunken last:mb-0" />
             ))}
           </div>
         ) : loadError ? (
           <div className="px-6 py-10 text-center">
             <p role="alert" className="text-sm text-danger">{loadError}</p>
-            <Button variant="outline" onClick={reload} className="mt-4">Try again</Button>
+            <Button variant="outline" onClick={reload} className="mt-4">{t('common.tryAgain')}</Button>
           </div>
         ) : data.items.length === 0 ? (
           <div className="px-6 py-10 text-center text-sm text-muted">
-            No time entries for the selected period.
+            {t('timeEntryPanel.noTimeEntriesForThe')}
           </div>
         ) : (
           <table className="w-full border-collapse text-sm">
-            <caption className="sr-only">Time entries for this project</caption>
+            <caption className="sr-only">{t('timeEntryPanel.timeEntriesForThisProject')}</caption>
             <thead>
               <tr className="border-b border-line bg-cream-soft text-left">
-                <HeaderCell>Date</HeaderCell>
-                <HeaderCell>Employee</HeaderCell>
-                <HeaderCell>Clock-in</HeaderCell>
-                <HeaderCell>Clock-out</HeaderCell>
-                <HeaderCell>Hours</HeaderCell>
-                {canSeeCost && <HeaderCell>Cost generated</HeaderCell>}
+                <HeaderCell>{t('timeEntryPanel.date')}</HeaderCell>
+                <HeaderCell>{t('timeEntryPanel.employee')}</HeaderCell>
+                <HeaderCell>{t('timeEntryPanel.clockIn')}</HeaderCell>
+                <HeaderCell>{t('timeEntryPanel.clockOut')}</HeaderCell>
+                <HeaderCell>{t('timeEntryPanel.hours')}</HeaderCell>
+                {canSeeCost && <HeaderCell>{t('timeEntryPanel.costGenerated')}</HeaderCell>}
               </tr>
             </thead>
             <tbody>

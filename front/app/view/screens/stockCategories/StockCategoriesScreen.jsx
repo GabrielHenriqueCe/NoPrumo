@@ -5,6 +5,7 @@ import { Badge } from '../../ui/Badge'
 import { Button } from '../../ui/Button'
 import { Pagination } from '../../ui/Pagination'
 import { StockCategoryFormDialog } from './StockCategoryFormDialog'
+import { useT } from '../../preferences/preferencesContext'
 
 /*
   Stock categories: the three flows the whole system is built around
@@ -21,6 +22,7 @@ const SEARCH_DEBOUNCE_MS = 350
 const EMPTY_PAGE = { items: [], page: 1, totalPages: 1, total: 0 }
 
 export function StockCategoriesScreen() {
+  const t = useT()
   const { stockCategories } = useContainer()
   const { can } = useSession()
   const canManage = can('manage_stock')
@@ -56,14 +58,14 @@ export function StockCategoriesScreen() {
       .list({ page, size: PAGE_SIZE, search: appliedSearch }, { signal: controller.signal })
       .then((result) => setData(result))
       .catch((error) => {
-        if (!controller.signal.aborted) setLoadError(error.message ?? 'Could not load stock categories.')
+        if (!controller.signal.aborted) setLoadError(error.message ?? t('stockCategoriesScreen.couldNotLoadStockCategories'))
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false)
       })
 
     return () => controller.abort()
-  }, [stockCategories, page, appliedSearch, reloadToken])
+  }, [stockCategories, page, appliedSearch, reloadToken, t])
 
   const saveCategory = async (values) => {
     if (editingCategory) {
@@ -79,23 +81,23 @@ export function StockCategoriesScreen() {
 
   return (
     <>
-      <header className="flex flex-wrap items-center gap-4 border-b border-line bg-white px-8 py-5">
+      <header className="flex flex-wrap items-center gap-4 px-10 pt-7">
         <div className="min-w-0">
-          <p className="label">Master data</p>
-          <h1 className="mt-1 text-xl font-semibold tracking-tight">Stock categories</h1>
+          <p className="label">{t('stockCategoriesScreen.masterData')}</p>
+          <h1 className="display mt-1 text-[38px] leading-none">{t('stockCategoriesScreen.stockCategories')}</h1>
         </div>
 
         <div className="ml-auto flex items-center gap-3">
           <label className="sr-only" htmlFor="stock-category-search">
-            Search stock categories
+            {t('stockCategoriesScreen.searchStockCategories')}
           </label>
           <input
             id="stock-category-search"
             type="search"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search by name"
-            className="w-72 border border-line bg-white px-3 py-2 text-sm outline-none focus:border-gold"
+            placeholder={t('stockCategoriesScreen.searchByName')}
+            className="w-72 h-11 rounded-full border border-line bg-surface px-5 text-sm outline-none focus:border-accent"
           />
 
           {canManage && (
@@ -105,26 +107,25 @@ export function StockCategoriesScreen() {
                 setFormOpen(true)
               }}
             >
-              New category
+              {t('stockCategoriesScreen.newCategory')}
             </Button>
           )}
         </div>
       </header>
 
-      <div className="p-8">
+      <div className="px-10 pt-6 pb-10">
         <p className="mb-6 max-w-[54em] text-sm leading-relaxed text-muted">
-          Consumable material, PPE and tool come from the seed and define the three stock flows.
-          There is no deactivate here: a category cannot be removed once groups depend on it.
+          {t('stockCategoriesScreen.consumableMaterialPpeAndTool')}
         </p>
 
-        <div className="border border-line bg-white">
+        <div className="overflow-hidden rounded-3xl border border-line bg-surface">
           {loading && <TableSkeleton />}
 
           {!loading && loadError && (
             <div className="px-6 py-10 text-center">
               <p className="text-sm text-danger">{loadError}</p>
               <Button variant="outline" onClick={reload} className="mt-4">
-                Try again
+                {t('common.tryAgain')}
               </Button>
             </div>
           )}
@@ -132,19 +133,19 @@ export function StockCategoriesScreen() {
           {!loading && !loadError && data.items.length === 0 && (
             <div className="px-6 py-12 text-center">
               <p className="text-sm text-muted">
-                {appliedSearch ? `No category matches “${appliedSearch}”.` : 'No stock category registered yet.'}
+                {appliedSearch ? t('stockCategoriesScreen.noCategoryMatchesAppliedsearch', { appliedSearch: appliedSearch }) : t('stockCategoriesScreen.noStockCategoryRegisteredYet')}
               </p>
             </div>
           )}
 
           {!loading && !loadError && data.items.length > 0 && (
             <table className="w-full border-collapse text-sm">
-              <caption className="sr-only">Registered stock categories</caption>
+              <caption className="sr-only">{t('stockCategoriesScreen.registeredStockCategories')}</caption>
               <thead>
                 <tr className="border-b border-line bg-cream-soft text-left">
-                  <Th>Name</Th>
-                  <Th>Tracks project balance</Th>
-                  <Th>Requires return</Th>
+                  <Th>{t('common.name')}</Th>
+                  <Th>{t('stockCategoriesScreen.tracksProjectBalance')}</Th>
+                  <Th>{t('stockCategoriesScreen.requiresReturn')}</Th>
                   <th className="px-4 py-3" />
                 </tr>
               </thead>
@@ -156,13 +157,13 @@ export function StockCategoriesScreen() {
 
                     <td className="px-4 py-3">
                       <Badge tone={category.tracksProjectBalance ? 'active' : 'inactive'}>
-                        {category.tracksProjectBalance ? 'Yes' : 'No'}
+                        {category.tracksProjectBalance ? t('common.yes') : t('common.no')}
                       </Badge>
                     </td>
 
                     <td className="px-4 py-3">
                       <Badge tone={category.requiresReturn ? 'active' : 'inactive'}>
-                        {category.requiresReturn ? 'Yes' : 'No'}
+                        {category.requiresReturn ? t('common.yes') : t('common.no')}
                       </Badge>
                     </td>
 
@@ -177,7 +178,7 @@ export function StockCategoriesScreen() {
                               setFormOpen(true)
                             }}
                           >
-                            Edit
+                            {t('common.edit')}
                           </Button>
                         </div>
                       )}
@@ -212,10 +213,11 @@ function Th({ children }) {
 }
 
 function TableSkeleton() {
+  const t = useT()
   return (
-    <div className="p-4" role="status" aria-label="Loading stock categories">
+    <div className="p-4" role="status" aria-label={t('stockCategoriesScreen.loadingStockCategories')}>
       {Array.from({ length: 4 }).map((_, index) => (
-        <div key={index} className="mb-2 h-11 animate-pulse bg-cream last:mb-0" />
+        <div key={index} className="mb-2 h-11 animate-pulse rounded-xl bg-sunken last:mb-0" />
       ))}
     </div>
   )

@@ -5,6 +5,7 @@ import { Button } from '../../ui/Button'
 import { Pagination } from '../../ui/Pagination'
 import { SelectField } from '../../ui/SelectField'
 import { StockGroupFormDialog } from './StockGroupFormDialog'
+import { useT } from '../../preferences/preferencesContext'
 
 /*
   Stock groups: the shelf inside a category's aisle. A group belongs to one
@@ -20,6 +21,7 @@ const SEARCH_DEBOUNCE_MS = 350
 const EMPTY_PAGE = { items: [], page: 1, totalPages: 1, total: 0 }
 
 export function StockGroupsScreen() {
+    const t = useT()
     const { stockGroups, stockCategories } = useContainer()
     const { can } = useSession()
     const canManage = can('manage_stock')
@@ -65,14 +67,14 @@ export function StockGroupsScreen() {
             )
             .then((result) => setData(result))
             .catch((error) => {
-                if (!controller.signal.aborted) setLoadError(error.message ?? 'Could not load stock groups.')
+                if (!controller.signal.aborted) setLoadError(error.message ?? t('stockGroupsScreen.couldNotLoadStockGroups'))
             })
             .finally(() => {
                 if (!controller.signal.aborted) setLoading(false)
             })
 
         return () => controller.abort()
-    }, [stockGroups, page, appliedSearch, categoryFilter, reloadToken])
+    }, [stockGroups, page, appliedSearch, categoryFilter, reloadToken, t])
 
     // Categories fill the filter and the form's dropdown; fetched once, not on
     // every list refresh. 100 is comfortably above the three seeded rows plus
@@ -104,35 +106,35 @@ export function StockGroupsScreen() {
 
     return (
         <>
-            <header className="flex flex-wrap items-center gap-4 border-b border-line bg-white px-8 py-5">
+            <header className="flex flex-wrap items-center gap-4 px-10 pt-7">
                 <div className="min-w-0">
-                    <p className="label">Master data</p>
-                    <h1 className="mt-1 text-xl font-semibold tracking-tight">Stock groups</h1>
+                    <p className="label">{t('stockGroupsScreen.masterData')}</p>
+                    <h1 className="display mt-1 text-[38px] leading-none">{t('stockGroupsScreen.stockGroups')}</h1>
                 </div>
 
                 <div className="ml-auto flex items-center gap-3">
                     <label className="sr-only" htmlFor="stock-group-search">
-                        Search stock groups
+                        {t('stockGroupsScreen.searchStockGroups')}
                     </label>
                     <input
                         id="stock-group-search"
                         type="search"
                         value={search}
                         onChange={(event) => setSearch(event.target.value)}
-                        placeholder="Search by name"
-                        className="w-64 border border-line bg-white px-3 py-2 text-sm outline-none focus:border-gold"
+                        placeholder={t('stockGroupsScreen.searchByName')}
+                        className="w-64 h-11 rounded-full border border-line bg-surface px-5 text-sm outline-none focus:border-accent"
                     />
 
                     <div className="w-56">
                         <SelectField
-                            label="Category"
+                            label={t('stockGroupsScreen.category')}
                             name="category-filter"
                             value={categoryFilter}
                             onChange={(event) => {
                                 setCategoryFilter(event.target.value)
                                 setPage(1)
                             }}
-                            placeholder="All categories"
+                            placeholder={t('stockGroupsScreen.allCategories')}
                             options={categories.map((category) => ({ value: category.id, label: category.name }))}
                         />
                     </div>
@@ -144,26 +146,25 @@ export function StockGroupsScreen() {
                                 setFormOpen(true)
                             }}
                         >
-                            New group
+                            {t('stockGroupsScreen.newGroup')}
                         </Button>
                     )}
                 </div>
             </header>
 
-            <div className="p-8">
+            <div className="px-10 pt-6 pb-10">
                 <p className="mb-6 max-w-[54em] text-sm leading-relaxed text-muted">
-                    A group belongs to one category. Once it has items, the API refuses to move it to a
-                    different category — that would change the flow of everything inside it.
+                    {t('stockGroupsScreen.aGroupBelongsToOne')}
                 </p>
 
-                <div className="border border-line bg-white">
+                <div className="overflow-hidden rounded-3xl border border-line bg-surface">
                     {loading && <TableSkeleton />}
 
                     {!loading && loadError && (
                         <div className="px-6 py-10 text-center">
                             <p className="text-sm text-danger">{loadError}</p>
                             <Button variant="outline" onClick={reload} className="mt-4">
-                                Try again
+                                {t('common.tryAgain')}
                             </Button>
                         </div>
                     )}
@@ -171,18 +172,18 @@ export function StockGroupsScreen() {
                     {!loading && !loadError && data.items.length === 0 && (
                         <div className="px-6 py-12 text-center">
                             <p className="text-sm text-muted">
-                                {appliedSearch ? `No group matches “${appliedSearch}”.` : 'No stock group registered yet.'}
+                                {appliedSearch ? t('stockGroupsScreen.noGroupMatchesAppliedsearch', { appliedSearch: appliedSearch }) : t('stockGroupsScreen.noStockGroupRegisteredYet')}
                             </p>
                         </div>
                     )}
 
                     {!loading && !loadError && data.items.length > 0 && (
                         <table className="w-full border-collapse text-sm">
-                            <caption className="sr-only">Registered stock groups</caption>
+                            <caption className="sr-only">{t('stockGroupsScreen.registeredStockGroups')}</caption>
                             <thead>
                                 <tr className="border-b border-line bg-cream-soft text-left">
-                                    <Th>Name</Th>
-                                    <Th>Category</Th>
+                                    <Th>{t('common.name')}</Th>
+                                    <Th>{t('stockGroupsScreen.category')}</Th>
                                     <th className="px-4 py-3" />
                                 </tr>
                             </thead>
@@ -204,7 +205,7 @@ export function StockGroupsScreen() {
                                                             setFormOpen(true)
                                                         }}
                                                     >
-                                                        Edit
+                                                        {t('common.edit')}
                                                     </Button>
                                                 </div>
                                             )}
@@ -240,10 +241,11 @@ function Th({ children }) {
 }
 
 function TableSkeleton() {
+    const t = useT()
     return (
-        <div className="p-4" role="status" aria-label="Loading stock groups">
+        <div className="p-4" role="status" aria-label={t('stockGroupsScreen.loadingStockGroups')}>
             {Array.from({ length: 4 }).map((_, index) => (
-                <div key={index} className="mb-2 h-11 animate-pulse bg-cream last:mb-0" />
+                <div key={index} className="mb-2 h-11 animate-pulse rounded-xl bg-sunken last:mb-0" />
             ))}
         </div>
     )

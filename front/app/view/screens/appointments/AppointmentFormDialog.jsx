@@ -5,6 +5,7 @@ import { Dialog } from '../../ui/Dialog'
 import { SelectField } from '../../ui/SelectField'
 import { TextField } from '../../ui/TextField'
 import { APPOINTMENT_TYPES } from './appointmentLabels'
+import { useT } from '../../preferences/preferencesContext'
 
 const emptyForm = (projectId) => ({
   date: todayIso(),
@@ -17,6 +18,7 @@ const emptyForm = (projectId) => ({
 })
 
 export function AppointmentFormDialog({ open, appointment, options, defaultProjectId, onClose, onSubmit }) {
+  const t = useT()
   const editing = Boolean(appointment)
 
   const [form, setForm] = useState(() => emptyForm(defaultProjectId))
@@ -71,7 +73,7 @@ export function AppointmentFormDialog({ open, appointment, options, defaultProje
       })
     } catch (error) {
       if (error.isValidation) setFieldErrors(error.fieldErrors)
-      else setFormError(error.message ?? 'Could not save the appointment.')
+      else setFormError(error.message ?? t('appointmentFormDialog.couldNotSaveTheAppointment'))
     } finally {
       setBusy(false)
     }
@@ -81,14 +83,14 @@ export function AppointmentFormDialog({ open, appointment, options, defaultProje
     <Dialog
       open={open}
       onClose={busy ? undefined : onClose}
-      title={editing ? 'Edit appointment' : 'New appointment'}
-      description="Training expiries are not entered here: they come from the training records."
+      title={editing ? t('appointmentFormDialog.editAppointment') : t('appointmentFormDialog.newAppointment')}
+      description={t('appointmentFormDialog.trainingExpiriesAreNotEntered')}
     >
       <form onSubmit={submit} noValidate className="flex flex-col gap-4 p-6">
         <TextField
-          label="Title"
+          label={t('appointmentFormDialog.title')}
           name="title"
-          placeholder="e.g. Concrete delivery"
+          placeholder={t('appointmentFormDialog.eGConcreteDelivery')}
           required
           value={form.title}
           onChange={update('title')}
@@ -97,7 +99,7 @@ export function AppointmentFormDialog({ open, appointment, options, defaultProje
 
         <div className="grid grid-cols-3 gap-4">
           <TextField
-            label="Date"
+            label={t('appointmentFormDialog.date')}
             name="date"
             type="date"
             required
@@ -107,70 +109,70 @@ export function AppointmentFormDialog({ open, appointment, options, defaultProje
           />
 
           <TextField
-            label="Time"
+            label={t('appointmentFormDialog.time')}
             name="time"
             type="time"
             value={form.time}
             onChange={update('time')}
             error={fieldErrors.time}
-            hint="Optional."
+            hint={t('appointmentFormDialog.optional')}
           />
 
           <SelectField
-            label="Type"
+            label={t('appointmentFormDialog.type')}
             name="type"
             required
             value={form.type}
             onChange={update('type')}
             error={fieldErrors.type}
-            placeholder="Select a type…"
-            options={APPOINTMENT_TYPES}
+            placeholder={t('appointmentFormDialog.selectAType')}
+            options={APPOINTMENT_TYPES.map((value) => ({ value, label: t(`labels.appointmentType.${value}`) }))}
           />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <SelectField
-            label="Project"
+            label={t('appointmentFormDialog.project')}
             name="projectId"
             value={form.projectId}
             onChange={update('projectId')}
             error={fieldErrors.projectId}
-            placeholder="No project"
+            placeholder={t('appointmentFormDialog.noProject')}
             options={projectOptions}
           />
 
           <SelectField
-            label="Responsible"
+            label={t('appointmentFormDialog.responsible')}
             name="assignedToId"
             value={form.assignedToId}
             onChange={update('assignedToId')}
             error={fieldErrors.assignedToId}
-            placeholder="Nobody in particular"
+            placeholder={t('appointmentFormDialog.nobodyInParticular')}
             options={assigneeOptions}
           />
         </div>
 
         <TextField
-          label="Description"
+          label={t('appointmentFormDialog.description')}
           name="description"
           value={form.description}
           onChange={update('description')}
           error={fieldErrors.description}
-          hint="Optional."
+          hint={t('appointmentFormDialog.optional')}
         />
 
         {formError && (
-          <p role="alert" className="border border-danger-soft bg-[#faefea] px-3 py-2 text-[12.5px] text-danger">
+          <p role="alert" className="rounded-2xl bg-danger-wash px-3 py-2 text-[12.5px] text-danger">
             {formError}
           </p>
         )}
 
         <div className="mt-2 flex items-center gap-2.5">
-          <Button type="submit" busy={busy} busyLabel="Saving…">
-            {editing ? 'Save changes' : 'Create appointment'}
+          <Button type="submit" busy={busy} busyLabel={t('common.saving')}>
+            {editing ? t('common.saveChanges') : t('appointmentFormDialog.createAppointment')}
           </Button>
           <Button type="button" variant="outline" onClick={onClose} disabled={busy}>
-            Cancel
+            {t('common.cancel')}
           </Button>
         </div>
       </form>

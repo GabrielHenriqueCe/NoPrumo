@@ -3,6 +3,7 @@ import { Button } from '../../ui/Button'
 import { Dialog } from '../../ui/Dialog'
 import { SelectField } from '../../ui/SelectField'
 import { TextField } from '../../ui/TextField'
+import { useT } from '../../preferences/preferencesContext'
 
 /*
   Create or edit a stock group. A group belongs to one category, and the API
@@ -13,6 +14,7 @@ import { TextField } from '../../ui/TextField'
 const EMPTY = { name: '', stockCategoryId: '' }
 
 export function StockGroupFormDialog({ open, group, categories, onClose, onSubmit }) {
+    const t = useT()
     const editing = Boolean(group)
 
     const [form, setForm] = useState(EMPTY)
@@ -50,7 +52,7 @@ export function StockGroupFormDialog({ open, group, categories, onClose, onSubmi
         } catch (error) {
             // The API is the one that validates. The form only shows where it hurt.
             if (error.isValidation) setFieldErrors(error.fieldErrors)
-            else setFormError(error.message ?? 'Could not save the group.')
+            else setFormError(error.message ?? t('stockGroupFormDialog.couldNotSaveTheGroup'))
         } finally {
             setBusy(false)
         }
@@ -60,14 +62,14 @@ export function StockGroupFormDialog({ open, group, categories, onClose, onSubmi
         <Dialog
             open={open}
             onClose={busy ? undefined : onClose}
-            title={editing ? 'Edit stock group' : 'New stock group'}
-            description="A group belongs to one category, like a shelf inside an aisle."
+            title={editing ? t('stockGroupFormDialog.editStockGroup') : t('stockGroupFormDialog.newStockGroup')}
+            description={t('stockGroupFormDialog.aGroupBelongsToOne')}
         >
             <form onSubmit={submit} noValidate className="flex flex-col gap-4 p-6">
                 <TextField
-                    label="Name"
+                    label={t('common.name')}
                     name="name"
-                    placeholder="e.g. Helmets"
+                    placeholder={t('stockGroupFormDialog.eGHelmets')}
                     required
                     value={form.name}
                     onChange={update('name')}
@@ -75,28 +77,28 @@ export function StockGroupFormDialog({ open, group, categories, onClose, onSubmi
                 />
 
                 <SelectField
-                    label="Category"
+                    label={t('stockGroupFormDialog.category')}
                     name="stockCategoryId"
                     required
                     value={form.stockCategoryId}
                     onChange={update('stockCategoryId')}
                     error={fieldErrors.stockCategoryId}
-                    placeholder="Select a category…"
+                    placeholder={t('stockGroupFormDialog.selectACategory')}
                     options={categories.map((category) => ({ value: category.id, label: category.name }))}
                 />
 
                 {formError && (
-                    <p role="alert" className="border border-danger-soft bg-[#faefea] px-3 py-2 text-[12.5px] text-danger">
+                    <p role="alert" className="rounded-2xl bg-danger-wash px-3 py-2 text-[12.5px] text-danger">
                         {formError}
                     </p>
                 )}
 
                 <div className="mt-2 flex items-center gap-2.5">
-                    <Button type="submit" busy={busy} busyLabel="Saving…">
-                        {editing ? 'Save changes' : 'Create group'}
+                    <Button type="submit" busy={busy} busyLabel={t('common.saving')}>
+                        {editing ? t('common.saveChanges') : t('stockGroupFormDialog.createGroup')}
                     </Button>
                     <Button type="button" variant="outline" onClick={onClose} disabled={busy}>
-                        Cancel
+                        {t('common.cancel')}
                     </Button>
                 </div>
             </form>

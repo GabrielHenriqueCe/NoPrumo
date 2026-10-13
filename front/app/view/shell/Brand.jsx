@@ -1,4 +1,5 @@
 import { useId } from 'react'
+import { useT } from '../preferences/preferencesContext'
 
 /*
   The No Prumo mark, redrawn as SVG.
@@ -85,21 +86,16 @@ export function PlumbMark({ size = 44, tone = 'light', className = '' }) {
   )
 }
 
+// The wordmark follows the theme; tone only picks the colours of the mark itself.
 export function Brand({ size = 40, tone = 'light', tagline = true, className = '' }) {
-  const dark = tone === 'dark'
+  const t = useT()
 
   return (
     <div className={`flex items-center gap-3 ${className}`}>
       <PlumbMark size={size} tone={tone} />
       <div className="leading-none">
-        <div className={`text-[19px] font-bold tracking-tight ${dark ? 'text-cream' : 'text-graphite'}`}>
-          No Prumo
-        </div>
-        {tagline && (
-          <div className={`label mt-1.5 ${dark ? 'text-muted-dark' : 'text-muted'}`}>
-            Construction management
-          </div>
-        )}
+        <div className="font-display text-[26px] font-bold tracking-wide text-ink uppercase">No Prumo</div>
+        {tagline && <div className="label mt-1.5">{t('auth.welcome')}</div>}
       </div>
     </div>
   )

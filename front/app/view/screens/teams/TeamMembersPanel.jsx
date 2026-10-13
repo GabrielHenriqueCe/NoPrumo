@@ -4,6 +4,7 @@ import { Button } from '../../ui/Button'
 import { SelectField } from '../../ui/SelectField'
 import { TextField } from '../../ui/TextField'
 import { formatDate, todayIso } from '../../format/dates'
+import { useT } from '../../preferences/preferencesContext'
 
 // Nobody is removed: ending a stint fills its end date and the row becomes history.
 
@@ -12,6 +13,7 @@ const EMPLOYEE_PAGE_SIZE = 100
 const MAX_EMPLOYEE_PAGES = 50
 
 export function TeamMembersPanel({ team, onChanged, onDone }) {
+  const t = useT()
   const { teams, employees } = useContainer()
 
   const [members, setMembers] = useState([])
@@ -37,11 +39,11 @@ export function TeamMembersPanel({ team, onChanged, onDone }) {
         setLoaded(true)
       })
       .catch((error) => {
-        if (!controller.signal.aborted) setLoadError(error.message ?? 'Could not load the members.')
+        if (!controller.signal.aborted) setLoadError(error.message ?? t('teamMembersPanel.couldNotLoadTheMembers'))
       })
 
     return () => controller.abort()
-  }, [teams, team.id, reloadToken])
+  }, [teams, team.id, reloadToken, t])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -49,11 +51,11 @@ export function TeamMembersPanel({ team, onChanged, onDone }) {
     listAllEmployees(employees, controller.signal)
       .then(setEmployeeList)
       .catch((error) => {
-        if (!controller.signal.aborted) setEmployeesError(error.message ?? 'Could not load the employees.')
+        if (!controller.signal.aborted) setEmployeesError(error.message ?? t('teamMembersPanel.couldNotLoadTheEmployees'))
       })
 
     return () => controller.abort()
-  }, [employees])
+  }, [employees, t])
 
   const current = useMemo(() => members.filter((member) => member.endDate == null), [members])
   const past = useMemo(() => members.filter((member) => member.endDate != null), [members])
@@ -88,7 +90,7 @@ export function TeamMembersPanel({ team, onChanged, onDone }) {
         />
       ) : (
         <p className="border border-line bg-cream-soft px-4 py-3 text-[13px] text-muted">
-          This team is inactive. Activate it to add members.
+          {t('teamMembersPanel.thisTeamIsInactiveActivate')}
         </p>
       )}
 
@@ -98,7 +100,7 @@ export function TeamMembersPanel({ team, onChanged, onDone }) {
         <div className="text-center">
           <p className="text-sm text-danger">{loadError}</p>
           <Button variant="outline" onClick={reload} className="mt-3">
-            Try again
+            {t('common.tryAgain')}
           </Button>
         </div>
       )}
@@ -106,17 +108,17 @@ export function TeamMembersPanel({ team, onChanged, onDone }) {
       {loaded && !loadError && (
         <>
           <section>
-            <h3 className="label mb-2">Current members · {current.length}</h3>
+            <h3 className="label mb-2">{t('teamMembersPanel.currentMembers')} {current.length}</h3>
 
             {current.length === 0 ? (
-              <p className="text-[13px] text-muted">Nobody on this team right now.</p>
+              <p className="text-[13px] text-muted">{t('teamMembersPanel.nobodyOnThisTeamRight')}</p>
             ) : (
               <table className="w-full border-collapse text-sm">
-                <caption className="sr-only">Current members</caption>
+                <caption className="sr-only">{t('teamMembersPanel.currentMembers2')}</caption>
                 <thead>
                   <tr className="border-b border-line text-left">
-                    <HeaderCell>Employee</HeaderCell>
-                    <HeaderCell>Since</HeaderCell>
+                    <HeaderCell>{t('teamMembersPanel.employee')}</HeaderCell>
+                    <HeaderCell>{t('teamMembersPanel.since')}</HeaderCell>
                     <th className="py-2" />
                   </tr>
                 </thead>
@@ -139,10 +141,10 @@ export function TeamMembersPanel({ team, onChanged, onDone }) {
                                 }}
                                 variant="outline"
                                 className="px-3 py-1.5"
-                                aria-label={`End the stint of ${member.employeeName}`}
+                                aria-label={t('teamMembersPanel.endTheStintOfEmployeename', { employeeName: member.employeeName })}
                                 onClick={() => setEndingId(member.employeeId)}
                               >
-                                End stint
+                                {t('teamMembersPanel.endStint')}
                               </Button>
                             )}
                           </td>
@@ -169,17 +171,17 @@ export function TeamMembersPanel({ team, onChanged, onDone }) {
           </section>
 
           <section>
-            <h3 className="label mb-2">Past members · {past.length}</h3>
+            <h3 className="label mb-2">{t('teamMembersPanel.pastMembers')} {past.length}</h3>
 
             {past.length === 0 ? (
-              <p className="text-[13px] text-muted">Nobody has left this team yet.</p>
+              <p className="text-[13px] text-muted">{t('teamMembersPanel.nobodyHasLeftThisTeam')}</p>
             ) : (
               <table className="w-full border-collapse text-sm">
-                <caption className="sr-only">Past members</caption>
+                <caption className="sr-only">{t('teamMembersPanel.pastMembers2')}</caption>
                 <thead>
                   <tr className="border-b border-line text-left">
-                    <HeaderCell>Employee</HeaderCell>
-                    <HeaderCell>Period</HeaderCell>
+                    <HeaderCell>{t('teamMembersPanel.employee')}</HeaderCell>
+                    <HeaderCell>{t('teamMembersPanel.period')}</HeaderCell>
                   </tr>
                 </thead>
 
@@ -204,7 +206,7 @@ export function TeamMembersPanel({ team, onChanged, onDone }) {
 
       <div className="flex items-center gap-2.5">
         <Button type="button" variant="outline" onClick={onDone}>
-          Done
+          {t('teamMembersPanel.done')}
         </Button>
       </div>
     </div>
@@ -212,6 +214,7 @@ export function TeamMembersPanel({ team, onChanged, onDone }) {
 }
 
 function AddMemberForm({ teamId, candidates, employeesError, onAdded }) {
+  const t = useT()
   const { teams } = useContainer()
 
   const [form, setForm] = useState(() => ({ employeeId: '', startDate: todayIso() }))
@@ -241,7 +244,7 @@ function AddMemberForm({ teamId, candidates, employeesError, onAdded }) {
       onAdded()
     } catch (error) {
       if (error.isValidation) setFieldErrors(error.fieldErrors)
-      else setFormError(error.message ?? 'Could not add the member.')
+      else setFormError(error.message ?? t('teamMembersPanel.couldNotAddTheMember'))
     } finally {
       setBusy(false)
     }
@@ -253,20 +256,20 @@ function AddMemberForm({ teamId, candidates, employeesError, onAdded }) {
     <form
       onSubmit={submit}
       noValidate
-      aria-label="Add a member"
+      aria-label={t('teamMembersPanel.addAMember')}
       className="border border-line-soft bg-cream-soft p-4"
     >
-      <p className="label mb-3">Add a member</p>
+      <p className="label mb-3">{t('teamMembersPanel.addAMember')}</p>
 
       <div className="grid grid-cols-[minmax(0,1fr)_10.5rem] items-start gap-3">
         <SelectField
-          label="Employee"
+          label={t('teamMembersPanel.employee')}
           name="employeeId"
           required
           value={form.employeeId}
           onChange={update('employeeId')}
           error={fieldErrors.employeeId}
-          placeholder={candidates.length > 0 ? 'Select an employee…' : 'No active employee to add'}
+          placeholder={candidates.length > 0 ? t('teamMembersPanel.selectAnEmployee') : t('teamMembersPanel.noActiveEmployeeToAdd')}
           options={candidates.map((employee) => ({
             value: employee.id,
             label: employee.registrationNumber
@@ -276,7 +279,7 @@ function AddMemberForm({ teamId, candidates, employeesError, onAdded }) {
         />
 
         <TextField
-          label="Start date"
+          label={t('teamMembersPanel.startDate')}
           name="startDate"
           type="date"
           required
@@ -287,19 +290,20 @@ function AddMemberForm({ teamId, candidates, employeesError, onAdded }) {
       </div>
 
       {problem && (
-        <p role="alert" className="mt-3 border border-danger-soft bg-[#faefea] px-3 py-2 text-[12.5px] text-danger">
+        <p role="alert" className="mt-3 rounded-2xl bg-danger-wash px-3 py-2 text-[12.5px] text-danger">
           {problem}
         </p>
       )}
 
-      <Button type="submit" busy={busy} busyLabel="Adding…" className="mt-3">
-        Add member
+      <Button type="submit" busy={busy} busyLabel={t('teamMembersPanel.adding')} className="mt-3">
+        {t('teamMembersPanel.addMember')}
       </Button>
     </form>
   )
 }
 
 function EndStintForm({ teamId, member, onEnded, onCancel }) {
+  const t = useT()
   const { teams } = useContainer()
 
   const [endDate, setEndDate] = useState(() => {
@@ -324,7 +328,7 @@ function EndStintForm({ teamId, member, onEnded, onCancel }) {
       // No setBusy(false) on success: this form unmounts with its row.
       onEnded()
     } catch (failure) {
-      setError(failure.fieldErrors?.endDate ?? failure.message ?? 'Could not end the stint.')
+      setError(failure.fieldErrors?.endDate ?? failure.message ?? t('teamMembersPanel.couldNotEndTheStint'))
       setBusy(false)
     }
   }
@@ -344,7 +348,7 @@ function EndStintForm({ teamId, member, onEnded, onCancel }) {
     >
       <TextField
         ref={inputRef}
-        label="End date"
+        label={t('teamMembersPanel.endDate')}
         name="endDate"
         type="date"
         required
@@ -355,16 +359,16 @@ function EndStintForm({ teamId, member, onEnded, onCancel }) {
           setError(null)
         }}
         error={error}
-        hint={`On the team since ${formatDate(member.startDate)}.`}
+        hint={t('teamMembersPanel.onTheTeamSinceValue', { value: formatDate(member.startDate) })}
         className="w-48"
       />
 
       <div className="flex gap-2 pt-5">
-        <Button type="submit" busy={busy} busyLabel="Saving…" className="px-3 py-2">
-          End stint
+        <Button type="submit" busy={busy} busyLabel={t('common.saving')} className="px-3 py-2">
+          {t('teamMembersPanel.endStint')}
         </Button>
         <Button type="button" variant="outline" onClick={onCancel} disabled={busy} className="px-3 py-2">
-          Cancel
+          {t('common.cancel')}
         </Button>
       </div>
     </form>
@@ -387,10 +391,11 @@ function HeaderCell({ children }) {
 }
 
 function ListSkeleton() {
+  const t = useT()
   return (
-    <div role="status" aria-label="Loading members">
+    <div role="status" aria-label={t('teamMembersPanel.loadingMembers')}>
       {Array.from({ length: 3 }).map((_, index) => (
-        <div key={index} className="mb-2 h-10 animate-pulse bg-cream last:mb-0" />
+        <div key={index} className="mb-2 h-10 animate-pulse rounded-xl bg-sunken last:mb-0" />
       ))}
     </div>
   )

@@ -6,7 +6,8 @@ import { Pagination } from '../../ui/Pagination'
 import { SelectField } from '../../ui/SelectField'
 import { EmployeeTrainingFormDialog } from './EmployeeTrainingFormDialog'
 import { formatDate } from '../../format/dates'
-import { modalityLabel, statusBadge } from './trainingLabels'
+import { statusBadge } from './trainingLabels'
+import { useT } from '../../preferences/preferencesContext'
 
 // Expiry date and status come from the API; the screen never works them out.
 
@@ -20,6 +21,7 @@ const MAX_EMPLOYEE_PAGES = 50
 const EMPTY_PAGE = { items: [], page: 1, totalPages: 1, total: 0 }
 
 export function EmployeeTrainingsScreen() {
+  const t = useT()
   const { employeeTrainings, employees, trainingTypes } = useContainer()
 
   const [data, setData] = useState(EMPTY_PAGE)
@@ -60,20 +62,20 @@ export function EmployeeTrainingsScreen() {
       )
       .then((result) => setData(result))
       .catch((error) => {
-        if (!controller.signal.aborted) setLoadError(error.message ?? 'Could not load trainings.')
+        if (!controller.signal.aborted) setLoadError(error.message ?? t('employeeTrainingsScreen.couldNotLoadTrainings'))
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false)
       })
 
     return () => controller.abort()
-  }, [employeeTrainings, page, appliedSearch, typeFilter, reloadToken])
+  }, [employeeTrainings, page, appliedSearch, typeFilter, reloadToken, t])
 
   // Loaded separately so one failing does not empty the other.
   useEffect(() => {
     const controller = new AbortController()
     const fail = (error) => {
-      if (!controller.signal.aborted) setLookupError(error.message ?? 'Could not load the form lists.')
+      if (!controller.signal.aborted) setLookupError(error.message ?? t('employeeTrainingsScreen.couldNotLoadTheForm'))
     }
 
     listAllEmployees(employees, controller.signal).then(setEmployeeList).catch(fail)
@@ -84,7 +86,7 @@ export function EmployeeTrainingsScreen() {
       .catch(fail)
 
     return () => controller.abort()
-  }, [employees, trainingTypes])
+  }, [employees, trainingTypes, t])
 
   // Stable on purpose: the Dialog refocuses its first field whenever onClose changes.
   const closeForm = useCallback(() => {
@@ -110,64 +112,62 @@ export function EmployeeTrainingsScreen() {
 
   return (
     <>
-      <header className="flex flex-wrap items-center gap-4 border-b border-line bg-white px-8 py-5">
+      <header className="flex flex-wrap items-center gap-4 px-10 pt-7">
         <div className="min-w-0">
-          <p className="label">Master data</p>
-          <h1 className="mt-1 text-xl font-semibold tracking-tight">Trainings</h1>
+          <p className="label">{t('employeeTrainingsScreen.masterData')}</p>
+          <h1 className="display mt-1 text-[38px] leading-none">{t('employeeTrainingsScreen.trainings')}</h1>
         </div>
 
         <div className="ml-auto flex items-center gap-3">
           <label className="sr-only" htmlFor="training-search">
-            Search trainings
+            {t('employeeTrainingsScreen.searchTrainings')}
           </label>
           <input
             id="training-search"
             type="search"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search by employee or training"
-            className="w-72 border border-line bg-white px-3 py-2 text-sm outline-none focus:border-gold"
+            placeholder={t('employeeTrainingsScreen.searchByEmployeeOrTraining')}
+            className="w-72 h-11 rounded-full border border-line bg-surface px-5 text-sm outline-none focus:border-accent"
           />
 
           <div className="w-56">
             <SelectField
-              label="Training type"
+              label={t('employeeTrainingsScreen.trainingType')}
               name="training-type-filter"
               value={typeFilter}
               onChange={(event) => {
                 setTypeFilter(event.target.value)
                 setPage(1)
               }}
-              placeholder="All training types"
+              placeholder={t('employeeTrainingsScreen.allTrainingTypes')}
               options={typeList.map((type) => ({ value: type.id, label: `${type.code} — ${type.name}` }))}
             />
           </div>
 
-          <Button onClick={() => openForm(null)}>New training</Button>
+          <Button onClick={() => openForm(null)}>{t('employeeTrainingsScreen.newTraining')}</Button>
         </div>
       </header>
 
-      <div className="p-8">
+      <div className="px-10 pt-6 pb-10">
         <p className="mb-6 max-w-[54em] text-sm leading-relaxed text-muted">
-          Each row is one certificate. The expiry date is set by the system from the issue date and the
-          validity of the training type, and the status compares it with today — “Expires soon” means
-          30 days or less. Certificates are history: they are corrected, never deleted.
+          {t('employeeTrainingsScreen.eachRowIsOneCertificate')}
         </p>
 
         {lookupError && (
-          <p role="alert" className="mb-4 border border-danger-soft bg-[#faefea] px-4 py-2.5 text-[13px] text-danger">
+          <p role="alert" className="mb-4 rounded-2xl bg-danger-wash px-4 py-2.5 text-[13px] text-danger">
             {lookupError}
           </p>
         )}
 
-        <div className="border border-line bg-white">
+        <div className="overflow-hidden rounded-3xl border border-line bg-surface">
           {loading && <TableSkeleton />}
 
           {!loading && loadError && (
             <div className="px-6 py-10 text-center">
               <p className="text-sm text-danger">{loadError}</p>
               <Button variant="outline" onClick={reload} className="mt-4">
-                Try again
+                {t('common.tryAgain')}
               </Button>
             </div>
           )}
@@ -175,22 +175,22 @@ export function EmployeeTrainingsScreen() {
           {!loading && !loadError && data.items.length === 0 && (
             <div className="px-6 py-12 text-center">
               <p className="text-sm text-muted">
-                {appliedSearch ? `No training matches “${appliedSearch}”.` : 'No training recorded yet.'}
+                {appliedSearch ? t('employeeTrainingsScreen.noTrainingMatchesAppliedsearch', { appliedSearch: appliedSearch }) : t('employeeTrainingsScreen.noTrainingRecordedYet')}
               </p>
             </div>
           )}
 
           {!loading && !loadError && data.items.length > 0 && (
             <table className="w-full border-collapse text-sm">
-              <caption className="sr-only">Recorded trainings</caption>
+              <caption className="sr-only">{t('employeeTrainingsScreen.recordedTrainings')}</caption>
               <thead>
                 <tr className="border-b border-line bg-cream-soft text-left">
-                  <HeaderCell>Employee</HeaderCell>
-                  <HeaderCell>Training</HeaderCell>
-                  <HeaderCell>Issued</HeaderCell>
-                  <HeaderCell>Expires</HeaderCell>
-                  <HeaderCell>Workload</HeaderCell>
-                  <HeaderCell>Modality</HeaderCell>
+                  <HeaderCell>{t('employeeTrainingsScreen.employee')}</HeaderCell>
+                  <HeaderCell>{t('employeeTrainingsScreen.training')}</HeaderCell>
+                  <HeaderCell>{t('employeeTrainingsScreen.issued')}</HeaderCell>
+                  <HeaderCell>{t('employeeTrainingsScreen.expires')}</HeaderCell>
+                  <HeaderCell>{t('employeeTrainingsScreen.workload')}</HeaderCell>
+                  <HeaderCell>{t('employeeTrainingsScreen.modality')}</HeaderCell>
                   <th className="px-4 py-3" />
                 </tr>
               </thead>
@@ -220,7 +220,7 @@ export function EmployeeTrainingsScreen() {
                           {training.expiryDate && (
                             <span className="whitespace-nowrap">{formatDate(training.expiryDate)}</span>
                           )}
-                          <Badge tone={badge.tone}>{badge.label}</Badge>
+                          <Badge tone={badge.tone}>{t(badge.labelKey)}</Badge>
                         </div>
                       </td>
 
@@ -228,17 +228,17 @@ export function EmployeeTrainingsScreen() {
                         {training.workloadHours != null ? `${training.workloadHours} h` : '—'}
                       </td>
 
-                      <td className="px-4 py-3">{modalityLabel(training.modality)}</td>
+                      <td className="px-4 py-3">{training.modality ? t(`labels.modality.${training.modality}`) : '—'}</td>
 
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-2">
                           <Button
                             variant="outline"
                             className="px-3 py-1.5"
-                            aria-label={`Edit ${training.trainingTypeCode} of ${training.employeeName}`}
+                            aria-label={t('employeeTrainingsScreen.editTrainingtypecodeOfEmployeename', { trainingTypeCode: training.trainingTypeCode, employeeName: training.employeeName })}
                             onClick={() => openForm(training)}
                           >
-                            Edit
+                            {t('common.edit')}
                           </Button>
                         </div>
                       </td>
@@ -272,10 +272,11 @@ function HeaderCell({ children }) {
 }
 
 function TableSkeleton() {
+  const t = useT()
   return (
-    <div className="p-4" role="status" aria-label="Loading trainings">
+    <div className="p-4" role="status" aria-label={t('employeeTrainingsScreen.loadingTrainings')}>
       {Array.from({ length: 4 }).map((_, index) => (
-        <div key={index} className="mb-2 h-11 animate-pulse bg-cream last:mb-0" />
+        <div key={index} className="mb-2 h-11 animate-pulse rounded-xl bg-sunken last:mb-0" />
       ))}
     </div>
   )

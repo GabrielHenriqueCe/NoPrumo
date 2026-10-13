@@ -4,6 +4,7 @@ import { Badge } from '../../ui/Badge'
 import { Button } from '../../ui/Button'
 import { Pagination } from '../../ui/Pagination'
 import { TrainingTypeFormDialog } from './TrainingTypeFormDialog'
+import { useT } from '../../preferences/preferencesContext'
 
 // No deactivate: the table has no active/deletedAt column.
 
@@ -13,6 +14,7 @@ const SEARCH_DEBOUNCE_MS = 350
 const EMPTY_PAGE = { items: [], page: 1, totalPages: 1, total: 0 }
 
 export function TrainingTypesScreen() {
+  const t = useT()
   const { trainingTypes } = useContainer()
 
   const [data, setData] = useState(EMPTY_PAGE)
@@ -46,14 +48,14 @@ export function TrainingTypesScreen() {
       .list({ page, size: PAGE_SIZE, search: appliedSearch }, { signal: controller.signal })
       .then((result) => setData(result))
       .catch((error) => {
-        if (!controller.signal.aborted) setLoadError(error.message ?? 'Could not load training types.')
+        if (!controller.signal.aborted) setLoadError(error.message ?? t('trainingTypesScreen.couldNotLoadTrainingTypes'))
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false)
       })
 
     return () => controller.abort()
-  }, [trainingTypes, page, appliedSearch, reloadToken])
+  }, [trainingTypes, page, appliedSearch, reloadToken, t])
 
   // Stable on purpose: the Dialog refocuses its first field whenever onClose changes.
   const closeForm = useCallback(() => {
@@ -79,44 +81,42 @@ export function TrainingTypesScreen() {
 
   return (
     <>
-      <header className="flex flex-wrap items-center gap-4 border-b border-line bg-white px-8 py-5">
+      <header className="flex flex-wrap items-center gap-4 px-10 pt-7">
         <div className="min-w-0">
-          <p className="label">Master data</p>
-          <h1 className="mt-1 text-xl font-semibold tracking-tight">Training types</h1>
+          <p className="label">{t('trainingTypesScreen.masterData')}</p>
+          <h1 className="display mt-1 text-[38px] leading-none">{t('trainingTypesScreen.trainingTypes')}</h1>
         </div>
 
         <div className="ml-auto flex items-center gap-3">
           <label className="sr-only" htmlFor="training-type-search">
-            Search training types
+            {t('trainingTypesScreen.searchTrainingTypes')}
           </label>
           <input
             id="training-type-search"
             type="search"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search by code or name"
-            className="w-72 border border-line bg-white px-3 py-2 text-sm outline-none focus:border-gold"
+            placeholder={t('trainingTypesScreen.searchByCodeOrName')}
+            className="w-72 h-11 rounded-full border border-line bg-surface px-5 text-sm outline-none focus:border-accent"
           />
 
-          <Button onClick={() => openForm(null)}>New training type</Button>
+          <Button onClick={() => openForm(null)}>{t('trainingTypesScreen.newTrainingType')}</Button>
         </div>
       </header>
 
-      <div className="p-8">
+      <div className="px-10 pt-6 pb-10">
         <p className="mb-6 max-w-[54em] text-sm leading-relaxed text-muted">
-          NR courses, the ASO and every other certificate an employee may need. The validity sets the
-          expiry date of each training recorded from now on — changing it does not move the trainings
-          already saved. There is no deactivate here: those trainings keep pointing to their type.
+          {t('trainingTypesScreen.nrCoursesTheAsoAnd')}
         </p>
 
-        <div className="border border-line bg-white">
+        <div className="overflow-hidden rounded-3xl border border-line bg-surface">
           {loading && <TableSkeleton />}
 
           {!loading && loadError && (
             <div className="px-6 py-10 text-center">
               <p className="text-sm text-danger">{loadError}</p>
               <Button variant="outline" onClick={reload} className="mt-4">
-                Try again
+                {t('common.tryAgain')}
               </Button>
             </div>
           )}
@@ -125,22 +125,22 @@ export function TrainingTypesScreen() {
             <div className="px-6 py-12 text-center">
               <p className="text-sm text-muted">
                 {appliedSearch
-                  ? `No training type matches “${appliedSearch}”.`
-                  : 'No training type registered yet.'}
+                  ? t('trainingTypesScreen.noTrainingTypeMatchesAppliedsearch', { appliedSearch: appliedSearch })
+                  : t('trainingTypesScreen.noTrainingTypeRegisteredYet')}
               </p>
             </div>
           )}
 
           {!loading && !loadError && data.items.length > 0 && (
             <table className="w-full border-collapse text-sm">
-              <caption className="sr-only">Registered training types</caption>
+              <caption className="sr-only">{t('trainingTypesScreen.registeredTrainingTypes')}</caption>
               <thead>
                 <tr className="border-b border-line bg-cream-soft text-left">
-                  <HeaderCell>Code</HeaderCell>
-                  <HeaderCell>Name</HeaderCell>
-                  <HeaderCell>Validity</HeaderCell>
-                  <HeaderCell>Min. workload</HeaderCell>
-                  <HeaderCell>In person</HeaderCell>
+                  <HeaderCell>{t('trainingTypesScreen.code')}</HeaderCell>
+                  <HeaderCell>{t('common.name')}</HeaderCell>
+                  <HeaderCell>{t('trainingTypesScreen.validity')}</HeaderCell>
+                  <HeaderCell>{t('trainingTypesScreen.minWorkload')}</HeaderCell>
+                  <HeaderCell>{t('trainingTypesScreen.inPerson')}</HeaderCell>
                   <th className="px-4 py-3" />
                 </tr>
               </thead>
@@ -157,9 +157,9 @@ export function TrainingTypesScreen() {
 
                     <td className="px-4 py-3">
                       {type.requiresInPerson ? (
-                        <Badge tone="warning">Required</Badge>
+                        <Badge tone="warning">{t('trainingTypesScreen.required')}</Badge>
                       ) : (
-                        <span className="text-muted">Not required</span>
+                        <span className="text-muted">{t('trainingTypesScreen.notRequired')}</span>
                       )}
                     </td>
 
@@ -171,7 +171,7 @@ export function TrainingTypesScreen() {
                           aria-label={`Edit ${type.code}`}
                           onClick={() => openForm(type)}
                         >
-                          Edit
+                          {t('common.edit')}
                         </Button>
                       </div>
                     </td>
@@ -207,10 +207,11 @@ function HeaderCell({ children }) {
 }
 
 function TableSkeleton() {
+  const t = useT()
   return (
-    <div className="p-4" role="status" aria-label="Loading training types">
+    <div className="p-4" role="status" aria-label={t('trainingTypesScreen.loadingTrainingTypes')}>
       {Array.from({ length: 4 }).map((_, index) => (
-        <div key={index} className="mb-2 h-11 animate-pulse bg-cream last:mb-0" />
+        <div key={index} className="mb-2 h-11 animate-pulse rounded-xl bg-sunken last:mb-0" />
       ))}
     </div>
   )

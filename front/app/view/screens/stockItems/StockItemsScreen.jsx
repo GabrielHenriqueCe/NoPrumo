@@ -6,6 +6,7 @@ import { Button } from '../../ui/Button'
 import { Pagination } from '../../ui/Pagination'
 import { SelectField } from '../../ui/SelectField'
 import { StockItemFormDialog } from './StockItemFormDialog'
+import { useT } from '../../preferences/preferencesContext'
 
 /*
   Stock items: the box on the shelf. The only one of the three stock screens
@@ -21,6 +22,7 @@ const SEARCH_DEBOUNCE_MS = 350
 const EMPTY_PAGE = { items: [], page: 1, totalPages: 1, total: 0 }
 
 export function StockItemsScreen() {
+    const t = useT()
     const { stockItems, stockGroups } = useContainer()
     const { can } = useSession()
     const canManage = can('manage_stock')
@@ -63,14 +65,14 @@ export function StockItemsScreen() {
             )
             .then((result) => setData(result))
             .catch((error) => {
-                if (!controller.signal.aborted) setLoadError(error.message ?? 'Could not load stock items.')
+                if (!controller.signal.aborted) setLoadError(error.message ?? t('stockItemsScreen.couldNotLoadStockItems'))
             })
             .finally(() => {
                 if (!controller.signal.aborted) setLoading(false)
             })
 
         return () => controller.abort()
-    }, [stockItems, page, appliedSearch, groupFilter, reloadToken])
+    }, [stockItems, page, appliedSearch, groupFilter, reloadToken, t])
 
     // Groups feed the filter and the form's dropdown; fetched once.
     useEffect(() => {
@@ -98,7 +100,7 @@ export function StockItemsScreen() {
             await action()
             reload()
         } catch (error) {
-            setActionError(error.message ?? 'The action could not be completed.')
+            setActionError(error.message ?? t('stockItemsScreen.theActionCouldNotBe'))
         } finally {
             setPendingId(null)
         }
@@ -118,35 +120,35 @@ export function StockItemsScreen() {
 
     return (
         <>
-            <header className="flex flex-wrap items-center gap-4 border-b border-line bg-white px-8 py-5">
+            <header className="flex flex-wrap items-center gap-4 px-10 pt-7">
                 <div className="min-w-0">
-                    <p className="label">Master data</p>
-                    <h1 className="mt-1 text-xl font-semibold tracking-tight">Stock items</h1>
+                    <p className="label">{t('stockItemsScreen.masterData')}</p>
+                    <h1 className="display mt-1 text-[38px] leading-none">{t('stockItemsScreen.stockItems')}</h1>
                 </div>
 
                 <div className="ml-auto flex items-center gap-3">
                     <label className="sr-only" htmlFor="stock-item-search">
-                        Search stock items
+                        {t('stockItemsScreen.searchStockItems')}
                     </label>
                     <input
                         id="stock-item-search"
                         type="search"
                         value={search}
                         onChange={(event) => setSearch(event.target.value)}
-                        placeholder="Search by name or code"
-                        className="w-64 border border-line bg-white px-3 py-2 text-sm outline-none focus:border-gold"
+                        placeholder={t('stockItemsScreen.searchByNameOrCode')}
+                        className="w-64 h-11 rounded-full border border-line bg-surface px-5 text-sm outline-none focus:border-accent"
                     />
 
                     <div className="w-56">
                         <SelectField
-                            label="Group"
+                            label={t('stockItemsScreen.group')}
                             name="group-filter"
                             value={groupFilter}
                             onChange={(event) => {
                                 setGroupFilter(event.target.value)
                                 setPage(1)
                             }}
-                            placeholder="All groups"
+                            placeholder={t('stockItemsScreen.allGroups')}
                             options={groups.map((group) => ({ value: group.id, label: group.name }))}
                         />
                     </div>
@@ -158,32 +160,31 @@ export function StockItemsScreen() {
                                 setFormOpen(true)
                             }}
                         >
-                            New item
+                            {t('stockItemsScreen.newItem')}
                         </Button>
                     )}
                 </div>
             </header>
 
-            <div className="p-8">
+            <div className="px-10 pt-6 pb-10">
                 <p className="mb-6 max-w-[54em] text-sm leading-relaxed text-muted">
-                    An item is switched off, never deleted: its movement history has to keep pointing
-                    somewhere.
+                    {t('stockItemsScreen.anItemIsSwitchedOff')}
                 </p>
 
                 {actionError && (
-                    <p role="alert" className="mb-4 border border-danger-soft bg-[#faefea] px-4 py-2.5 text-[13px] text-danger">
+                    <p role="alert" className="mb-4 rounded-2xl bg-danger-wash px-4 py-2.5 text-[13px] text-danger">
                         {actionError}
                     </p>
                 )}
 
-                <div className="border border-line bg-white">
+                <div className="overflow-hidden rounded-3xl border border-line bg-surface">
                     {loading && <TableSkeleton />}
 
                     {!loading && loadError && (
                         <div className="px-6 py-10 text-center">
                             <p className="text-sm text-danger">{loadError}</p>
                             <Button variant="outline" onClick={reload} className="mt-4">
-                                Try again
+                                {t('common.tryAgain')}
                             </Button>
                         </div>
                     )}
@@ -191,22 +192,22 @@ export function StockItemsScreen() {
                     {!loading && !loadError && data.items.length === 0 && (
                         <div className="px-6 py-12 text-center">
                             <p className="text-sm text-muted">
-                                {appliedSearch ? `No item matches “${appliedSearch}”.` : 'No stock item registered yet.'}
+                                {appliedSearch ? t('stockItemsScreen.noItemMatchesAppliedsearch', { appliedSearch: appliedSearch }) : t('stockItemsScreen.noStockItemRegisteredYet')}
                             </p>
                         </div>
                     )}
 
                     {!loading && !loadError && data.items.length > 0 && (
                         <table className="w-full border-collapse text-sm">
-                            <caption className="sr-only">Registered stock items</caption>
+                            <caption className="sr-only">{t('stockItemsScreen.registeredStockItems')}</caption>
                             <thead>
                                 <tr className="border-b border-line bg-cream-soft text-left">
-                                    <Th>Name</Th>
-                                    <Th>Group</Th>
-                                    <Th>Unit</Th>
-                                    <Th>Min. quantity</Th>
-                                    {canSeePrice && <Th>Reference price</Th>}
-                                    <Th>Status</Th>
+                                    <Th>{t('common.name')}</Th>
+                                    <Th>{t('stockItemsScreen.group')}</Th>
+                                    <Th>{t('stockItemsScreen.unit')}</Th>
+                                    <Th>{t('stockItemsScreen.minQuantity')}</Th>
+                                    {canSeePrice && <Th>{t('stockItemsScreen.referencePrice')}</Th>}
+                                    <Th>{t('common.status')}</Th>
                                     <th className="px-4 py-3" />
                                 </tr>
                             </thead>
@@ -236,7 +237,7 @@ export function StockItemsScreen() {
 
                                             <td className="px-4 py-3">
                                                 <Badge tone={item.active ? 'active' : 'inactive'}>
-                                                    {item.active ? 'Active' : 'Inactive'}
+                                                    {item.active ? t('common.active') : t('common.inactive')}
                                                 </Badge>
                                             </td>
 
@@ -252,7 +253,7 @@ export function StockItemsScreen() {
                                                                 setFormOpen(true)
                                                             }}
                                                         >
-                                                            Edit
+                                                            {t('common.edit')}
                                                         </Button>
 
                                                         <Button
@@ -262,7 +263,7 @@ export function StockItemsScreen() {
                                                             disabled={busy}
                                                             onClick={() => runAction(item.id, () => stockItems.setActive(item.id, !item.active))}
                                                         >
-                                                            {item.active ? 'Deactivate' : 'Activate'}
+                                                            {item.active ? t('common.deactivate') : t('common.activate')}
                                                         </Button>
                                                     </div>
                                                 )}
@@ -300,10 +301,11 @@ function Th({ children }) {
 }
 
 function TableSkeleton() {
+    const t = useT()
     return (
-        <div className="p-4" role="status" aria-label="Loading stock items">
+        <div className="p-4" role="status" aria-label={t('stockItemsScreen.loadingStockItems')}>
             {Array.from({ length: 4 }).map((_, index) => (
-                <div key={index} className="mb-2 h-11 animate-pulse bg-cream last:mb-0" />
+                <div key={index} className="mb-2 h-11 animate-pulse rounded-xl bg-sunken last:mb-0" />
             ))}
         </div>
     )

@@ -4,8 +4,10 @@ import { useContainer } from '../../providers/containerContext';
 import { Dialog } from '../../ui/Dialog';
 import { Button } from '../../ui/Button';
 import { TextField } from '../../ui/TextField';
+import { useT } from '../../preferences/preferencesContext'
 
 export function JobRoleFormDialog({ jobRole, onClose, onSave }) {
+    const t = useT()
     const { jobRoles, departments } = useContainer();
     const [name, setName] = useState(jobRole ? jobRole.name : '');
     const [departmentId, setDepartmentId] = useState(jobRole ? jobRole.departmentId : '');
@@ -56,29 +58,29 @@ export function JobRoleFormDialog({ jobRole, onClose, onSave }) {
             if (error.isValidation) {
                 setFieldErrors(error.fieldErrors);
             } else {
-                setFormError(error.message || 'An unexpected error occurred.');
+                setFormError(error.message || t('jobRoleFormDialog.anUnexpectedErrorOccurred'));
             }
         }
     };
 
     return (
-        <Dialog open={true} title={jobRole ? "Edit Job Role" : "New Job Role"} onClose={onClose}>
+        <Dialog open={true} title={jobRole ? t('jobRoleFormDialog.editJobRole') : t('jobRoleFormDialog.newJobRole')} onClose={onClose}>
             <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-6">
-                {formError && <div className="p-3 bg-red-100 text-red-700 rounded text-sm">{formError}</div>}
+                {formError && <div className="p-3 bg-danger-wash text-danger rounded text-sm">{formError}</div>}
                 <TextField
-                    label="Name"
+                    label={t('common.name')}
                     value={name}
                     onChange={e => setName(e.target.value)}
                     error={fieldErrors.name}
                 />
 
                 <SelectField
-                    label="Department"
+                    label={t('jobRoleFormDialog.department')}
                     value={departmentId}
                     onChange={e => setDepartmentId(e.target.value)}
                     error={fieldErrors.departmentId}
                     options={[
-                        ...(jobRole ? [] : [{ value: '', label: 'Select a Department' }]),
+                        ...(jobRole ? [] : [{ value: '', label: t('jobRoleFormDialog.selectADepartment') }]),
                         ...departmentsList.map(dep => ({ value: dep.id, label: dep.name }))
                     ]}
                 />
@@ -86,13 +88,13 @@ export function JobRoleFormDialog({ jobRole, onClose, onSave }) {
                 {jobRole && (
                     <label className="flex items-center gap-2">
                         <input type="checkbox" checked={active} onChange={e => setActive(e.target.checked)} />
-                        Active
+                        {t('common.active')}
                     </label>
                 )}
 
                 <div className="flex gap-2 mt-4 justify-end">
-                    <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-                    <Button type="submit">Save</Button>
+                    <Button type="button" variant="outline" onClick={onClose}>{t('common.cancel')}</Button>
+                    <Button type="submit">{t('common.save')}</Button>
                 </div>
             </form>
         </Dialog>

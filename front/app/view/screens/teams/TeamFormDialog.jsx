@@ -4,14 +4,15 @@ import { Dialog } from '../../ui/Dialog'
 import { SelectField } from '../../ui/SelectField'
 import { TextField } from '../../ui/TextField'
 import { TeamMembersPanel } from './TeamMembersPanel'
+import { useT } from '../../preferences/preferencesContext'
 
 // Members hang off the team's id, so the members tab only exists once the team does.
 
 const EMPTY = { name: '', departmentId: '' }
 
 const TABS = [
-  { id: 'details', label: 'Details' },
-  { id: 'members', label: 'Members' },
+  { id: 'details', labelKey: 'extras.details' },
+  { id: 'members', labelKey: 'extras.members' },
 ]
 
 export function TeamFormDialog({
@@ -23,6 +24,7 @@ export function TeamFormDialog({
   onSubmit,
   onMembersChanged,
 }) {
+  const t = useT()
   const editing = Boolean(team)
   const baseId = useId()
   const tabRefs = useRef({})
@@ -85,7 +87,7 @@ export function TeamFormDialog({
       })
     } catch (error) {
       if (error.isValidation) setFieldErrors(error.fieldErrors)
-      else setFormError(error.message ?? 'Could not save the team.')
+      else setFormError(error.message ?? t('teamFormDialog.couldNotSaveTheTeam'))
     } finally {
       setBusy(false)
     }
@@ -103,9 +105,9 @@ export function TeamFormDialog({
   const detailsForm = (
     <form onSubmit={submit} noValidate className="flex flex-col gap-4 p-6">
       <TextField
-        label="Name"
+        label={t('common.name')}
         name="name"
-        placeholder="e.g. Masonry crew A"
+        placeholder={t('teamFormDialog.eGMasonryCrewA')}
         required
         value={form.name}
         onChange={update('name')}
@@ -113,28 +115,28 @@ export function TeamFormDialog({
       />
 
       <SelectField
-        label="Department"
+        label={t('teamFormDialog.department')}
         name="departmentId"
         required
         value={form.departmentId}
         onChange={update('departmentId')}
         error={fieldErrors.departmentId}
-        placeholder={departmentOptions.length > 0 ? 'Select a department…' : 'No department registered yet'}
+        placeholder={departmentOptions.length > 0 ? t('teamFormDialog.selectADepartment') : t('teamFormDialog.noDepartmentRegisteredYet')}
         options={departmentOptions}
       />
 
       {formError && (
-        <p role="alert" className="border border-danger-soft bg-[#faefea] px-3 py-2 text-[12.5px] text-danger">
+        <p role="alert" className="rounded-2xl bg-danger-wash px-3 py-2 text-[12.5px] text-danger">
           {formError}
         </p>
       )}
 
       <div className="mt-2 flex items-center gap-2.5">
-        <Button type="submit" busy={busy} busyLabel="Saving…">
-          {editing ? 'Save changes' : 'Create team'}
+        <Button type="submit" busy={busy} busyLabel={t('common.saving')}>
+          {editing ? t('common.saveChanges') : t('teamFormDialog.createTeam')}
         </Button>
         <Button type="button" variant="outline" onClick={close} disabled={busy}>
-          Cancel
+          {t('common.cancel')}
         </Button>
       </div>
     </form>
@@ -144,11 +146,11 @@ export function TeamFormDialog({
     <Dialog
       open={open}
       onClose={close}
-      title={editing ? 'Edit team' : 'New team'}
+      title={editing ? t('teamFormDialog.editTeam') : t('teamFormDialog.newTeam')}
       description={
         editing
           ? `${team.name} · ${team.departmentName}`
-          : 'Name the team and pick its department. Members come right after.'
+          : t('teamFormDialog.nameTheTeamAndPick')
       }
     >
       {!editing && detailsForm}
@@ -157,7 +159,7 @@ export function TeamFormDialog({
         <>
           <div
             role="tablist"
-            aria-label="Team"
+            aria-label={t('teamFormDialog.team')}
             onKeyDown={onTabKeyDown}
             className="flex gap-1 border-b border-line-soft px-6"
           >
@@ -185,7 +187,7 @@ export function TeamFormDialog({
                       : 'border-transparent text-muted hover:text-graphite',
                   ].join(' ')}
                 >
-                  {item.label}
+                  {t(item.labelKey)}
                 </button>
               )
             })}

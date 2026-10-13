@@ -4,6 +4,7 @@ import { Dialog } from '../../ui/Dialog'
 import { SelectField } from '../../ui/SelectField'
 import { TextField } from '../../ui/TextField'
 import { PROJECT_STATUSES } from './projectStatus'
+import { useT } from '../../preferences/preferencesContext'
 
 const EMPTY = {
   code: '',
@@ -36,6 +37,7 @@ const textOrNull = (value) => value.trim() || null
 const idOrNull = (value) => (value ? Number(value) : null)
 
 export function ProjectFormDialog({ open, project, clientOptions, supervisorOptions, canSeeAmount, onClose, onSubmit }) {
+  const t = useT()
   const editing = Boolean(project)
 
   const [form, setForm] = useState(EMPTY)
@@ -90,7 +92,7 @@ export function ProjectFormDialog({ open, project, clientOptions, supervisorOpti
       await onSubmit(values)
     } catch (error) {
       if (error.isValidation) setFieldErrors(error.fieldErrors)
-      else setFormError(error.message ?? 'Could not save the project.')
+      else setFormError(error.message ?? t('projectFormDialog.couldNotSaveTheProject'))
     } finally {
       setBusy(false)
     }
@@ -100,15 +102,15 @@ export function ProjectFormDialog({ open, project, clientOptions, supervisorOpti
     <Dialog
       open={open}
       onClose={busy ? undefined : onClose}
-      title={editing ? 'Edit project' : 'New project'}
-      description="A construction site, its client and who runs it."
+      title={editing ? t('projectFormDialog.editProject') : t('projectFormDialog.newProject')}
+      description={t('projectFormDialog.aConstructionSiteItsClient')}
     >
       <form onSubmit={submit} noValidate className="flex flex-col gap-4 p-6">
         <div className="grid grid-cols-3 gap-4">
           <TextField
-            label="Code"
+            label={t('projectFormDialog.code')}
             name="code"
-            placeholder="OB-2026-01"
+            placeholder={t('projectFormDialog.ob202601')}
             required
             value={form.code}
             onChange={update('code')}
@@ -117,9 +119,9 @@ export function ProjectFormDialog({ open, project, clientOptions, supervisorOpti
 
           <TextField
             className="col-span-2"
-            label="Name"
+            label={t('common.name')}
             name="name"
-            placeholder="e.g. Aurora Residential"
+            placeholder={t('projectFormDialog.eGAuroraResidential')}
             required
             value={form.name}
             onChange={update('name')}
@@ -129,34 +131,34 @@ export function ProjectFormDialog({ open, project, clientOptions, supervisorOpti
 
         <div className="grid grid-cols-2 gap-4">
           <SelectField
-            label="Client"
+            label={t('projectFormDialog.client')}
             name="clientId"
             value={form.clientId}
             onChange={update('clientId')}
             error={fieldErrors.clientId}
-            placeholder={clientOptions.length ? 'Select a client…' : 'No client registered'}
+            placeholder={clientOptions.length ? t('projectFormDialog.selectAClient') : t('projectFormDialog.noClientRegistered')}
             options={clientOptions}
           />
 
           <SelectField
-            label="Status"
+            label={t('common.status')}
             name="status"
             required
             value={form.status}
             onChange={update('status')}
             error={fieldErrors.status}
-            options={PROJECT_STATUSES}
+            options={PROJECT_STATUSES.map((value) => ({ value, label: t(`projectStatus.${value}`) }))}
           />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <SelectField
-            label="Supervisor"
+            label={t('projectFormDialog.supervisor')}
             name="supervisorId"
             value={form.supervisorId}
             onChange={update('supervisorId')}
             error={fieldErrors.supervisorId}
-            placeholder={supervisorOptions.length ? 'Select an employee…' : 'No employee registered'}
+            placeholder={supervisorOptions.length ? t('projectFormDialog.selectAnEmployee') : t('projectFormDialog.noEmployeeRegistered')}
             options={supervisorOptions}
           />
 
@@ -172,18 +174,18 @@ export function ProjectFormDialog({ open, project, clientOptions, supervisorOpti
 
         <div className="grid grid-cols-2 gap-4">
           <TextField
-            label="Technical manager"
+            label={t('projectFormDialog.technicalManager')}
             name="technicalManager"
-            placeholder="e.g. Eng. Ana Souza"
+            placeholder={t('projectFormDialog.eGEngAnaSouza')}
             value={form.technicalManager}
             onChange={update('technicalManager')}
             error={fieldErrors.technicalManager}
           />
 
           <TextField
-            label="CREA / RT"
+            label={t('projectFormDialog.creaRt')}
             name="creaRt"
-            placeholder="SC-000000/D"
+            placeholder={t('projectFormDialog.sc000000D')}
             value={form.creaRt}
             onChange={update('creaRt')}
             error={fieldErrors.creaRt}
@@ -192,7 +194,7 @@ export function ProjectFormDialog({ open, project, clientOptions, supervisorOpti
 
         <div className="grid grid-cols-2 gap-4">
           <TextField
-            label="Start date"
+            label={t('projectFormDialog.startDate')}
             name="startDate"
             type="date"
             value={form.startDate}
@@ -201,19 +203,19 @@ export function ProjectFormDialog({ open, project, clientOptions, supervisorOpti
           />
 
           <TextField
-            label="Forecast date"
+            label={t('projectFormDialog.forecastDate')}
             name="forecastDate"
             type="date"
             value={form.forecastDate}
             onChange={update('forecastDate')}
             error={fieldErrors.forecastDate}
-            hint="The project shows as late once this date has passed."
+            hint={t('projectFormDialog.theProjectShowsAsLate')}
           />
         </div>
 
         {canSeeAmount && (
           <TextField
-            label="Contract amount (R$)"
+            label={t('projectFormDialog.contractAmountR')}
             name="contractAmount"
             type="number"
             min="0"
@@ -227,21 +229,21 @@ export function ProjectFormDialog({ open, project, clientOptions, supervisorOpti
         )}
 
         <fieldset className="flex flex-col gap-4 border-t border-line-soft pt-4">
-          <legend className="label pr-2">Site address</legend>
+          <legend className="label pr-2">{t('projectFormDialog.siteAddress')}</legend>
 
           <div className="grid grid-cols-3 gap-4">
             <TextField
               className="col-span-2"
-              label="Street"
+              label={t('projectFormDialog.street')}
               name="street"
-              placeholder="e.g. Rua XV de Novembro"
+              placeholder={t('projectFormDialog.eGRuaXvDe')}
               value={form.street}
               onChange={update('street')}
               error={fieldErrors.street}
             />
 
             <TextField
-              label="Number"
+              label={t('projectFormDialog.number')}
               name="number"
               placeholder="100"
               value={form.number}
@@ -252,25 +254,25 @@ export function ProjectFormDialog({ open, project, clientOptions, supervisorOpti
 
           <div className="grid grid-cols-3 gap-4">
             <TextField
-              label="Complement"
+              label={t('projectFormDialog.complement')}
               name="complement"
-              placeholder="Lot 4"
+              placeholder={t('projectFormDialog.lot4')}
               value={form.complement}
               onChange={update('complement')}
               error={fieldErrors.complement}
             />
 
             <TextField
-              label="District"
+              label={t('projectFormDialog.district')}
               name="district"
-              placeholder="Centro"
+              placeholder={t('projectFormDialog.centro')}
               value={form.district}
               onChange={update('district')}
               error={fieldErrors.district}
             />
 
             <TextField
-              label="Postal code"
+              label={t('projectFormDialog.postalCode')}
               name="postalCode"
               placeholder="89000-000"
               value={form.postalCode}
@@ -282,16 +284,16 @@ export function ProjectFormDialog({ open, project, clientOptions, supervisorOpti
           <div className="grid grid-cols-3 gap-4">
             <TextField
               className="col-span-2"
-              label="City"
+              label={t('projectFormDialog.city')}
               name="city"
-              placeholder="Blumenau"
+              placeholder={t('projectFormDialog.blumenau')}
               value={form.city}
               onChange={update('city')}
               error={fieldErrors.city}
             />
 
             <TextField
-              label="State (UF)"
+              label={t('projectFormDialog.stateUf')}
               name="state"
               placeholder="SC"
               maxLength={2}
@@ -303,17 +305,17 @@ export function ProjectFormDialog({ open, project, clientOptions, supervisorOpti
         </fieldset>
 
         {formError && (
-          <p role="alert" className="border border-danger-soft bg-[#faefea] px-3 py-2 text-[12.5px] text-danger">
+          <p role="alert" className="rounded-2xl bg-danger-wash px-3 py-2 text-[12.5px] text-danger">
             {formError}
           </p>
         )}
 
         <div className="mt-2 flex items-center gap-2.5">
-          <Button type="submit" busy={busy} busyLabel="Saving…">
-            {editing ? 'Save changes' : 'Create project'}
+          <Button type="submit" busy={busy} busyLabel={t('common.saving')}>
+            {editing ? t('common.saveChanges') : t('projectFormDialog.createProject')}
           </Button>
           <Button type="button" variant="outline" onClick={onClose} disabled={busy}>
-            Cancel
+            {t('common.cancel')}
           </Button>
         </div>
       </form>

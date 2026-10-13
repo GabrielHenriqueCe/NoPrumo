@@ -12,6 +12,7 @@ import { createProjectLinkGateway } from './data/gateways/projectLinkGateway'
 import { createProjectTeamGateway } from './data/gateways/projectTeamGateway'
 import { createTimeEntryGateway } from './data/gateways/timeEntryGateway'
 import { createPurchaseRequestGateway } from './data/gateways/purchaseRequestGateway'
+import { createReportGateway } from './data/gateways/reportGateway'
 import { createStageGateway } from './data/gateways/stageGateway'
 import { createStockCategoryGateway } from './data/gateways/stockCategoryGateway'
 import { createStockGroupGateway } from './data/gateways/stockGroupGateway'
@@ -77,6 +78,7 @@ export function createContainer({
     projectTeams: createProjectTeamGateway(http),
     timeEntries: createTimeEntryGateway(http),
     appointments: createAppointmentGateway(http),
+    reports: createReportGateway(http),
 
     trainingTypes: createTrainingTypeGateway(http),
     employeeTrainings: createEmployeeTrainingGateway(http),

@@ -1,60 +1,174 @@
 @import 'tailwindcss';
 
+@import '@fontsource/barlow/400.css';
+@import '@fontsource/barlow/500.css';
+@import '@fontsource/barlow/600.css';
+@import '@fontsource/barlow-condensed/600.css';
+@import '@fontsource/barlow-condensed/700.css';
+@import '@fontsource/geist-mono/400.css';
+@import '@fontsource/geist-mono/500.css';
+
 /*
-  Palette.
+  Two themes, one set of roles.
 
-  Graphite and cream come from the screen redesign; bronze and the steel greys
-  were sampled straight out of Logo_NoPrumo.jpeg, so the interface and the logo
-  are the same two materials.
+  Every colour is a role (page, surface, ink, line...) with a light and a dark
+  value; screens only ever name the role. The light values are the H design;
+  the dark ones are its night version. The bronze and steel of the logo stay
+  the same in both.
 
-  Type stays on system fonts on purpose: everything here runs on the machine,
-  with no CDN and no webfont download, so the app also works with no internet.
+  The fonts are bundled with the app (@fontsource), not loaded from a CDN, so
+  the app still works with no internet.
 */
+:root {
+  color-scheme: light;
+
+  --page: #f3f1ec;
+  --surface: #ffffff;
+  --sunken: #faf8f4;
+  --track: #ece8df;
+  --line: #e2ddd2;
+  --line-soft: #ece8df;
+  --ink: #10161c;
+  --muted: #5b6470;
+
+  --accent: #886830;
+  --accent-bright: #d9b451;
+  --gold: #a8842b;
+  --gold-wash: #fbf7ec;
+
+  --primary: #10161c;
+  --on-primary: #f3f1ec;
+
+  --rail: #10161c;
+  --rail-active: #232e3a;
+  --rail-text: #c6cdd4;
+  --rail-icon: #8a95a1;
+
+  --danger: #8a3418;
+  --late: #c4614a;
+  --danger-strong: #a3412b;
+  --on-danger: #ffffff;
+  --danger-wash: rgb(225 145 122 / 0.3);
+
+  --success: #2f6b3f;
+  --success-wash: #eef4ef;
+
+  --overlay: rgb(16 22 28 / 0.55);
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --page: #151514;
+  --surface: #1f1e1b;
+  --sunken: #252420;
+  --track: #34322d;
+  --line: #2c2a26;
+  --line-soft: #2a2925;
+  --ink: #ece9e1;
+  --muted: #a39f95;
+
+  --accent: #d9b451;
+  --accent-bright: #d9b451;
+  --gold: #d9b451;
+  --gold-wash: rgb(217 180 81 / 0.12);
+
+  --primary: #d9b451;
+  --on-primary: #151514;
+
+  --rail: #0f0f0e;
+  --rail-active: #2a2925;
+  --rail-text: #c9c5bb;
+  --rail-icon: #8b867f;
+
+  --danger: #e1917a;
+  --late: #e1917a;
+  --danger-strong: #e1917a;
+  --on-danger: #151514;
+  --danger-wash: rgb(225 145 122 / 0.2);
+
+  --success: #8fc7a0;
+  --success-wash: rgb(143 199 160 / 0.14);
+
+  --overlay: rgb(0 0 0 / 0.65);
+}
+
+@theme inline {
+  --color-page: var(--page);
+  --color-surface: var(--surface);
+  --color-sunken: var(--sunken);
+  --color-track: var(--track);
+  --color-line: var(--line);
+  --color-line-soft: var(--line-soft);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-bright: var(--accent-bright);
+  --color-primary: var(--primary);
+  --color-on-primary: var(--on-primary);
+  --color-rail: var(--rail);
+  --color-rail-active: var(--rail-active);
+  --color-rail-text: var(--rail-text);
+  --color-rail-icon: var(--rail-icon);
+  --color-danger: var(--danger);
+  --color-late: var(--late);
+  --color-danger-strong: var(--danger-strong);
+  --color-on-danger: var(--on-danger);
+  --color-danger-wash: var(--danger-wash);
+  --color-success: var(--success);
+  --color-success-wash: var(--success-wash);
+  --color-overlay: var(--overlay);
+
+  /* Older names, still used across the screens: each one points at its role. */
+  --color-cream: var(--page);
+  --color-cream-soft: var(--sunken);
+  --color-graphite: var(--ink);
+  --color-graphite-soft: var(--rail-active);
+  --color-bronze: var(--accent);
+  --color-gold: var(--gold);
+  --color-gold-bright: var(--accent-bright);
+  --color-gold-wash: var(--gold-wash);
+  --color-line-dark: var(--rail-active);
+  --color-muted-dark: var(--rail-icon);
+  --color-danger-soft: var(--late);
+}
+
 @theme {
-  --color-cream: #f3f1ec;
-  --color-cream-soft: #fcfbf8;
-  --color-graphite: #10161c;
-  --color-graphite-soft: #161f29;
-
-  /* bronze sampled from the plumb bob, gold tones for interaction */
-  --color-bronze: #886830;
-  --color-gold: #a8842b;
-  --color-gold-bright: #d9b451;
-  --color-gold-wash: #fbf7ec;
-
-  /* steel greys sampled from the hexagon */
+  /* steel greys sampled from the logo's hexagon: the same in both themes */
   --color-steel-900: #404040;
   --color-steel-700: #606060;
   --color-steel-500: #808080;
 
-  --color-line: #ddd9d0;
-  --color-line-soft: #e8e5de;
-  --color-line-dark: #232e3a;
-  --color-muted: #6b7480;
-  --color-muted-dark: #6f7a86;
-  --color-danger: #9c3d22;
-  --color-danger-soft: #e1917a;
-  --color-success: #2f6b3f;
-
-  --font-sans: 'Segoe UI Variable Display', 'Segoe UI', system-ui, -apple-system, sans-serif;
-  --font-mono: 'Cascadia Mono', Consolas, ui-monospace, monospace;
+  --font-sans: 'Barlow', system-ui, sans-serif;
+  --font-display: 'Barlow Condensed', 'Barlow', system-ui, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, Consolas, monospace;
 }
 
 body {
   margin: 0;
-  background: var(--color-cream);
-  color: var(--color-graphite);
+  background: var(--page);
+  color: var(--ink);
   font-family: var(--font-sans);
+  font-size: 15px;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Section label: small caps monospace, used above every heading */
+/* Section label: small caps monospace, used above headings and table columns */
 .label {
   font-family: var(--font-mono);
-  font-size: 9.5px;
-  letter-spacing: 0.14em;
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--color-muted);
+  color: var(--muted);
+}
+
+/* The H headline: condensed, bold, uppercase */
+.display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  line-height: 1.02;
+  letter-spacing: 0.01em;
 }
 
 /*
@@ -63,6 +177,6 @@ body {
   the first thing to get forgotten.
 */
 :focus-visible {
-  outline: 2px solid var(--color-gold);
+  outline: 2px solid var(--accent-bright);
   outline-offset: 2px;
 }

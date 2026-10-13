@@ -5,12 +5,14 @@ import { Button } from '../../ui/Button'
 import { Pagination } from '../../ui/Pagination'
 import { ClientFormDialog } from './ClientFormDialog'
 import { ClientPortalLinksDialog } from './ClientPortalLinksDialog'
+import { useT } from '../../preferences/preferencesContext'
 
 const PAGE_SIZE = 10
 const SEARCH_DEBOUNCE_MS = 350
 const EMPTY_PAGE = { items: [], page: 1, totalPages: 1, total: 0 }
 
 export function ClientsScreen() {
+  const t = useT()
   const { clients } = useContainer()
 
   const [data, setData] = useState(EMPTY_PAGE)
@@ -47,14 +49,14 @@ export function ClientsScreen() {
       .list({ page, size: PAGE_SIZE, search: appliedSearch }, { signal: controller.signal })
       .then((result) => setData(result))
       .catch((error) => {
-        if (!controller.signal.aborted) setLoadError(error.message ?? 'Could not load clients.')
+        if (!controller.signal.aborted) setLoadError(error.message ?? t('clientsScreen.couldNotLoadClients'))
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false)
       })
 
     return () => controller.abort()
-  }, [clients, page, appliedSearch, reloadToken])
+  }, [clients, page, appliedSearch, reloadToken, t])
 
   const runAction = async (id, action) => {
     setPendingId(id)
@@ -64,7 +66,7 @@ export function ClientsScreen() {
       await action()
       reload()
     } catch (error) {
-      setActionError(error.message ?? 'The action could not be completed.')
+      setActionError(error.message ?? t('clientsScreen.theActionCouldNotBe'))
     } finally {
       setPendingId(null)
     }
@@ -84,23 +86,23 @@ export function ClientsScreen() {
 
   return (
     <>
-      <header className="flex flex-wrap items-center gap-4 border-b border-line bg-white px-8 py-5">
+      <header className="flex flex-wrap items-center gap-4 px-10 pt-7">
         <div className="min-w-0">
-          <p className="label">Master data</p>
-          <h1 className="mt-1 text-xl font-semibold tracking-tight">Clients</h1>
+          <p className="label">{t('clientsScreen.masterData')}</p>
+          <h1 className="display mt-1 text-[38px] leading-none">{t('clientsScreen.clients')}</h1>
         </div>
 
         <div className="ml-auto flex items-center gap-3">
           <label className="sr-only" htmlFor="client-search">
-            Search clients
+            {t('clientsScreen.searchClients')}
           </label>
           <input
             id="client-search"
             type="search"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search by name, document or email"
-            className="w-72 border border-line bg-white px-3 py-2 text-sm outline-none focus:border-gold"
+            placeholder={t('clientsScreen.searchByNameDocumentOr')}
+            className="w-72 h-11 rounded-full border border-line bg-surface px-5 text-sm outline-none focus:border-accent"
           />
 
           <Button
@@ -109,31 +111,30 @@ export function ClientsScreen() {
               setFormOpen(true)
             }}
           >
-            New client
+            {t('clientsScreen.newClient')}
           </Button>
         </div>
       </header>
 
-      <div className="p-8">
+      <div className="px-10 pt-6 pb-10">
         <p className="mb-6 max-w-[54em] text-sm leading-relaxed text-muted">
-          Clients represent external project owners and partners. Records are deactivated, never
-          deleted, to maintain project association history.
+          {t('clientsScreen.clientsRepresentExternalProjectOwners')}
         </p>
 
         {actionError && (
-          <p role="alert" className="mb-4 border border-danger-soft bg-[#faefea] px-4 py-2.5 text-[13px] text-danger">
+          <p role="alert" className="mb-4 rounded-2xl bg-danger-wash px-4 py-2.5 text-[13px] text-danger">
             {actionError}
           </p>
         )}
 
-        <div className="border border-line bg-white">
+        <div className="overflow-hidden rounded-3xl border border-line bg-surface">
           {loading && <TableSkeleton />}
 
           {!loading && loadError && (
             <div className="px-6 py-10 text-center">
               <p className="text-sm text-danger">{loadError}</p>
               <Button variant="outline" onClick={reload} className="mt-4">
-                Try again
+                {t('common.tryAgain')}
               </Button>
             </div>
           )}
@@ -141,21 +142,21 @@ export function ClientsScreen() {
           {!loading && !loadError && data.items.length === 0 && (
             <div className="px-6 py-12 text-center">
               <p className="text-sm text-muted">
-                {appliedSearch ? `No client matches “${appliedSearch}”.` : 'No client registered yet.'}
+                {appliedSearch ? t('clientsScreen.noClientMatchesAppliedsearch', { appliedSearch: appliedSearch }) : t('clientsScreen.noClientRegisteredYet')}
               </p>
             </div>
           )}
 
           {!loading && !loadError && data.items.length > 0 && (
             <table className="w-full border-collapse text-sm">
-              <caption className="sr-only">Registered clients</caption>
+              <caption className="sr-only">{t('clientsScreen.registeredClients')}</caption>
               <thead>
                 <tr className="border-b border-line bg-cream-soft text-left">
-                  <Th>Name</Th>
-                  <Th>Document</Th>
-                  <Th>Contact</Th>
-                  <Th>Location</Th>
-                  <Th>Status</Th>
+                  <Th>{t('common.name')}</Th>
+                  <Th>{t('clientsScreen.document')}</Th>
+                  <Th>{t('clientsScreen.contact')}</Th>
+                  <Th>{t('clientsScreen.location')}</Th>
+                  <Th>{t('common.status')}</Th>
                   <th className="px-4 py-3" />
                 </tr>
               </thead>
@@ -186,7 +187,7 @@ export function ClientsScreen() {
 
                       <td className="px-4 py-3">
                         <Badge tone={client.active ? 'active' : 'inactive'}>
-                          {client.active ? 'Active' : 'Inactive'}
+                          {client.active ? t('common.active') : t('common.inactive')}
                         </Badge>
                       </td>
 
@@ -198,7 +199,7 @@ export function ClientsScreen() {
                             disabled={busy}
                             onClick={() => setLinksClient(client)}
                           >
-                            Portal
+                            {t('clientsScreen.portal')}
                           </Button>
 
                           <Button
@@ -210,7 +211,7 @@ export function ClientsScreen() {
                               setFormOpen(true)
                             }}
                           >
-                            Edit
+                            {t('common.edit')}
                           </Button>
 
                           <Button
@@ -221,7 +222,7 @@ export function ClientsScreen() {
                               runAction(client.id, () => clients.setActive(client.id, !client.active))
                             }
                           >
-                            {client.active ? 'Deactivate' : 'Activate'}
+                            {client.active ? t('common.deactivate') : t('common.activate')}
                           </Button>
                         </div>
                       </td>
@@ -268,10 +269,11 @@ function Th({ children }) {
 }
 
 function TableSkeleton() {
+  const t = useT()
   return (
-    <div className="p-4" role="status" aria-label="Loading clients">
+    <div className="p-4" role="status" aria-label={t('clientsScreen.loadingClients')}>
       {Array.from({ length: 4 }).map((_, index) => (
-        <div key={index} className="mb-2 h-11 animate-pulse bg-cream last:mb-0" />
+        <div key={index} className="mb-2 h-11 animate-pulse rounded-xl bg-sunken last:mb-0" />
       ))}
     </div>
   )

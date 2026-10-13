@@ -1,33 +1,36 @@
+import { useT } from '../preferences/preferencesContext'
 import { Button } from './Button'
 
-// `noun` and `pluralNoun` name what is being counted: "3 projects", not "3 records".
+/*
+  `noun` names what is being counted: "3 projects", not "3 records". It is
+  also the key under `nouns` in the dictionaries, so the count reads right in
+  both languages; a noun with no entry there falls back to the English plural.
+*/
 export function Pagination({ page, totalPages, total, onChange, busy = false, noun = 'record', pluralNoun = `${noun}s` }) {
-    const counted = `${total} ${total === 1 ? noun : pluralNoun}`
+  const t = useT()
+  const lastPage = Math.max(totalPages, 1)
 
-    return (
-        <nav className="mt-4 flex items-center gap-3" aria-label="Pagination">
-            <Button
-                variant="outline"
-                onClick={() => onChange(page - 1)}
-                disabled={busy || page <= 1}
-                className="px-3 py-1.5"
-            >
-                Previous
-            </Button>
+  const translated = t(`nouns.${noun}`, { count: total })
+  const counted = translated === `nouns.${noun}` ? `${total} ${total === 1 ? noun : pluralNoun}` : translated
 
-            <span aria-live="polite" className="text-[12.5px] text-muted">
-                {/* Usamos Math.max para não mostrar "Page 1 of 0" quando não houver registos */}
-                Page {page} of {Math.max(totalPages, 1)} · {counted}
-            </span>
+  return (
+    <nav className="mt-4 flex flex-wrap items-center gap-3" aria-label={t('common.pagination')}>
+      <Button variant="outline" onClick={() => onChange(page - 1)} disabled={busy || page <= 1} className="px-4 py-1.5">
+        {t('common.previous')}
+      </Button>
 
-            <Button
-                variant="outline"
-                onClick={() => onChange(page + 1)}
-                disabled={busy || page >= Math.max(totalPages, 1)}
-                className="px-3 py-1.5"
-            >
-                Next
-            </Button>
-        </nav>
-    )
+      <span aria-live="polite" className="text-[13px] text-muted">
+        {t('common.pageOf', { page, totalPages: lastPage })} · {counted}
+      </span>
+
+      <Button
+        variant="outline"
+        onClick={() => onChange(page + 1)}
+        disabled={busy || page >= lastPage}
+        className="px-4 py-1.5"
+      >
+        {t('common.next')}
+      </Button>
+    </nav>
+  )
 }

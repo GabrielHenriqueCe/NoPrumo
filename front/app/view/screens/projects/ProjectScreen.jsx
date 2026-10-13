@@ -1,62 +1,69 @@
-import { useEffect, useState } from 'react'
-import { Link, Navigate, NavLink, useParams } from 'react-router-dom'
-import { formatDate } from '../../format/dates'
+import { useCallback, useEffect, useState } from 'react'
+import { Link, Navigate, useParams } from 'react-router-dom'
+import { usePreferences } from '../../preferences/preferencesContext'
 import { useContainer } from '../../providers/containerContext'
 import { useSession } from '../../providers/sessionContext'
 import { Badge } from '../../ui/Badge'
 import { Button } from '../../ui/Button'
+import { PillTabs } from '../../ui/PillTabs'
 import { ProjectPpePanel } from '../ppeIssues/ProjectPpePanel'
 import { ProjectTeamsPanel } from '../projectTeams/ProjectTeamsPanel'
 import { ProjectStagesPanel } from '../stages/ProjectStagesPanel'
+import { ProjectFinancePanel } from './ProjectFinancePanel'
+import { ProjectFormDialog } from './ProjectFormDialog'
+import { ProjectLinksDialog } from './ProjectLinksDialog'
 import { ProjectMaterialPanel } from './ProjectMaterialPanel'
 import { ProjectOverview } from './ProjectOverview'
-import { projectStatusLabel } from './projectStatus'
+import { useProjectLookups } from './useProjectLookups'
 
 /*
   The project page: everything about one project, in tabs. Each tab is a
   component that receives the project; the tab list is the only place that
   knows which component goes where and who may see it.
+
+  The header also holds what is done to the project as a whole: edit it, share
+  the client portal, switch it off.
 */
 
 const PROJECT_TABS = [
   {
     key: 'overview',
-    label: 'Overview',
     permission: 'view_projects',
     render: (project) => <ProjectOverview project={project} />,
   },
   {
     key: 'stages',
-    label: 'Stages',
     permission: 'view_projects',
     render: (project) => <ProjectStagesPanel projectId={project.id} />,
   },
   {
+    key: 'material',
+    permission: 'view_stock',
+    render: (project) => <ProjectMaterialPanel projectId={project.id} />,
+  },
+  {
     key: 'team',
-    label: 'Team',
     permission: 'manage_projects',
     render: (project) => (
-      <div className="p-8">
+      <div className="px-10 pt-5 pb-10">
         <ProjectTeamsPanel projectId={project.id} />
       </div>
     ),
   },
   {
-    key: 'material',
-    label: 'Material',
-    permission: 'view_stock',
-    render: (project) => <ProjectMaterialPanel projectId={project.id} />,
-  },
-  {
     // The API's view_ppe: whoever issues PPE, and whoever only reads it on site.
     key: 'ppe',
-    label: 'PPE',
     permission: ['manage_safety', 'view_stock'],
     render: (project) => (
-      <div className="p-8">
+      <div className="px-10 pt-5 pb-10">
         <ProjectPpePanel projectId={project.id} />
       </div>
     ),
+  },
+  {
+    key: 'finance',
+    permission: 'view_finance',
+    render: (project) => <ProjectFinancePanel projectId={project.id} />,
   },
 ]
 
@@ -66,11 +73,20 @@ export function ProjectScreen() {
   const { projectId, tab } = useParams()
   const { projects } = useContainer()
   const { can } = useSession()
+  const { t, format } = usePreferences()
+  const canManage = can('manage_projects')
+  const { clientOptions, supervisorOptions } = useProjectLookups(canManage)
 
   const [project, setProject] = useState(null)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(null)
   const [reloadToken, setReloadToken] = useState(0)
+  const [formOpen, setFormOpen] = useState(false)
+  const [linksOpen, setLinksOpen] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [actionError, setActionError] = useState(null)
+
+  const reload = useCallback(() => setReloadToken((value) => value + 1), [])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -97,29 +113,30 @@ export function ProjectScreen() {
   // The first tab lives at the bare address, so /overview and unknown tabs fold back into it.
   if (!currentTab || tab === FIRST_TAB) return <Navigate to={basePath} replace />
 
-  if (loading) {
+  if (loading && !project) {
     return (
-      <div className="p-8" role="status" aria-label="Loading project">
-        <div className="h-16 animate-pulse bg-white" />
+      <div className="px-10 pt-7" role="status" aria-label={t('common.loading')}>
+        <div className="h-12 w-80 animate-pulse rounded-2xl bg-surface" />
+        <div className="mt-4 h-12 w-[520px] max-w-full animate-pulse rounded-full bg-surface" />
       </div>
     )
   }
 
   if (loadError) {
     return (
-      <div className="p-8">
-        <div className="border border-line bg-white px-6 py-10 text-center">
-          <p className="text-sm text-danger">
-            {loadError.status === 404 ? 'This project does not exist.' : (loadError.message ?? 'Could not load the project.')}
+      <div className="px-10 py-8">
+        <div className="rounded-3xl border border-line bg-surface px-6 py-10 text-center">
+          <p className="text-danger">
+            {loadError.status === 404 ? t('project.notFound') : (loadError.message ?? t('common.couldNotLoad'))}
           </p>
           <div className="mt-4 flex justify-center gap-2.5">
             {loadError.status !== 404 && (
-              <Button variant="outline" onClick={() => setReloadToken((value) => value + 1)}>
-                Try again
+              <Button variant="outline" onClick={reload}>
+                {t('common.tryAgain')}
               </Button>
             )}
-            <Link to="/projects" className="px-4 py-2.5 text-sm font-semibold text-bronze hover:underline">
-              Back to projects
+            <Link to="/projects" className="px-4 py-2.5 font-semibold text-accent hover:underline">
+              {t('project.backToList')}
             </Link>
           </div>
         </div>
@@ -127,55 +144,108 @@ export function ProjectScreen() {
     )
   }
 
+  const toggleActive = async () => {
+    setBusy(true)
+    setActionError(null)
+    try {
+      await projects.setActive(project.id, !project.active)
+      reload()
+    } catch (error) {
+      setActionError(error.message ?? t('common.couldNotSave'))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const saveProject = async (values) => {
+    await projects.update(project.id, values)
+    setFormOpen(false)
+    reload()
+  }
+
+  const place = [project.city, project.state].filter(Boolean).join(' / ')
+  const facts = [
+    project.code,
+    project.clientName,
+    place,
+    project.supervisorName && t('project.supervisor', { name: project.supervisorName }),
+    project.forecastDate && t('project.forecastOn', { date: format.date(project.forecastDate) }),
+  ].filter(Boolean)
+
   return (
     <>
-      <header className="border-b border-line bg-white px-8 pt-5">
-        <Link to="/projects" className="label hover:text-bronze">
-          ← Projects
+      <header className="flex flex-col px-10 pt-6">
+        <Link
+          to="/projects"
+          className="inline-flex min-h-9 items-center gap-1.5 self-start rounded-full border border-line bg-surface px-3.5 text-[13.5px] hover:border-accent"
+        >
+          ← {t('menu.projects')}
         </Link>
 
-        <div className="mt-1 flex flex-wrap items-center gap-3">
-          <h1 className="text-xl font-semibold tracking-tight">{project.name}</h1>
-          <div className="flex flex-wrap gap-1.5">
-            {project.active ? (
-              <Badge tone="neutral">{projectStatusLabel(project.status)}</Badge>
-            ) : (
-              <Badge tone="inactive">Inactive</Badge>
-            )}
-            {project.active && project.late && <Badge tone="warning">Late</Badge>}
-          </div>
+        <div className="mt-2.5 flex flex-wrap items-center gap-3">
+          <h1 className="display text-[42px] leading-none">{project.name}</h1>
+          {project.active ? (
+            <Badge tone="neutral">{t(`projectStatus.${project.status}`)}</Badge>
+          ) : (
+            <Badge tone="inactive">{t('common.inactive')}</Badge>
+          )}
+          {project.active && project.late && <Badge tone="late">{t('common.late')}</Badge>}
+
+          {canManage && (
+            <div className="ml-auto flex flex-wrap gap-2">
+              <Button variant="outline" className="px-4 py-2" onClick={() => setFormOpen(true)}>
+                {t('common.edit')}
+              </Button>
+              <Button variant="outline" className="px-4 py-2" onClick={() => setLinksOpen(true)}>
+                {t('project.portal')}
+              </Button>
+              <Button variant={project.active ? 'danger' : 'outline'} className="px-4 py-2" busy={busy} onClick={toggleActive}>
+                {project.active ? t('common.deactivate') : t('common.activate')}
+              </Button>
+            </div>
+          )}
         </div>
 
-        <p className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-muted">
-          <span className="font-mono">{project.code}</span>
-          {project.clientName && <span>{project.clientName}</span>}
-          {project.city && <span>{project.state ? `${project.city} / ${project.state}` : project.city}</span>}
-          {project.supervisorName && <span>Supervisor: {project.supervisorName}</span>}
-          <span>Forecast: {formatDate(project.forecastDate)}</span>
-        </p>
+        <p className="mt-1.5 font-mono text-[13px] text-muted">{facts.join(' · ')}</p>
 
-        <nav aria-label="Project sections" className="mt-4 -mb-px flex gap-1 overflow-x-auto">
-          {tabs.map((projectTab) => (
-            <NavLink
-              key={projectTab.key}
-              to={projectTab.key === FIRST_TAB ? basePath : `${basePath}/${projectTab.key}`}
-              end
-              className={({ isActive }) =>
-                [
-                  'border-b-2 px-3.5 py-2.5 text-sm whitespace-nowrap transition-colors',
-                  isActive
-                    ? 'border-gold font-semibold text-graphite'
-                    : 'border-transparent text-muted hover:text-graphite',
-                ].join(' ')
-              }
-            >
-              {projectTab.label}
-            </NavLink>
-          ))}
-        </nav>
+        {actionError && (
+          <p role="alert" className="mt-3 rounded-2xl bg-danger-wash px-4 py-2.5 text-[13.5px] text-danger">
+            {actionError}
+          </p>
+        )}
+
+        <div className="mt-4">
+          <PillTabs
+            label={t('project.sections')}
+            tabs={tabs.map((projectTab) => ({
+              to: projectTab.key === FIRST_TAB ? basePath : `${basePath}/${projectTab.key}`,
+              label: t(`project.tabs.${projectTab.key}`),
+            }))}
+          />
+        </div>
       </header>
 
       {currentTab.render(project)}
+
+      {canManage && (
+        <>
+          <ProjectFormDialog
+            open={formOpen}
+            project={project}
+            clientOptions={clientOptions}
+            supervisorOptions={supervisorOptions}
+            canSeeAmount={can('view_finance')}
+            onClose={() => setFormOpen(false)}
+            onSubmit={saveProject}
+          />
+          <ProjectLinksDialog
+            open={linksOpen}
+            projectId={project.id}
+            projectName={project.name}
+            onClose={() => setLinksOpen(false)}
+          />
+        </>
+      )}
     </>
   )
 }

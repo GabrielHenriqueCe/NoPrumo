@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { RequireSession } from './guards/RequireSession'
 import { useSession } from './providers/sessionContext'
+import { AccountScreen } from './screens/account/AccountScreen'
 import { AppointmentsScreen } from './screens/appointments/AppointmentsScreen'
 import { ChangePasswordScreen } from './screens/auth/ChangePasswordScreen'
 import { LoginScreen } from './screens/auth/LoginScreen'
@@ -9,11 +10,13 @@ import { DepartmentsScreen } from './screens/departments/DepartmentsScreen'
 import { EmployeesScreen } from './screens/employees/EmployeesScreen'
 import { EmployeeTrainingsScreen } from './screens/employeeTrainings/EmployeeTrainingsScreen'
 import { EmploymentRegimesScreen } from './screens/employmentRegimes/EmploymentRegimesScreen'
+import { HomeScreen } from './screens/home/HomeScreen'
 import { JobRolesScreen } from './screens/jobRoles/JobRolesScreen'
 import { PortalScreen } from './screens/portal/PortalScreen'
 import { ProjectScreen } from './screens/projects/ProjectScreen'
 import { ProjectsScreen } from './screens/projects/ProjectsScreen'
 import { PurchasesScreen } from './screens/purchases/PurchasesScreen'
+import { ReportsScreen } from './screens/reports/ReportsScreen'
 import { SettingsScreen } from './screens/settings/SettingsScreen'
 import { StockCategoriesScreen } from './screens/stockCategories/StockCategoriesScreen'
 import { StockGroupsScreen } from './screens/stockGroups/StockGroupsScreen'
@@ -42,6 +45,10 @@ import { SETTINGS_PERMISSIONS } from './shell/settings'
 */
 
 const SCREENS = [
+  { path: '/home', permission: null, element: <HomeScreen /> },
+  { path: '/account', permission: null, element: <AccountScreen /> },
+  { path: '/reports', permission: 'view_finance', element: <ReportsScreen /> },
+
   { path: '/settings', permission: SETTINGS_PERMISSIONS, element: <SettingsScreen /> },
 
   { path: '/users', permission: 'manage_users', element: <UsersScreen /> },
@@ -114,8 +121,7 @@ export function AppRoutes() {
 
 /*
   Anything unknown — including the bare "/" right after signing in — lands on
-  the first menu item this account can open. Sending everyone to /users would
-  greet a foreman with "no access" while stock items sit right there.
+  the first menu item this account can open: Home, which everyone has.
 */
 function FirstAllowedScreen() {
   const { can } = useSession()
@@ -124,6 +130,5 @@ function FirstAllowedScreen() {
     (item) => !item.permission || can(item.permission),
   )
 
-  // No item at all: /users shows the "no screen available yet" notice.
-  return <Navigate to={first?.to ?? '/users'} replace />
+  return <Navigate to={first?.to ?? '/home'} replace />
 }

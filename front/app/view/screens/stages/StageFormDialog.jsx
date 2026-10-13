@@ -4,6 +4,7 @@ import { Dialog } from '../../ui/Dialog'
 import { SelectField } from '../../ui/SelectField'
 import { TextField } from '../../ui/TextField'
 import { STAGE_STATUSES } from './stageStatus'
+import { useT } from '../../preferences/preferencesContext'
 
 const EMPTY = {
   name: '',
@@ -25,6 +26,7 @@ const idOrNull = (value) => (value ? Number(value) : null)
 
 // The project is the page the form opened from; it has no select.
 export function StageFormDialog({ open, stage, projectId, teamOptions, supervisorOptions, onClose, onSubmit }) {
+  const t = useT()
   const editing = Boolean(stage)
 
   const [form, setForm] = useState(EMPTY)
@@ -69,7 +71,7 @@ export function StageFormDialog({ open, stage, projectId, teamOptions, superviso
         // There is no project field on screen, so its error (e.g. an inactive project) goes here.
         if (error.fieldErrors.projectId) setFormError(error.fieldErrors.projectId)
       } else {
-        setFormError(error.message ?? 'Could not save the stage.')
+        setFormError(error.message ?? t('stageFormDialog.couldNotSaveTheStage'))
       }
     } finally {
       setBusy(false)
@@ -80,16 +82,16 @@ export function StageFormDialog({ open, stage, projectId, teamOptions, superviso
     <Dialog
       open={open}
       onClose={busy ? undefined : onClose}
-      title={editing ? 'Edit stage' : 'New stage'}
-      description="A step of a project's schedule, in the order it is built."
+      title={editing ? t('stageFormDialog.editStage') : t('stageFormDialog.newStage')}
+      description={t('stageFormDialog.aStepOfAProject')}
     >
       <form onSubmit={submit} noValidate className="flex flex-col gap-4 p-6">
         <div className="grid grid-cols-3 gap-4">
           <TextField
             className="col-span-2"
-            label="Name"
+            label={t('common.name')}
             name="name"
-            placeholder="e.g. Foundation"
+            placeholder={t('stageFormDialog.eGFoundation')}
             required
             value={form.name}
             onChange={update('name')}
@@ -97,7 +99,7 @@ export function StageFormDialog({ open, stage, projectId, teamOptions, superviso
           />
 
           <TextField
-            label="Order"
+            label={t('stageFormDialog.order')}
             name="sortOrder"
             type="number"
             min="0"
@@ -112,17 +114,17 @@ export function StageFormDialog({ open, stage, projectId, teamOptions, superviso
 
         <div className="grid grid-cols-2 gap-4">
           <SelectField
-            label="Status"
+            label={t('common.status')}
             name="status"
             required
             value={form.status}
             onChange={update('status')}
             error={fieldErrors.status}
-            options={STAGE_STATUSES}
+            options={STAGE_STATUSES.map((value) => ({ value, label: t(`stageStatus.${value}`) }))}
           />
 
           <TextField
-            label="Progress (%)"
+            label={t('stageFormDialog.progress')}
             name="percentage"
             type="number"
             min="0"
@@ -132,54 +134,54 @@ export function StageFormDialog({ open, stage, projectId, teamOptions, superviso
             value={form.percentage}
             onChange={update('percentage')}
             error={fieldErrors.percentage}
-            hint="A completed stage must be at 100%."
+            hint={t('stageFormDialog.aCompletedStageMustBe')}
           />
         </div>
 
         <TextField
-          label="Planned date"
+          label={t('stageFormDialog.plannedDate')}
           name="plannedDate"
           type="date"
           value={form.plannedDate}
           onChange={update('plannedDate')}
           error={fieldErrors.plannedDate}
-          hint="The stage shows as late once this date has passed."
+          hint={t('stageFormDialog.theStageShowsAsLate')}
         />
 
         <div className="grid grid-cols-2 gap-4">
           <SelectField
-            label="Team"
+            label={t('stageFormDialog.team')}
             name="teamId"
             value={form.teamId}
             onChange={update('teamId')}
             error={fieldErrors.teamId}
-            placeholder={teamOptions.length ? 'Select a team…' : 'No team registered'}
+            placeholder={teamOptions.length ? t('stageFormDialog.selectATeam') : t('stageFormDialog.noTeamRegistered')}
             options={teamOptions}
           />
 
           <SelectField
-            label="Supervisor"
+            label={t('stageFormDialog.supervisor')}
             name="supervisorId"
             value={form.supervisorId}
             onChange={update('supervisorId')}
             error={fieldErrors.supervisorId}
-            placeholder={supervisorOptions.length ? 'Select an employee…' : 'No employee registered'}
+            placeholder={supervisorOptions.length ? t('stageFormDialog.selectAnEmployee') : t('stageFormDialog.noEmployeeRegistered')}
             options={supervisorOptions}
           />
         </div>
 
         {formError && (
-          <p role="alert" className="border border-danger-soft bg-[#faefea] px-3 py-2 text-[12.5px] text-danger">
+          <p role="alert" className="rounded-2xl bg-danger-wash px-3 py-2 text-[12.5px] text-danger">
             {formError}
           </p>
         )}
 
         <div className="mt-2 flex items-center gap-2.5">
-          <Button type="submit" busy={busy} busyLabel="Saving…">
-            {editing ? 'Save changes' : 'Create stage'}
+          <Button type="submit" busy={busy} busyLabel={t('common.saving')}>
+            {editing ? t('common.saveChanges') : t('stageFormDialog.createStage')}
           </Button>
           <Button type="button" variant="outline" onClick={onClose} disabled={busy}>
-            Cancel
+            {t('common.cancel')}
           </Button>
         </div>
       </form>

@@ -4,8 +4,10 @@ import { Pagination } from '../../ui/Pagination';
 import { Button } from '../../ui/Button';
 import { TextField } from '../../ui/TextField';
 import { JobRoleFormDialog } from './JobRoleFormDialog';
+import { useT } from '../../preferences/preferencesContext'
 
 export function JobRolesScreen() {
+    const t = useT()
     const { jobRoles, departments } = useContainer();
     const [rolesList, setRolesList] = useState([]);
     const [departmentsMap, setDepartmentsMap] = useState({});
@@ -80,30 +82,30 @@ export function JobRolesScreen() {
 
     return (
         <div className="p-6">
-            <h1 className="text-2xl font-bold mb-4">Job Roles</h1>
+            <h1 className="text-2xl font-bold mb-4">{t('jobRolesScreen.jobRoles')}</h1>
             {error && (
-                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                <div className="bg-danger-wash border border-late text-danger px-4 py-3 rounded mb-4">
                     {error}
                 </div>
             )}
             <div className="flex gap-4 mb-4">
                 <TextField 
-                    placeholder="Search job roles..." 
+                    placeholder={t('jobRolesScreen.searchJobRoles')} 
                     value={search} 
                     onChange={(e) => { setSearch(e.target.value); setPage(1); }} 
                 />
                 <Button onClick={() => { setEditingRole(null); setIsDialogOpen(true); }}>
-                    New Job Role
+                    {t('jobRolesScreen.newJobRole')}
                 </Button>
             </div>
 
             <table className="w-full text-left border-collapse mb-4">
                 <thead>
                     <tr className="border-b">
-                        <th className="py-2">Name</th>
-                        <th className="py-2">Department</th>
-                        <th className="py-2">Status</th>
-                        <th className="py-2">Actions</th>
+                        <th className="py-2">{t('common.name')}</th>
+                        <th className="py-2">{t('jobRolesScreen.department')}</th>
+                        <th className="py-2">{t('common.status')}</th>
+                        <th className="py-2">{t('common.actions')}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -111,11 +113,11 @@ export function JobRolesScreen() {
                         <tr key={role.id} className="border-b">
                             <td className="py-2">{role.name}</td>
                             <td className="py-2">{departmentsMap[role.departmentId] || role.departmentId}</td>
-                            <td className="py-2">{role.active ? 'Active' : 'Inactive'}</td>
+                            <td className="py-2">{role.active ? t('common.active') : t('common.inactive')}</td>
                             <td className="py-2 flex gap-2">
-                                <Button variant="outline" onClick={() => { setEditingRole(role); setIsDialogOpen(true); }}>Edit</Button>
+                                <Button variant="outline" onClick={() => { setEditingRole(role); setIsDialogOpen(true); }}>{t('common.edit')}</Button>
                                 <Button variant="outline" onClick={() => handleToggleActive(role)}>
-                                    {role.active ? "Deactivate" : "Activate"}
+                                    {role.active ? t('common.deactivate') : t('common.activate')}
                                 </Button>
                             </td>
                         </tr>

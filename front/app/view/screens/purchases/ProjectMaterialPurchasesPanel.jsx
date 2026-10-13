@@ -3,7 +3,8 @@ import { useContainer } from '../../providers/containerContext'
 import { Badge } from '../../ui/Badge'
 import { Button } from '../../ui/Button'
 import { PurchaseRequestFormDialog } from './PurchaseRequestFormDialog'
-import { purchaseStatusLabel, purchaseStatusTone } from './purchaseStatus'
+import { purchaseStatusKey, purchaseStatusTone } from './purchaseStatus'
+import { useT } from '../../preferences/preferencesContext'
 
 function formatDate(value) {
   if (!value) return '—'
@@ -12,6 +13,7 @@ function formatDate(value) {
 }
 
 export function ProjectMaterialPurchasesPanel({ projectId }) {
+  const t = useT()
   const { purchaseRequests } = useContainer()
 
   const [requests, setRequests] = useState([])
@@ -30,7 +32,7 @@ export function ProjectMaterialPurchasesPanel({ projectId }) {
       .then((data) => setRequests(data.items || []))
       .catch((err) => {
         if (!controller.signal.aborted) {
-          setError(err.message || 'Could not load project purchase requests.')
+          setError(err.message || t('projectMaterialPurchasesPanel.couldNotLoadProjectPurchase'))
         }
       })
       .finally(() => {
@@ -38,7 +40,7 @@ export function ProjectMaterialPurchasesPanel({ projectId }) {
       })
 
     return () => controller.abort()
-  }, [projectId, purchaseRequests])
+  }, [projectId, purchaseRequests, t])
 
   useEffect(() => {
     return loadRequests()
@@ -48,42 +50,42 @@ export function ProjectMaterialPurchasesPanel({ projectId }) {
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="label">Project Supplies</div>
-          <h2 className="text-lg font-semibold text-graphite">Purchase Requests</h2>
+          <div className="label">{t('projectMaterialPurchasesPanel.projectSupplies')}</div>
+          <h2 className="text-lg font-semibold text-graphite">{t('projectMaterialPurchasesPanel.purchaseRequests')}</h2>
         </div>
 
         <Button variant="primary" onClick={() => setFormOpen(true)}>
-          + Request materials
+          {t('projectMaterialPurchasesPanel.requestMaterials')}
         </Button>
       </div>
 
       {error && (
-        <div className="border border-danger-soft bg-[#faefea] p-3 text-sm text-danger">
+        <div className="rounded-2xl bg-danger-wash p-3 text-sm text-danger">
           {error}
         </div>
       )}
 
       {loading ? (
-        <div className="p-4" role="status" aria-label="Loading purchase requests">
+        <div className="p-4" role="status" aria-label={t('projectMaterialPurchasesPanel.loadingPurchaseRequests')}>
           {Array.from({ length: 3 }).map((_, index) => (
-            <div key={index} className="mb-2 h-10 animate-pulse bg-cream last:mb-0" />
+            <div key={index} className="mb-2 h-10 animate-pulse rounded-xl bg-sunken last:mb-0" />
           ))}
         </div>
       ) : requests.length === 0 ? (
         <div className="border border-line bg-cream-soft p-8 text-center">
-          <p className="text-sm text-muted">No purchase request registered for this project yet.</p>
+          <p className="text-sm text-muted">{t('projectMaterialPurchasesPanel.noPurchaseRequestRegisteredFor')}</p>
         </div>
       ) : (
-        <div className="overflow-x-auto border border-line bg-white">
+        <div className="overflow-x-auto border border-line bg-surface">
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr className="border-b border-line bg-cream-soft text-left">
-                <HeaderCell>Date</HeaderCell>
-                <HeaderCell>Items / Quantities</HeaderCell>
-                <HeaderCell>Needed by</HeaderCell>
-                <HeaderCell>Requested by</HeaderCell>
-                <HeaderCell>Status</HeaderCell>
-                <HeaderCell>Notes</HeaderCell>
+                <HeaderCell>{t('projectMaterialPurchasesPanel.date')}</HeaderCell>
+                <HeaderCell>{t('projectMaterialPurchasesPanel.itemsQuantities')}</HeaderCell>
+                <HeaderCell>{t('projectMaterialPurchasesPanel.neededBy')}</HeaderCell>
+                <HeaderCell>{t('projectMaterialPurchasesPanel.requestedBy')}</HeaderCell>
+                <HeaderCell>{t('common.status')}</HeaderCell>
+                <HeaderCell>{t('common.notes')}</HeaderCell>
               </tr>
             </thead>
             <tbody>
@@ -100,7 +102,7 @@ export function ProjectMaterialPurchasesPanel({ projectId }) {
                           </span>
                           {item.fulfilledQuantity > 0 && (
                             <span className="ml-1 text-success">
-                              (Fulfilled: {item.fulfilledQuantity} {item.unit})
+                              {t('projectMaterialPurchasesPanel.fulfilled')} {item.fulfilledQuantity} {item.unit})
                             </span>
                           )}
                         </div>
@@ -111,11 +113,11 @@ export function ProjectMaterialPurchasesPanel({ projectId }) {
                   <td className="px-4 py-3 text-xs text-muted">{req.requesterName || '—'}</td>
                   <td className="px-4 py-3">
                     <Badge tone={purchaseStatusTone(req.status)}>
-                      {purchaseStatusLabel(req.status)}
+                      {t(purchaseStatusKey(req.status))}
                     </Badge>
                     {req.rejectionReason && (
                       <div className="mt-1 text-[11px] text-danger">
-                        Reason: {req.rejectionReason}
+                        {t('projectMaterialPurchasesPanel.reason')} {req.rejectionReason}
                       </div>
                     )}
                   </td>

@@ -6,8 +6,10 @@ import { TextField } from '../../ui/TextField';
 import { EmployeeFormDialog } from './EmployeeFormDialog';
 import { EmployeeProfile } from './EmployeeProfile';
 import { useSession } from '../../providers/sessionContext';
+import { useT } from '../../preferences/preferencesContext'
 
 export function EmployeesScreen() {
+    const t = useT()
     const { can } = useSession();
     const canViewFinance = can('view_finance');
     const { employees } = useContainer();
@@ -66,44 +68,44 @@ export function EmployeesScreen() {
 
     return (
         <div className="p-6">
-            <h1 className="text-2xl font-bold mb-4">Employees</h1>
+            <h1 className="text-2xl font-bold mb-4">{t('employeesScreen.employees')}</h1>
             {error && (
-                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                <div className="bg-danger-wash border border-late text-danger px-4 py-3 rounded mb-4">
                     {error}
                 </div>
             )}
 
             <div className="flex gap-4 mb-4">
                 <TextField
-                    placeholder="Search by name or registration..."
+                    placeholder={t('employeesScreen.searchByNameOrRegistration')}
                     value={search}
                     onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                 />
                 <Button onClick={() => { setEditingEmployee(null); setIsFormDialogOpen(true); }}>
-                    New Employee
+                    {t('employeesScreen.newEmployee')}
                 </Button>
             </div>
 
             <table className="w-full text-left border-collapse mb-4">
                 <thead>
-                    <tr className="border-b bg-gray-50">
-                        <th className="py-3 px-2">Reg. Number</th>
-                        <th className="py-3 px-2">Name</th>
-                        <th className="py-3 px-2">Job Role</th>
-                        <th className="py-3 px-2">Regime</th>
-                        <th className="py-3 px-2">Status</th>
-                        <th className="py-3 px-2 text-right">Actions</th>
+                    <tr className="border-b bg-sunken">
+                        <th className="py-3 px-2">{t('employeesScreen.regNumber')}</th>
+                        <th className="py-3 px-2">{t('common.name')}</th>
+                        <th className="py-3 px-2">{t('employeesScreen.jobRole')}</th>
+                        <th className="py-3 px-2">{t('employeesScreen.regime')}</th>
+                        <th className="py-3 px-2">{t('common.status')}</th>
+                        <th className="py-3 px-2 text-right">{t('common.actions')}</th>
                     </tr>
                 </thead>
                 <tbody>
                     {employeesList.map(emp => (
-                        <tr key={emp.id} className="border-b hover:bg-gray-50 transition-colors">
+                        <tr key={emp.id} className="border-b hover:bg-sunken transition-colors">
                             <td className="py-3 px-2 text-sm">{emp.registrationNumber || '-'}</td>
 
                             {/* CLICAR NO NOME ABRE A FICHA */}
                             <td className="py-3 px-2">
                                 <button
-                                    className="font-medium text-blue-600 hover:text-blue-800 hover:underline text-left"
+                                    className="font-medium text-accent hover:text-accent hover:underline text-left"
                                     onClick={() => setViewingEmployeeId(emp.id)}
                                 >
                                     {emp.name}
@@ -113,14 +115,14 @@ export function EmployeesScreen() {
                             <td className="py-3 px-2 text-sm">{emp.jobRoleName || '-'}</td>
                             <td className="py-3 px-2 text-sm">{emp.employmentRegimeLabel || '-'}</td>
                             <td className="py-3 px-2">
-                                <span className={`px-2 py-1 text-xs rounded-full ${emp.active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                                    {emp.active ? 'Active' : 'Inactive'}
+                                <span className={`px-2 py-1 text-xs rounded-full ${emp.active ? 'bg-success-wash text-success' : 'bg-sunken text-ink'}`}>
+                                    {emp.active ? t('common.active') : t('common.inactive')}
                                 </span>
                             </td>
                             <td className="py-3 px-2 flex gap-2 justify-end">
-                                <Button variant="outline" size="sm" onClick={() => { setEditingEmployee(emp); setIsFormDialogOpen(true); }}>Edit</Button>
+                                <Button variant="outline" size="sm" onClick={() => { setEditingEmployee(emp); setIsFormDialogOpen(true); }}>{t('common.edit')}</Button>
                                 <Button variant="outline" size="sm" onClick={() => handleToggleActive(emp)}>
-                                    {emp.active ? "Deactivate" : "Activate"}
+                                    {emp.active ? t('common.deactivate') : t('common.activate')}
                                 </Button>
                             </td>
                         </tr>
@@ -129,7 +131,7 @@ export function EmployeesScreen() {
             </table>
 
             {employeesList.length === 0 && !error && (
-                <div className="text-center py-8 text-gray-500">No employees found.</div>
+                <div className="text-center py-8 text-muted">{t('employeesScreen.noEmployeesFound')}</div>
             )}
 
             <Pagination page={page} totalPages={totalPages} total={total} onChange={setPage} />

@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef } from 'react'
+import { useT } from '../preferences/preferencesContext'
 
 /*
   Modal dialog.
@@ -18,6 +19,7 @@ import { useEffect, useId, useRef } from 'react'
 */
 
 export function Dialog({ open, title, description, onClose, children }) {
+  const t = useT()
   const titleId = useId()
   const panelRef = useRef(null)
 
@@ -52,7 +54,7 @@ export function Dialog({ open, title, description, onClose, children }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-graphite/55 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose?.()
       }}
@@ -63,11 +65,11 @@ export function Dialog({ open, title, description, onClose, children }) {
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className="max-h-[88vh] w-[540px] max-w-full overflow-y-auto border border-line bg-white outline-none"
+        className="max-h-[88vh] w-[560px] max-w-full overflow-y-auto rounded-3xl border border-line bg-surface text-ink shadow-[0_24px_60px_rgb(0_0_0/0.25)] outline-none"
       >
         <header className="flex items-start gap-4 border-b border-line-soft px-6 py-5">
           <div className="min-w-0">
-            <h2 id={titleId} className="text-lg font-semibold tracking-tight">
+            <h2 id={titleId} className="display text-[26px]">
               {title}
             </h2>
             {description && <p className="mt-1 text-[13px] text-muted">{description}</p>}
@@ -77,8 +79,8 @@ export function Dialog({ open, title, description, onClose, children }) {
             type="button"
             data-dialog-dismiss
             onClick={onClose}
-            aria-label="Close"
-            className="ml-auto cursor-pointer text-2xl leading-none text-muted hover:text-graphite"
+            aria-label={t('common.close')}
+            className="ml-auto cursor-pointer text-2xl leading-none text-muted hover:text-ink"
           >
             ×
           </button>

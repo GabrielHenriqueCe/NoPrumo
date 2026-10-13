@@ -5,6 +5,7 @@ import { Button } from '../../ui/Button'
 import { Pagination } from '../../ui/Pagination'
 import { SelectField } from '../../ui/SelectField'
 import { TeamFormDialog } from './TeamFormDialog'
+import { useT } from '../../preferences/preferencesContext'
 
 
 const PAGE_SIZE = 10
@@ -13,6 +14,7 @@ const SEARCH_DEBOUNCE_MS = 350
 const EMPTY_PAGE = { items: [], page: 1, totalPages: 1, total: 0 }
 
 export function TeamsScreen() {
+  const t = useT()
   const { teams, departments } = useContainer()
 
   const [data, setData] = useState(EMPTY_PAGE)
@@ -54,14 +56,14 @@ export function TeamsScreen() {
       )
       .then((result) => setData(result))
       .catch((error) => {
-        if (!controller.signal.aborted) setLoadError(error.message ?? 'Could not load teams.')
+        if (!controller.signal.aborted) setLoadError(error.message ?? t('teamsScreen.couldNotLoadTeams'))
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false)
       })
 
     return () => controller.abort()
-  }, [teams, page, appliedSearch, departmentFilter, reloadToken])
+  }, [teams, page, appliedSearch, departmentFilter, reloadToken, t])
 
   // The departments API returns them unordered.
   useEffect(() => {
@@ -99,7 +101,7 @@ export function TeamsScreen() {
       await action()
       reload()
     } catch (error) {
-      setActionError(error.message ?? 'The action could not be completed.')
+      setActionError(error.message ?? t('teamsScreen.theActionCouldNotBe'))
     } finally {
       setPendingId(null)
     }
@@ -121,64 +123,62 @@ export function TeamsScreen() {
 
   return (
     <>
-      <header className="flex flex-wrap items-center gap-4 border-b border-line bg-white px-8 py-5">
+      <header className="flex flex-wrap items-center gap-4 px-10 pt-7">
         <div className="min-w-0">
-          <p className="label">Master data</p>
-          <h1 className="mt-1 text-xl font-semibold tracking-tight">Teams</h1>
+          <p className="label">{t('teamsScreen.masterData')}</p>
+          <h1 className="display mt-1 text-[38px] leading-none">{t('teamsScreen.teams')}</h1>
         </div>
 
         <div className="ml-auto flex items-center gap-3">
           <label className="sr-only" htmlFor="team-search">
-            Search teams
+            {t('teamsScreen.searchTeams')}
           </label>
           <input
             id="team-search"
             type="search"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search by team or department"
-            className="w-64 border border-line bg-white px-3 py-2 text-sm outline-none focus:border-gold"
+            placeholder={t('teamsScreen.searchByTeamOrDepartment')}
+            className="w-64 h-11 rounded-full border border-line bg-surface px-5 text-sm outline-none focus:border-accent"
           />
 
           <div className="w-56">
             <SelectField
-              label="Department"
+              label={t('teamsScreen.department')}
               name="department-filter"
               value={departmentFilter}
               onChange={(event) => {
                 setDepartmentFilter(event.target.value)
                 setPage(1)
               }}
-              placeholder="All departments"
+              placeholder={t('teamsScreen.allDepartments')}
               options={departmentList.map((department) => ({ value: department.id, label: department.name }))}
             />
           </div>
 
-          <Button onClick={() => openForm(null)}>New team</Button>
+          <Button onClick={() => openForm(null)}>{t('teamsScreen.newTeam')}</Button>
         </div>
       </header>
 
-      <div className="p-8">
+      <div className="px-10 pt-6 pb-10">
         <p className="mb-6 max-w-[54em] text-sm leading-relaxed text-muted">
-          A team belongs to a department. Members join and leave with a date: ending a stint keeps the
-          record of who was on the team, and when. A team is switched off, never deleted — and only
-          once nobody is left in it.
+          {t('teamsScreen.aTeamBelongsToA')}
         </p>
 
         {actionError && (
-          <p role="alert" className="mb-4 border border-danger-soft bg-[#faefea] px-4 py-2.5 text-[13px] text-danger">
+          <p role="alert" className="mb-4 rounded-2xl bg-danger-wash px-4 py-2.5 text-[13px] text-danger">
             {actionError}
           </p>
         )}
 
-        <div className="border border-line bg-white">
+        <div className="overflow-hidden rounded-3xl border border-line bg-surface">
           {loading && <TableSkeleton />}
 
           {!loading && loadError && (
             <div className="px-6 py-10 text-center">
               <p className="text-sm text-danger">{loadError}</p>
               <Button variant="outline" onClick={reload} className="mt-4">
-                Try again
+                {t('common.tryAgain')}
               </Button>
             </div>
           )}
@@ -186,20 +186,20 @@ export function TeamsScreen() {
           {!loading && !loadError && data.items.length === 0 && (
             <div className="px-6 py-12 text-center">
               <p className="text-sm text-muted">
-                {appliedSearch ? `No team matches “${appliedSearch}”.` : 'No team registered yet.'}
+                {appliedSearch ? t('teamsScreen.noTeamMatchesAppliedsearch', { appliedSearch: appliedSearch }) : t('teamsScreen.noTeamRegisteredYet')}
               </p>
             </div>
           )}
 
           {!loading && !loadError && data.items.length > 0 && (
             <table className="w-full border-collapse text-sm">
-              <caption className="sr-only">Registered teams</caption>
+              <caption className="sr-only">{t('teamsScreen.registeredTeams')}</caption>
               <thead>
                 <tr className="border-b border-line bg-cream-soft text-left">
-                  <HeaderCell>Name</HeaderCell>
-                  <HeaderCell>Department</HeaderCell>
-                  <HeaderCell>Members</HeaderCell>
-                  <HeaderCell>Status</HeaderCell>
+                  <HeaderCell>{t('common.name')}</HeaderCell>
+                  <HeaderCell>{t('teamsScreen.department')}</HeaderCell>
+                  <HeaderCell>{t('teamsScreen.members')}</HeaderCell>
+                  <HeaderCell>{t('common.status')}</HeaderCell>
                   <th className="px-4 py-3" />
                 </tr>
               </thead>
@@ -216,7 +216,7 @@ export function TeamsScreen() {
 
                       <td className="px-4 py-3">
                         <Badge tone={team.active ? 'active' : 'inactive'}>
-                          {team.active ? 'Active' : 'Inactive'}
+                          {team.active ? t('common.active') : t('common.inactive')}
                         </Badge>
                       </td>
 
@@ -225,11 +225,11 @@ export function TeamsScreen() {
                           <Button
                             variant="outline"
                             className="px-3 py-1.5"
-                            aria-label={`Members of ${team.name}`}
+                            aria-label={t('teamsScreen.membersOfName', { name: team.name })}
                             disabled={busy}
                             onClick={() => openForm(team, 'members')}
                           >
-                            Members
+                            {t('teamsScreen.members')}
                           </Button>
 
                           <Button
@@ -239,7 +239,7 @@ export function TeamsScreen() {
                             disabled={busy}
                             onClick={() => openForm(team)}
                           >
-                            Edit
+                            {t('common.edit')}
                           </Button>
 
                           <Button
@@ -250,7 +250,7 @@ export function TeamsScreen() {
                             disabled={busy}
                             onClick={() => runAction(team.id, () => teams.setActive(team.id, !team.active))}
                           >
-                            {team.active ? 'Deactivate' : 'Activate'}
+                            {team.active ? t('common.deactivate') : t('common.activate')}
                           </Button>
                         </div>
                       </td>
@@ -292,10 +292,11 @@ function HeaderCell({ children }) {
 }
 
 function TableSkeleton() {
+  const t = useT()
   return (
-    <div className="p-4" role="status" aria-label="Loading teams">
+    <div className="p-4" role="status" aria-label={t('teamsScreen.loadingTeams')}>
       {Array.from({ length: 4 }).map((_, index) => (
-        <div key={index} className="mb-2 h-11 animate-pulse bg-cream last:mb-0" />
+        <div key={index} className="mb-2 h-11 animate-pulse rounded-xl bg-sunken last:mb-0" />
       ))}
     </div>
   )

@@ -2,6 +2,7 @@ import { useEffect, useId, useState } from 'react'
 import { Button } from '../../ui/Button'
 import { Dialog } from '../../ui/Dialog'
 import { TextField } from '../../ui/TextField'
+import { useT } from '../../preferences/preferencesContext'
 
 // Validity and workload are optional (a CNH has no workload): blank goes as null.
 // The only local check is "whole number": "1.5" fails JSON conversion with a technical message.
@@ -17,6 +18,7 @@ const EMPTY = {
 const WHOLE_NUMBER_FIELDS = ['validityMonths', 'minWorkloadHours']
 
 export function TrainingTypeFormDialog({ open, trainingType, onClose, onSubmit }) {
+  const t = useT()
   const editing = Boolean(trainingType)
   const inPersonId = useId()
 
@@ -71,7 +73,7 @@ export function TrainingTypeFormDialog({ open, trainingType, onClose, onSubmit }
       })
     } catch (error) {
       if (error.isValidation) setFieldErrors(error.fieldErrors)
-      else setFormError(error.message ?? 'Could not save the training type.')
+      else setFormError(error.message ?? t('trainingTypeFormDialog.couldNotSaveTheTraining'))
     } finally {
       setBusy(false)
     }
@@ -81,30 +83,30 @@ export function TrainingTypeFormDialog({ open, trainingType, onClose, onSubmit }
     <Dialog
       open={open}
       onClose={busy ? undefined : onClose}
-      title={editing ? 'Edit training type' : 'New training type'}
+      title={editing ? t('trainingTypeFormDialog.editTrainingType') : t('trainingTypeFormDialog.newTrainingType')}
       description={
         editing
-          ? 'Changing the validity does not move the expiry of trainings already saved.'
-          : 'An NR course, the ASO or any other certificate an employee may need.'
+          ? t('trainingTypeFormDialog.changingTheValidityDoesNot')
+          : t('trainingTypeFormDialog.anNrCourseTheAso')
       }
     >
       <form onSubmit={submit} noValidate className="flex flex-col gap-4 p-6">
         <div className="grid grid-cols-3 gap-4">
           <TextField
-            label="Code"
+            label={t('trainingTypeFormDialog.code')}
             name="code"
-            placeholder="e.g. NR-35"
+            placeholder={t('trainingTypeFormDialog.eGNr35')}
             required
             value={form.code}
             onChange={update('code')}
             error={fieldErrors.code}
-            hint="Saved in capitals."
+            hint={t('trainingTypeFormDialog.savedInCapitals')}
           />
 
           <TextField
-            label="Name"
+            label={t('common.name')}
             name="name"
-            placeholder="e.g. Work at height"
+            placeholder={t('trainingTypeFormDialog.eGWorkAtHeight')}
             required
             className="col-span-2"
             value={form.name}
@@ -115,7 +117,7 @@ export function TrainingTypeFormDialog({ open, trainingType, onClose, onSubmit }
 
         <div className="grid grid-cols-2 gap-4">
           <TextField
-            label="Validity (months)"
+            label={t('trainingTypeFormDialog.validityMonths')}
             name="validityMonths"
             type="number"
             inputMode="numeric"
@@ -124,11 +126,11 @@ export function TrainingTypeFormDialog({ open, trainingType, onClose, onSubmit }
             value={form.validityMonths}
             onChange={update('validityMonths')}
             error={fieldErrors.validityMonths}
-            hint="Leave blank if it never expires."
+            hint={t('trainingTypeFormDialog.leaveBlankIfItNever')}
           />
 
           <TextField
-            label="Minimum workload (hours)"
+            label={t('trainingTypeFormDialog.minimumWorkloadHours')}
             name="minWorkloadHours"
             type="number"
             inputMode="numeric"
@@ -137,7 +139,7 @@ export function TrainingTypeFormDialog({ open, trainingType, onClose, onSubmit }
             value={form.minWorkloadHours}
             onChange={update('minWorkloadHours')}
             error={fieldErrors.minWorkloadHours}
-            hint="Leave blank if there is none."
+            hint={t('trainingTypeFormDialog.leaveBlankIfThereIs')}
           />
         </div>
 
@@ -149,15 +151,15 @@ export function TrainingTypeFormDialog({ open, trainingType, onClose, onSubmit }
             checked={form.requiresInPerson}
             onChange={update('requiresInPerson')}
             aria-describedby={`${inPersonId}-hint`}
-            className="mt-0.5 h-4 w-4 cursor-pointer accent-graphite"
+            className="mt-0.5 h-4 w-4 cursor-pointer accent-[var(--ink)]"
           />
 
           <div>
             <label htmlFor={inPersonId} className="cursor-pointer text-sm font-medium">
-              Must be taken in person
+              {t('trainingTypeFormDialog.mustBeTakenInPerson')}
             </label>
             <p id={`${inPersonId}-hint`} className="mt-0.5 text-[12px] text-muted">
-              Online and blended trainings of this type are refused.
+              {t('trainingTypeFormDialog.onlineAndBlendedTrainingsOf')}
             </p>
             {fieldErrors.requiresInPerson && (
               <p className="mt-1.5 text-[12.5px] text-danger">{fieldErrors.requiresInPerson}</p>
@@ -166,17 +168,17 @@ export function TrainingTypeFormDialog({ open, trainingType, onClose, onSubmit }
         </div>
 
         {formError && (
-          <p role="alert" className="border border-danger-soft bg-[#faefea] px-3 py-2 text-[12.5px] text-danger">
+          <p role="alert" className="rounded-2xl bg-danger-wash px-3 py-2 text-[12.5px] text-danger">
             {formError}
           </p>
         )}
 
         <div className="mt-2 flex items-center gap-2.5">
-          <Button type="submit" busy={busy} busyLabel="Saving…">
-            {editing ? 'Save changes' : 'Create training type'}
+          <Button type="submit" busy={busy} busyLabel={t('common.saving')}>
+            {editing ? t('common.saveChanges') : t('trainingTypeFormDialog.createTrainingType')}
           </Button>
           <Button type="button" variant="outline" onClick={onClose} disabled={busy}>
-            Cancel
+            {t('common.cancel')}
           </Button>
         </div>
       </form>

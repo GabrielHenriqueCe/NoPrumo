@@ -1,4 +1,5 @@
 import { useId } from 'react'
+import { useT } from '../preferences/preferencesContext'
 
 /*
   Native <select> on purpose. It costs nothing, works with the keyboard, and on
@@ -7,7 +8,8 @@ import { useId } from 'react'
   one needs neither: six roles, fixed.
 */
 
-export function SelectField({ label, error, options, placeholder = 'Select…', className = '', ...rest }) {
+export function SelectField({ label, error, options = [], placeholder, className = '', children, ...rest }) {
+  const t = useT()
   const id = useId()
   const errorId = `${id}-error`
 
@@ -17,24 +19,30 @@ export function SelectField({ label, error, options, placeholder = 'Select…', 
         {label}
       </label>
 
-      <select
-        {...rest}
-        id={id}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={error ? errorId : undefined}
-        className={[
-          'w-full appearance-none bg-white px-3 py-2.5 text-sm text-graphite outline-none transition-colors',
-          'border',
-          error ? 'border-danger-soft' : 'border-line focus:border-gold',
-        ].join(' ')}
-      >
-        <option value="">{placeholder}</option>
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+      <div className="relative">
+        <select
+          {...rest}
+          id={id}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? errorId : undefined}
+          className={[
+            'min-h-11 w-full appearance-none rounded-2xl border bg-surface pr-10 pl-4 text-[15px] text-ink outline-none transition-colors',
+            error ? 'border-late' : 'border-line focus:border-accent',
+          ].join(' ')}
+        >
+          {/* Children are for callers that bring their own <option>s, including their own empty one. */}
+          {!children && <option value="">{placeholder ?? t('common.select')}</option>}
+          {options.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+          {children}
+        </select>
+        <span aria-hidden="true" className="pointer-events-none absolute top-1/2 right-4 -translate-y-1/2 text-muted">
+          ▾
+        </span>
+      </div>
 
       {error && (
         <p id={errorId} className="mt-1.5 text-[12.5px] text-danger">

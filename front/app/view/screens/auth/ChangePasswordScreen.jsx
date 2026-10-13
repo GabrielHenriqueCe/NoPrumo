@@ -1,151 +1,47 @@
-import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { usePreferences } from '../../preferences/preferencesContext'
 import { useSession } from '../../providers/sessionContext'
 import { Brand } from '../../shell/Brand'
-import { Button } from '../../ui/Button'
-import { TextField } from '../../ui/TextField'
+import { PasswordForm } from '../account/PasswordForm'
 
 /*
-  Two ways in: forced on first sign-in (RequireSession keeps the account here
-  until the provisional password is replaced) or by choice, from the menu.
-
-  The confirmation field never reaches the API: it exists to catch a typo in a
-  value nobody can see while typing.
+  The forced change on first sign-in: RequireSession keeps the account here
+  until the provisional password is replaced. No menu, because the person has
+  not finished signing in. Changing the password by choice is on My account.
 */
 
-const MIN_LENGTH = 8
-
 export function ChangePasswordScreen() {
-  const { changePassword, signOut, user, mustChangePassword } = useSession()
+  const { signOut, user, mustChangePassword } = useSession()
+  const { t, resolvedTheme } = usePreferences()
   const navigate = useNavigate()
-
-  const [form, setForm] = useState({ currentPassword: '', newPassword: '', confirmation: '' })
-  const [fieldErrors, setFieldErrors] = useState({})
-  const [formError, setFormError] = useState(null)
-  const [busy, setBusy] = useState(false)
-
-  const update = (field) => (event) => {
-    setForm((current) => ({ ...current, [field]: event.target.value }))
-    setFieldErrors((current) => ({ ...current, [field]: undefined }))
-  }
 
   const leave = () => {
     signOut()
     navigate('/login', { replace: true })
   }
 
-  const submit = async (event) => {
-    event.preventDefault()
-    setFormError(null)
-
-    if (form.newPassword.length < MIN_LENGTH) {
-      setFieldErrors({ newPassword: `Use at least ${MIN_LENGTH} characters.` })
-      return
-    }
-
-    if (form.newPassword !== form.confirmation) {
-      setFieldErrors({ confirmation: 'The two passwords do not match.' })
-      return
-    }
-
-    setBusy(true)
-    setFieldErrors({})
-
-    try {
-      await changePassword(form.currentPassword, form.newPassword)
-      navigate('/', { replace: true })
-    } catch (error) {
-      if (error.isValidation) setFieldErrors(error.fieldErrors)
-      else setFormError(error.message ?? 'Could not change the password.')
-    } finally {
-      setBusy(false)
-    }
-  }
-
   return (
-    <div className="flex min-h-screen items-center justify-center bg-graphite p-6">
-      <form
-        onSubmit={submit}
-        noValidate
-        className="w-full max-w-[390px] border border-line-dark bg-graphite-soft p-10"
-      >
-        <Brand tone="dark" size={68} />
+    <div className="flex min-h-screen items-center justify-center bg-page p-6 text-ink">
+      <div className="w-full max-w-[440px] rounded-3xl border border-line bg-surface p-10 shadow-[0_12px_40px_rgb(0_0_0/0.06)]">
+        <Brand tone={resolvedTheme === 'dark' ? 'dark' : 'light'} size={56} />
 
-        <p className="label mt-8 text-muted-dark">
-          {mustChangePassword ? 'Choose a new password' : 'Change your password'}
-        </p>
+        <p className="label mt-8">{user?.name}</p>
+        <h1 className="display mt-1 text-[34px]">{t('auth.changeTitle')}</h1>
+        <p className="mt-2 mb-6 leading-relaxed text-muted">{t('auth.changeIntro')}</p>
 
-        <p className="mt-2 mb-5 text-[12.5px] leading-relaxed text-muted-dark">
-          {mustChangePassword
-            ? `${user?.name ? `${user.name}, your` : 'Your'} account still uses the password an administrator handed over. Replace it to continue.`
-            : 'Confirm the current password, then choose the new one.'}
-        </p>
-
-        <TextField
-          tone="dark"
-          label="Current password"
-          name="currentPassword"
-          type="password"
-          placeholder={mustChangePassword ? 'The password you just signed in with' : 'Your current password'}
-          autoComplete="current-password"
+        <PasswordForm
           autoFocus
-          required
-          value={form.currentPassword}
-          onChange={update('currentPassword')}
-          error={fieldErrors.currentPassword}
-          className="mb-4"
+          onChanged={() => navigate(mustChangePassword ? '/' : '/account', { replace: true })}
         />
-
-        <TextField
-          tone="dark"
-          label="New password"
-          name="newPassword"
-          type="password"
-          placeholder={`At least ${MIN_LENGTH} characters`}
-          autoComplete="new-password"
-          required
-          value={form.newPassword}
-          onChange={update('newPassword')}
-          error={fieldErrors.newPassword}
-          hint={`At least ${MIN_LENGTH} characters.`}
-          className="mb-4"
-        />
-
-        <TextField
-          tone="dark"
-          label="Confirm the new password"
-          name="confirmation"
-          type="password"
-          placeholder="Type the new password again"
-          autoComplete="new-password"
-          required
-          value={form.confirmation}
-          onChange={update('confirmation')}
-          error={fieldErrors.confirmation}
-          className="mb-4"
-        />
-
-        {formError && (
-          <p
-            role="alert"
-            className="mb-4 border border-danger-soft/40 bg-danger/10 px-3 py-2 text-[12.5px] text-danger-soft"
-          >
-            {formError}
-          </p>
-        )}
-
-        <Button type="submit" variant="gold" busy={busy} busyLabel="Saving…" className="w-full">
-          {mustChangePassword ? 'Save and continue' : 'Save new password'}
-        </Button>
 
         <button
           type="button"
-          onClick={mustChangePassword ? leave : () => navigate(-1)}
-          className="label mt-5 block w-full cursor-pointer text-center text-muted-dark hover:text-cream"
+          onClick={mustChangePassword ? leave : () => navigate('/account')}
+          className="mt-6 cursor-pointer text-sm font-semibold text-muted hover:text-ink"
         >
-          {mustChangePassword ? 'Sign out' : 'Cancel'}
+          {mustChangePassword ? t('shell.signOut') : t('common.cancel')}
         </button>
-      </form>
+      </div>
     </div>
   )
 }

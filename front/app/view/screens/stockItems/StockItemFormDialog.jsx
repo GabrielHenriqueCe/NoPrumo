@@ -3,6 +3,7 @@ import { Button } from '../../ui/Button'
 import { Dialog } from '../../ui/Dialog'
 import { SelectField } from '../../ui/SelectField'
 import { TextField } from '../../ui/TextField'
+import { useT } from '../../preferences/preferencesContext'
 
 /*
   Create or edit a stock item.
@@ -27,6 +28,7 @@ const EMPTY = {
 }
 
 export function StockItemFormDialog({ open, item, groups, canSeePrice, onClose, onSubmit }) {
+    const t = useT()
     const editing = Boolean(item)
 
     const [form, setForm] = useState(EMPTY)
@@ -83,7 +85,7 @@ export function StockItemFormDialog({ open, item, groups, canSeePrice, onClose, 
             })
         } catch (error) {
             if (error.isValidation) setFieldErrors(error.fieldErrors)
-            else setFormError(error.message ?? 'Could not save the item.')
+            else setFormError(error.message ?? t('stockItemFormDialog.couldNotSaveTheItem'))
         } finally {
             setBusy(false)
         }
@@ -93,18 +95,18 @@ export function StockItemFormDialog({ open, item, groups, canSeePrice, onClose, 
         <Dialog
             open={open}
             onClose={busy ? undefined : onClose}
-            title={editing ? 'Edit stock item' : 'New stock item'}
-            description="The item belongs to a group, which belongs to a category."
+            title={editing ? t('stockItemFormDialog.editStockItem') : t('stockItemFormDialog.newStockItem')}
+            description={t('stockItemFormDialog.theItemBelongsToA')}
         >
             <form onSubmit={submit} noValidate className="flex flex-col gap-4 p-6">
                 <SelectField
-                    label="Group"
+                    label={t('stockItemFormDialog.group')}
                     name="stockGroupId"
                     required
                     value={form.stockGroupId}
                     onChange={update('stockGroupId')}
                     error={fieldErrors.stockGroupId}
-                    placeholder="Select a group…"
+                    placeholder={t('stockItemFormDialog.selectAGroup')}
                     options={groups.map((group) => ({
                         value: group.id,
                         label: `${group.name} (${group.stockCategoryName})`,
@@ -112,9 +114,9 @@ export function StockItemFormDialog({ open, item, groups, canSeePrice, onClose, 
                 />
 
                 <TextField
-                    label="Name"
+                    label={t('common.name')}
                     name="name"
-                    placeholder="e.g. White helmet"
+                    placeholder={t('stockItemFormDialog.eGWhiteHelmet')}
                     required
                     value={form.name}
                     onChange={update('name')}
@@ -123,19 +125,19 @@ export function StockItemFormDialog({ open, item, groups, canSeePrice, onClose, 
 
                 <div className="grid grid-cols-2 gap-4">
                     <TextField
-                        label="Code"
+                        label={t('stockItemFormDialog.code')}
                         name="code"
-                        placeholder="e.g. CAP-01"
+                        placeholder={t('stockItemFormDialog.eGCap01')}
                         value={form.code}
                         onChange={update('code')}
                         error={fieldErrors.code}
-                        hint="Optional."
+                        hint={t('stockItemFormDialog.optional')}
                     />
 
                     <TextField
-                        label="Unit"
+                        label={t('stockItemFormDialog.unit')}
                         name="unit"
-                        placeholder="e.g. un, kg, m"
+                        placeholder={t('stockItemFormDialog.eGUnKgM')}
                         required
                         value={form.unit}
                         onChange={update('unit')}
@@ -145,7 +147,7 @@ export function StockItemFormDialog({ open, item, groups, canSeePrice, onClose, 
 
                 <div className="grid grid-cols-2 gap-4">
                     <TextField
-                        label="Minimum quantity"
+                        label={t('stockItemFormDialog.minimumQuantity')}
                         name="minQuantity"
                         type="number"
                         step="0.01"
@@ -158,7 +160,7 @@ export function StockItemFormDialog({ open, item, groups, canSeePrice, onClose, 
 
                     {canSeePrice && (
                         <TextField
-                            label="Reference price"
+                            label={t('stockItemFormDialog.referencePrice')}
                             name="referencePrice"
                             type="number"
                             step="0.01"
@@ -166,7 +168,7 @@ export function StockItemFormDialog({ open, item, groups, canSeePrice, onClose, 
                             value={form.referencePrice}
                             onChange={update('referencePrice')}
                             error={fieldErrors.referencePrice}
-                            hint="Leave blank to keep it at 0."
+                            hint={t('stockItemFormDialog.leaveBlankToKeepIt')}
                         />
                     )}
                 </div>
@@ -176,15 +178,15 @@ export function StockItemFormDialog({ open, item, groups, canSeePrice, onClose, 
                         <TextField
                             label="CA"
                             name="ca"
-                            placeholder="Certificate of Approval"
+                            placeholder={t('stockItemFormDialog.certificateOfApproval')}
                             value={form.ca}
                             onChange={update('ca')}
                             error={fieldErrors.ca}
-                            hint="Only PPE items have a CA."
+                            hint={t('stockItemFormDialog.onlyPpeItemsHaveA')}
                         />
 
                         <TextField
-                            label="CA expiry date"
+                            label={t('stockItemFormDialog.caExpiryDate')}
                             name="caExpiryDate"
                             type="date"
                             value={form.caExpiryDate}
@@ -195,17 +197,17 @@ export function StockItemFormDialog({ open, item, groups, canSeePrice, onClose, 
                 )}
 
                 {formError && (
-                    <p role="alert" className="border border-danger-soft bg-[#faefea] px-3 py-2 text-[12.5px] text-danger">
+                    <p role="alert" className="rounded-2xl bg-danger-wash px-3 py-2 text-[12.5px] text-danger">
                         {formError}
                     </p>
                 )}
 
                 <div className="mt-2 flex items-center gap-2.5">
-                    <Button type="submit" busy={busy} busyLabel="Saving…">
-                        {editing ? 'Save changes' : 'Create item'}
+                    <Button type="submit" busy={busy} busyLabel={t('common.saving')}>
+                        {editing ? t('common.saveChanges') : t('stockItemFormDialog.createItem')}
                     </Button>
                     <Button type="button" variant="outline" onClick={onClose} disabled={busy}>
-                        Cancel
+                        {t('common.cancel')}
                     </Button>
                 </div>
             </form>

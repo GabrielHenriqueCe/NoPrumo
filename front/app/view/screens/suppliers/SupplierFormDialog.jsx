@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Button } from '../../ui/Button'
 import { Dialog } from '../../ui/Dialog'
 import { TextField } from '../../ui/TextField'
+import { useT } from '../../preferences/preferencesContext'
 
 const EMPTY = {
   name: '',
@@ -32,6 +33,7 @@ function formatDocument(value) {
 }
 
 export function SupplierFormDialog({ open, supplier, onClose, onSubmit }) {
+  const t = useT()
   const editing = Boolean(supplier)
 
   const [form, setForm] = useState(EMPTY)
@@ -89,28 +91,28 @@ export function SupplierFormDialog({ open, supplier, onClose, onSubmit }) {
       })
     } catch (error) {
       if (error.isValidation) setFieldErrors(error.fieldErrors)
-      else setFormError(error.message ?? 'Could not save the supplier.')
+      else setFormError(error.message ?? t('supplierFormDialog.couldNotSaveTheSupplier'))
     } finally {
       setBusy(false)
     }
   }
 
   const docPlaceholder = editing && supplier?.documentMasked
-    ? `${supplier.documentMasked} — leave blank to keep`
+    ? t('supplierFormDialog.documentmaskedLeaveBlankToKeep', { documentMasked: supplier.documentMasked })
     : '00.000.000/0001-00'
 
   return (
     <Dialog
       open={open}
       onClose={busy ? undefined : onClose}
-      title={editing ? 'Edit supplier' : 'New supplier'}
-      description="Register material and service suppliers."
+      title={editing ? t('supplierFormDialog.editSupplier') : t('supplierFormDialog.newSupplier')}
+      description={t('supplierFormDialog.registerMaterialAndServiceSuppliers')}
     >
       <form onSubmit={submit} noValidate className="flex flex-col gap-4 p-6 max-h-[80vh] overflow-y-auto">
         <TextField
-          label="Supplier name"
+          label={t('supplierFormDialog.supplierName')}
           name="name"
-          placeholder="e.g. BuildMaterials Inc"
+          placeholder={t('supplierFormDialog.eGBuildmaterialsInc')}
           required
           value={form.name}
           onChange={update('name')}
@@ -118,27 +120,27 @@ export function SupplierFormDialog({ open, supplier, onClose, onSubmit }) {
         />
 
         <TextField
-          label="Document (CPF / CNPJ)"
+          label={t('supplierFormDialog.documentCpfCnpj')}
           name="document"
           placeholder={docPlaceholder}
           value={form.document}
           onChange={update('document')}
           error={fieldErrors.document || fieldErrors.documentMasked}
-          hint={editing ? 'Leave blank to keep the current document.' : undefined}
+          hint={editing ? t('supplierFormDialog.leaveBlankToKeepThe') : undefined}
         />
 
         <div className="grid grid-cols-2 gap-4">
           <TextField
-            label="Contact name"
+            label={t('supplierFormDialog.contactName')}
             name="contactName"
-            placeholder="e.g. Carlos Santos"
+            placeholder={t('supplierFormDialog.eGCarlosSantos')}
             value={form.contactName}
             onChange={update('contactName')}
             error={fieldErrors.contactName}
           />
 
           <TextField
-            label="Phone"
+            label={t('supplierFormDialog.phone')}
             name="phone"
             placeholder="(00) 0000-0000"
             value={form.phone}
@@ -148,10 +150,10 @@ export function SupplierFormDialog({ open, supplier, onClose, onSubmit }) {
         </div>
 
         <TextField
-          label="Email"
+          label={t('supplierFormDialog.email')}
           name="email"
           type="email"
-          placeholder="sales@supplier.com"
+          placeholder={t('supplierFormDialog.salesSupplierCom')}
           value={form.email}
           onChange={update('email')}
           error={fieldErrors.email}
@@ -159,16 +161,16 @@ export function SupplierFormDialog({ open, supplier, onClose, onSubmit }) {
 
         <div className="grid grid-cols-2 gap-4">
           <TextField
-            label="City"
+            label={t('supplierFormDialog.city')}
             name="city"
-            placeholder="Blumenau"
+            placeholder={t('supplierFormDialog.blumenau')}
             value={form.city}
             onChange={update('city')}
             error={fieldErrors.city}
           />
 
           <TextField
-            label="State (UF)"
+            label={t('supplierFormDialog.stateUf')}
             name="state"
             placeholder="SC"
             value={form.state}
@@ -178,17 +180,17 @@ export function SupplierFormDialog({ open, supplier, onClose, onSubmit }) {
         </div>
 
         {formError && (
-          <p role="alert" className="border border-danger-soft bg-[#faefea] px-3 py-2 text-[12.5px] text-danger">
+          <p role="alert" className="rounded-2xl bg-danger-wash px-3 py-2 text-[12.5px] text-danger">
             {formError}
           </p>
         )}
 
         <div className="mt-2 flex items-center gap-2.5">
-          <Button type="submit" busy={busy} busyLabel="Saving…">
-            {editing ? 'Save changes' : 'Create supplier'}
+          <Button type="submit" busy={busy} busyLabel={t('common.saving')}>
+            {editing ? t('common.saveChanges') : t('supplierFormDialog.createSupplier')}
           </Button>
           <Button type="button" variant="outline" onClick={onClose} disabled={busy}>
-            Cancel
+            {t('common.cancel')}
           </Button>
         </div>
       </form>

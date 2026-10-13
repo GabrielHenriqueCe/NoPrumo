@@ -3,6 +3,7 @@ import { Button } from '../../ui/Button'
 import { Dialog } from '../../ui/Dialog'
 import { SelectField } from '../../ui/SelectField'
 import { TextField } from '../../ui/TextField'
+import { useT } from '../../preferences/preferencesContext'
 
 const EMPTY = {
   name: '',
@@ -41,6 +42,7 @@ function formatDocument(value, personType) {
 }
 
 export function ClientFormDialog({ open, client, onClose, onSubmit }) {
+  const t = useT()
   const editing = Boolean(client)
 
   const [form, setForm] = useState(EMPTY)
@@ -122,7 +124,7 @@ export function ClientFormDialog({ open, client, onClose, onSubmit }) {
       })
     } catch (error) {
       if (error.isValidation) setFieldErrors(error.fieldErrors)
-      else setFormError(error.message ?? 'Could not save the client.')
+      else setFormError(error.message ?? t('clientFormDialog.couldNotSaveTheClient'))
     } finally {
       setBusy(false)
     }
@@ -131,7 +133,7 @@ export function ClientFormDialog({ open, client, onClose, onSubmit }) {
   const isIndividual = form.personType === 'individual'
 
   const docPlaceholder = editing && client?.documentMasked
-    ? `${client.documentMasked} — leave blank to keep`
+    ? t('clientFormDialog.documentmaskedLeaveBlankToKeep', { documentMasked: client.documentMasked })
     : isIndividual
     ? '000.000.000-00'
     : '00.000.000/0001-00'
@@ -140,14 +142,14 @@ export function ClientFormDialog({ open, client, onClose, onSubmit }) {
     <Dialog
       open={open}
       onClose={busy ? undefined : onClose}
-      title={editing ? 'Edit client' : 'New client'}
-      description="Register partner clients for projects."
+      title={editing ? t('clientFormDialog.editClient') : t('clientFormDialog.newClient')}
+      description={t('clientFormDialog.registerPartnerClientsForProjects')}
     >
       <form onSubmit={submit} noValidate className="flex flex-col gap-4 p-6 max-h-[80vh] overflow-y-auto">
         <TextField
-          label="Client name"
+          label={t('clientFormDialog.clientName')}
           name="name"
-          placeholder="e.g. Acme Construction Ltd"
+          placeholder={t('clientFormDialog.eGAcmeConstructionLtd')}
           required
           value={form.name}
           onChange={update('name')}
@@ -156,15 +158,15 @@ export function ClientFormDialog({ open, client, onClose, onSubmit }) {
 
         <div className="grid grid-cols-2 gap-4">
           <SelectField
-            label="Person type"
+            label={t('clientFormDialog.personType')}
             name="personType"
             required
             value={form.personType}
             onChange={handlePersonTypeChange}
             error={fieldErrors.personType}
             options={[
-              { value: 'company', label: 'Company (PJ)' },
-              { value: 'individual', label: 'Individual (PF)' },
+              { value: 'company', label: t('clientFormDialog.companyPj') },
+              { value: 'individual', label: t('clientFormDialog.individualPf') },
             ]}
           />
 
@@ -175,25 +177,25 @@ export function ClientFormDialog({ open, client, onClose, onSubmit }) {
             value={form.document}
             onChange={update('document')}
             error={fieldErrors.document || fieldErrors.documentMasked}
-            hint={editing ? 'Leave blank to keep the current document.' : undefined}
+            hint={editing ? t('clientFormDialog.leaveBlankToKeepThe') : undefined}
           />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <TextField
-            label="Email"
+            label={t('clientFormDialog.email')}
             name="email"
             type="email"
-            placeholder="contact@client.com"
+            placeholder={t('clientFormDialog.contactClientCom')}
             value={form.email}
             onChange={update('email')}
             error={fieldErrors.email}
           />
 
           <TextField
-            label="Contact name"
+            label={t('clientFormDialog.contactName')}
             name="contactName"
-            placeholder="e.g. Maria Silva"
+            placeholder={t('clientFormDialog.eGMariaSilva')}
             value={form.contactName}
             onChange={update('contactName')}
             error={fieldErrors.contactName}
@@ -202,7 +204,7 @@ export function ClientFormDialog({ open, client, onClose, onSubmit }) {
 
         <div className="grid grid-cols-2 gap-4">
           <TextField
-            label="Phone"
+            label={t('clientFormDialog.phone')}
             name="phone"
             placeholder="(00) 0000-0000"
             value={form.phone}
@@ -211,7 +213,7 @@ export function ClientFormDialog({ open, client, onClose, onSubmit }) {
           />
 
           <TextField
-            label="Mobile"
+            label={t('clientFormDialog.mobile')}
             name="mobile"
             placeholder="(00) 90000-0000"
             value={form.mobile}
@@ -223,9 +225,9 @@ export function ClientFormDialog({ open, client, onClose, onSubmit }) {
         <div className="grid grid-cols-3 gap-4">
           <div className="col-span-2">
             <TextField
-              label="Street"
+              label={t('clientFormDialog.street')}
               name="street"
-              placeholder="e.g. Av. Brasil"
+              placeholder={t('clientFormDialog.eGAvBrasil')}
               value={form.street}
               onChange={update('street')}
               error={fieldErrors.street}
@@ -233,7 +235,7 @@ export function ClientFormDialog({ open, client, onClose, onSubmit }) {
           </div>
 
           <TextField
-            label="Number"
+            label={t('clientFormDialog.number')}
             name="number"
             placeholder="100"
             value={form.number}
@@ -244,25 +246,25 @@ export function ClientFormDialog({ open, client, onClose, onSubmit }) {
 
         <div className="grid grid-cols-3 gap-4">
           <TextField
-            label="Complement"
+            label={t('clientFormDialog.complement')}
             name="complement"
-            placeholder="Suite 201"
+            placeholder={t('clientFormDialog.suite201')}
             value={form.complement}
             onChange={update('complement')}
             error={fieldErrors.complement}
           />
 
           <TextField
-            label="District"
+            label={t('clientFormDialog.district')}
             name="district"
-            placeholder="Centro"
+            placeholder={t('clientFormDialog.centro')}
             value={form.district}
             onChange={update('district')}
             error={fieldErrors.district}
           />
 
           <TextField
-            label="Postal Code"
+            label={t('clientFormDialog.postalCode')}
             name="postalCode"
             placeholder="89000-000"
             value={form.postalCode}
@@ -273,16 +275,16 @@ export function ClientFormDialog({ open, client, onClose, onSubmit }) {
 
         <div className="grid grid-cols-2 gap-4">
           <TextField
-            label="City"
+            label={t('clientFormDialog.city')}
             name="city"
-            placeholder="Blumenau"
+            placeholder={t('clientFormDialog.blumenau')}
             value={form.city}
             onChange={update('city')}
             error={fieldErrors.city}
           />
 
           <TextField
-            label="State (UF)"
+            label={t('clientFormDialog.stateUf')}
             name="state"
             placeholder="SC"
             value={form.state}
@@ -292,17 +294,17 @@ export function ClientFormDialog({ open, client, onClose, onSubmit }) {
         </div>
 
         {formError && (
-          <p role="alert" className="border border-danger-soft bg-[#faefea] px-3 py-2 text-[12.5px] text-danger">
+          <p role="alert" className="rounded-2xl bg-danger-wash px-3 py-2 text-[12.5px] text-danger">
             {formError}
           </p>
         )}
 
         <div className="mt-2 flex items-center gap-2.5">
-          <Button type="submit" busy={busy} busyLabel="Saving…">
-            {editing ? 'Save changes' : 'Create client'}
+          <Button type="submit" busy={busy} busyLabel={t('common.saving')}>
+            {editing ? t('common.saveChanges') : t('clientFormDialog.createClient')}
           </Button>
           <Button type="button" variant="outline" onClick={onClose} disabled={busy}>
-            Cancel
+            {t('common.cancel')}
           </Button>
         </div>
       </form>

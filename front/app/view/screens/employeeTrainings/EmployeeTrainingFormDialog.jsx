@@ -5,6 +5,7 @@ import { SelectField } from '../../ui/SelectField'
 import { TextField } from '../../ui/TextField'
 import { formatDate, todayIso } from '../../format/dates'
 import { MODALITIES } from './trainingLabels'
+import { useT } from '../../preferences/preferencesContext'
 
 // No expiry field: the API calculates it. The hints only repeat the chosen type's rules.
 
@@ -18,6 +19,7 @@ const EMPTY = {
 }
 
 export function EmployeeTrainingFormDialog({ open, training, employees, trainingTypes, onClose, onSubmit }) {
+  const t = useT()
   const editing = Boolean(training)
 
   const [form, setForm] = useState(EMPTY)
@@ -85,7 +87,7 @@ export function EmployeeTrainingFormDialog({ open, training, employees, training
       })
     } catch (error) {
       if (error.isValidation) setFieldErrors(error.fieldErrors)
-      else setFormError(error.message ?? 'Could not save the training.')
+      else setFormError(error.message ?? t('employeeTrainingFormDialog.couldNotSaveTheTraining'))
     } finally {
       setBusy(false)
     }
@@ -95,40 +97,40 @@ export function EmployeeTrainingFormDialog({ open, training, employees, training
     <Dialog
       open={open}
       onClose={busy ? undefined : onClose}
-      title={editing ? 'Edit training' : 'New training'}
-      description={describeExpiry(training)}
+      title={editing ? t('employeeTrainingFormDialog.editTraining') : t('employeeTrainingFormDialog.newTraining')}
+      description={describeExpiry(training, t)}
     >
       <form onSubmit={submit} noValidate className="flex flex-col gap-4 p-6">
         <SelectField
-          label="Employee"
+          label={t('employeeTrainingFormDialog.employee')}
           name="employeeId"
           required
           value={form.employeeId}
           onChange={update('employeeId')}
           error={fieldErrors.employeeId}
-          placeholder={employeeOptions.length > 0 ? 'Select an employee…' : 'No active employee registered yet'}
+          placeholder={employeeOptions.length > 0 ? t('employeeTrainingFormDialog.selectAnEmployee') : t('employeeTrainingFormDialog.noActiveEmployeeRegisteredYet')}
           options={employeeOptions}
         />
 
         <div>
           <SelectField
-            label="Training type"
+            label={t('employeeTrainingFormDialog.trainingType')}
             name="trainingTypeId"
             required
             value={form.trainingTypeId}
             onChange={update('trainingTypeId')}
             error={fieldErrors.trainingTypeId}
-            placeholder={typeOptions.length > 0 ? 'Select a training type…' : 'No training type registered yet'}
+            placeholder={typeOptions.length > 0 ? t('employeeTrainingFormDialog.selectATrainingType') : t('employeeTrainingFormDialog.noTrainingTypeRegisteredYet')}
             options={typeOptions}
           />
           {selectedType && !fieldErrors.trainingTypeId && (
-            <FieldHint>{describeValidity(selectedType)}</FieldHint>
+            <FieldHint>{describeValidity(selectedType, t)}</FieldHint>
           )}
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <TextField
-            label="Issue date"
+            label={t('employeeTrainingFormDialog.issueDate')}
             name="issueDate"
             type="date"
             required
@@ -139,7 +141,7 @@ export function EmployeeTrainingFormDialog({ open, training, employees, training
           />
 
           <TextField
-            label="Workload (hours)"
+            label={t('employeeTrainingFormDialog.workloadHours')}
             name="workloadHours"
             type="number"
             inputMode="numeric"
@@ -150,8 +152,8 @@ export function EmployeeTrainingFormDialog({ open, training, employees, training
             error={fieldErrors.workloadHours}
             hint={
               selectedType?.minWorkloadHours != null
-                ? `At least ${selectedType.minWorkloadHours} h for ${selectedType.code}.`
-                : 'Optional.'
+                ? t('employeeTrainingFormDialog.atLeastMinworkloadhoursHFor', { minWorkloadHours: selectedType.minWorkloadHours, code: selectedType.code })
+                : t('employeeTrainingFormDialog.optional')
             }
           />
         </div>
@@ -159,23 +161,23 @@ export function EmployeeTrainingFormDialog({ open, training, employees, training
         <div className="grid grid-cols-2 gap-4">
           <div>
             <SelectField
-              label="Modality"
+              label={t('employeeTrainingFormDialog.modality')}
               name="modality"
               value={form.modality}
               onChange={update('modality')}
               error={fieldErrors.modality}
-              placeholder="Not informed"
-              options={MODALITIES}
+              placeholder={t('employeeTrainingFormDialog.notInformed')}
+              options={MODALITIES.map((value) => ({ value, label: t(`labels.modality.${value}`) }))}
             />
             {selectedType?.requiresInPerson && !fieldErrors.modality && (
-              <FieldHint>{selectedType.code} must be taken in person.</FieldHint>
+              <FieldHint>{selectedType.code} {t('employeeTrainingFormDialog.mustBeTakenInPerson')}</FieldHint>
             )}
           </div>
 
           <TextField
-            label="Instructor"
+            label={t('employeeTrainingFormDialog.instructor')}
             name="instructor"
-            placeholder="Who gave the training"
+            placeholder={t('employeeTrainingFormDialog.whoGaveTheTraining')}
             value={form.instructor}
             onChange={update('instructor')}
             error={fieldErrors.instructor}
@@ -183,17 +185,17 @@ export function EmployeeTrainingFormDialog({ open, training, employees, training
         </div>
 
         {formError && (
-          <p role="alert" className="border border-danger-soft bg-[#faefea] px-3 py-2 text-[12.5px] text-danger">
+          <p role="alert" className="rounded-2xl bg-danger-wash px-3 py-2 text-[12.5px] text-danger">
             {formError}
           </p>
         )}
 
         <div className="mt-2 flex items-center gap-2.5">
-          <Button type="submit" busy={busy} busyLabel="Saving…">
-            {editing ? 'Save changes' : 'Record training'}
+          <Button type="submit" busy={busy} busyLabel={t('common.saving')}>
+            {editing ? t('common.saveChanges') : t('employeeTrainingFormDialog.recordTraining')}
           </Button>
           <Button type="button" variant="outline" onClick={onClose} disabled={busy}>
-            Cancel
+            {t('common.cancel')}
           </Button>
         </div>
       </form>
@@ -214,19 +216,18 @@ function describeEmployee(employee) {
   return employee.active ? name : `${name} (inactive)`
 }
 
-function describeValidity(type) {
-  if (type.validityMonths == null) return 'This training does not expire.'
+function describeValidity(type, t) {
+  if (type.validityMonths == null) return t('extras.neverExpires')
 
-  const months = type.validityMonths === 1 ? '1 month' : `${type.validityMonths} months`
-  return `Valid for ${months} from the issue date.`
+  return t('extras.validFor', { count: type.validityMonths })
 }
 
-function describeExpiry(training) {
-  if (!training) return 'The system sets the expiry date from the issue date and the training type.'
+function describeExpiry(training, t) {
+  if (!training) return t('extras.expirySetBySystem')
 
-  if (!training.expiryDate) return 'Saved without an expiry date: its training type does not expire.'
+  if (!training.expiryDate) return t('extras.savedWithoutExpiry')
 
-  return `Saved expiry: ${formatDate(training.expiryDate)}. The system recalculates it if the issue date or the type changes.`
+  return t('extras.savedExpiry', { value: formatDate(training.expiryDate) })
 }
 
 function isWholeOrBlank(value) {

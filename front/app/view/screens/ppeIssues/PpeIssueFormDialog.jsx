@@ -5,12 +5,14 @@ import { Button } from '../../ui/Button'
 import { Dialog } from '../../ui/Dialog'
 import { SelectField } from '../../ui/SelectField'
 import { TextField } from '../../ui/TextField'
+import { useT } from '../../preferences/preferencesContext'
 
 // Only PPE items come from the API; an expired CA is shown and refused by the API.
 let nextLineKey = 0
 const newLine = () => ({ key: (nextLineKey += 1), stockItemId: '', quantity: '1' })
 
 export function PpeIssueFormDialog({ open, projectId, onClose, onIssued }) {
+  const t = useT()
   const { ppeIssues } = useContainer()
 
   const [options, setOptions] = useState({ employees: [], items: [] })
@@ -32,11 +34,11 @@ export function PpeIssueFormDialog({ open, projectId, onClose, onIssued }) {
       .options({ signal: controller.signal })
       .then(setOptions)
       .catch((error) => {
-        if (!controller.signal.aborted) setOptionsError(error.message ?? 'Could not load employees and PPE items.')
+        if (!controller.signal.aborted) setOptionsError(error.message ?? t('ppeIssueFormDialog.couldNotLoadEmployeesAnd'))
       })
 
     return () => controller.abort()
-  }, [open, ppeIssues])
+  }, [open, ppeIssues, t])
 
   const update = (field) => (event) => {
     setForm((current) => ({ ...current, [field]: event.target.value }))
@@ -77,7 +79,7 @@ export function PpeIssueFormDialog({ open, projectId, onClose, onIssued }) {
       onIssued(issue)
     } catch (error) {
       if (error.isValidation) setFieldErrors(error.fieldErrors)
-      else setFormError(error.message ?? 'Could not issue the PPE.')
+      else setFormError(error.message ?? t('ppeIssueFormDialog.couldNotIssueThePpe'))
     } finally {
       setBusy(false)
     }
@@ -94,18 +96,18 @@ export function PpeIssueFormDialog({ open, projectId, onClose, onIssued }) {
     <Dialog
       open={open}
       onClose={busy ? undefined : onClose}
-      title="New PPE issue"
-      description="Each item leaves the stock for the employee. The employee signs the receipt next."
+      title={t('ppeIssueFormDialog.newPpeIssue')}
+      description={t('ppeIssueFormDialog.eachItemLeavesTheStock')}
     >
       <form onSubmit={submit} noValidate className="flex flex-col gap-4 p-6">
         <SelectField
-          label="Employee"
+          label={t('ppeIssueFormDialog.employee')}
           name="employeeId"
           required
           value={form.employeeId}
           onChange={update('employeeId')}
           error={fieldErrors.employeeId}
-          placeholder={options.employees.length > 0 ? 'Select an employee…' : 'No active employee'}
+          placeholder={options.employees.length > 0 ? t('ppeIssueFormDialog.selectAnEmployee') : t('ppeIssueFormDialog.noActiveEmployee')}
           options={options.employees.map((employee) => ({
             value: employee.id,
             label: employee.registrationNumber ? `${employee.name} · ${employee.registrationNumber}` : employee.name,
@@ -113,7 +115,7 @@ export function PpeIssueFormDialog({ open, projectId, onClose, onIssued }) {
         />
 
         <TextField
-          label="Date"
+          label={t('ppeIssueFormDialog.date')}
           name="date"
           type="date"
           required
@@ -124,7 +126,7 @@ export function PpeIssueFormDialog({ open, projectId, onClose, onIssued }) {
         />
 
         <fieldset className="flex flex-col gap-3 border-t border-line-soft pt-4">
-          <legend className="label mb-1">Items</legend>
+          <legend className="label mb-1">{t('ppeIssueFormDialog.items')}</legend>
 
           {form.lines.map((line, index) => (
             <div key={line.key} className="grid grid-cols-[minmax(0,1fr)_6rem_auto] items-start gap-3">
@@ -134,12 +136,12 @@ export function PpeIssueFormDialog({ open, projectId, onClose, onIssued }) {
                 required
                 value={line.stockItemId}
                 onChange={updateLine(line.key, 'stockItemId')}
-                placeholder={itemOptions.length > 0 ? 'Select a PPE item…' : 'No PPE item registered'}
+                placeholder={itemOptions.length > 0 ? t('ppeIssueFormDialog.selectAPpeItem') : t('ppeIssueFormDialog.noPpeItemRegistered')}
                 options={itemOptions}
               />
 
               <TextField
-                label="Quantity"
+                label={t('ppeIssueFormDialog.quantity')}
                 name={`quantity-${line.key}`}
                 type="number"
                 min="0"
@@ -155,10 +157,10 @@ export function PpeIssueFormDialog({ open, projectId, onClose, onIssued }) {
                   variant="outline"
                   className="px-3 py-2"
                   disabled={form.lines.length === 1}
-                  aria-label={`Remove item ${index + 1}`}
+                  aria-label={t('ppeIssueFormDialog.removeItemValue', { value: index + 1 })}
                   onClick={() => removeLine(line.key)}
                 >
-                  Remove
+                  {t('ppeIssueFormDialog.remove')}
                 </Button>
               </div>
             </div>
@@ -172,32 +174,32 @@ export function PpeIssueFormDialog({ open, projectId, onClose, onIssued }) {
 
           <div>
             <Button type="button" variant="outline" className="px-3 py-1.5" onClick={addLine}>
-              Add item
+              {t('ppeIssueFormDialog.addItem')}
             </Button>
           </div>
         </fieldset>
 
         <TextField
-          label="Notes"
+          label={t('common.notes')}
           name="notes"
           value={form.notes}
           onChange={update('notes')}
           error={fieldErrors.notes}
-          hint="Optional."
+          hint={t('ppeIssueFormDialog.optional')}
         />
 
         {(formError || optionsError) && (
-          <p role="alert" className="border border-danger-soft bg-[#faefea] px-3 py-2 text-[12.5px] text-danger">
+          <p role="alert" className="rounded-2xl bg-danger-wash px-3 py-2 text-[12.5px] text-danger">
             {formError ?? optionsError}
           </p>
         )}
 
         <div className="mt-2 flex items-center gap-2.5">
-          <Button type="submit" busy={busy} busyLabel="Issuing…">
-            Issue PPE
+          <Button type="submit" busy={busy} busyLabel={t('ppeIssueFormDialog.issuing')}>
+            {t('ppeIssueFormDialog.issuePpe')}
           </Button>
           <Button type="button" variant="outline" onClick={onClose} disabled={busy}>
-            Cancel
+            {t('common.cancel')}
           </Button>
         </div>
       </form>
