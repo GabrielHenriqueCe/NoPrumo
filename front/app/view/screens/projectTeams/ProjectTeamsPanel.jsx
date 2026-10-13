@@ -7,9 +7,11 @@ import { Button } from '../../ui/Button'
 import { SelectField } from '../../ui/SelectField'
 import { TextField } from '../../ui/TextField'
 import { TimeEntryPanel } from '../timeEntries/TimeEntryPanel'
+import { useT } from '../../preferences/preferencesContext'
 
 // The "Team" tab of a project. The project page (Gabriel's frame) passes projectId.
 export function ProjectTeamsPanel({ projectId }) {
+  const t = useT()
   const { projectTeams } = useContainer()
   const { can } = useSession()
   const canManage = can('manage_projects')
@@ -35,11 +37,11 @@ export function ProjectTeamsPanel({ projectId }) {
         setLoaded(true)
       })
       .catch((error) => {
-        if (!controller.signal.aborted) setLoadError(error.message ?? 'Could not load the teams.')
+        if (!controller.signal.aborted) setLoadError(error.message ?? t('projectTeamsPanel.couldNotLoadTheTeams'))
       })
 
     return () => controller.abort()
-  }, [projectTeams, projectId, reloadToken])
+  }, [projectTeams, projectId, reloadToken, t])
 
   useEffect(() => {
     if (!canManage) return undefined
@@ -68,8 +70,7 @@ export function ProjectTeamsPanel({ projectId }) {
   return (
     <div className="flex flex-col gap-6">
       <p className="max-w-[54em] text-sm leading-relaxed text-muted">
-        Teams working on this project and who is on them today. A team leaves the project with an end
-        date: the period stays in the history.
+        {t('projectTeamsPanel.teamsWorkingOnThisProject')}
       </p>
 
       {canManage && <AllocateTeamForm projectId={projectId} teams={available} onAllocated={changed} />}
@@ -77,10 +78,10 @@ export function ProjectTeamsPanel({ projectId }) {
       {!loaded && !loadError && <ListSkeleton />}
 
       {loadError && (
-        <div className="border border-line bg-white px-6 py-10 text-center">
+        <div className="border border-line bg-surface px-6 py-10 text-center">
           <p className="text-sm text-danger">{loadError}</p>
           <Button variant="outline" onClick={reload} className="mt-4">
-            Try again
+            {t('common.tryAgain')}
           </Button>
         </div>
       )}
@@ -88,7 +89,7 @@ export function ProjectTeamsPanel({ projectId }) {
       {loaded && !loadError && (
         <>
             <section>
-                <h3 className="label mb-2">On the project · {current.length}</h3>
+                <h3 className="label mb-2">{t('projectTeamsPanel.onTheProject')} {current.length}</h3>
 
                 {/* Extrair os funcionários de todas as equipas atualmente na obra para o dropdown do ponto */}
                 <TimeEntryPanel
@@ -103,8 +104,8 @@ export function ProjectTeamsPanel({ projectId }) {
                 />
 
             {current.length === 0 ? (
-              <p className="border border-line bg-white px-6 py-8 text-center text-sm text-muted">
-                No team on this project right now.
+              <p className="border border-line bg-surface px-6 py-8 text-center text-sm text-muted">
+                {t('projectTeamsPanel.noTeamOnThisProject')}
               </p>
             ) : (
               <div className="flex flex-col gap-4">
@@ -125,19 +126,19 @@ export function ProjectTeamsPanel({ projectId }) {
           </section>
 
           <section>
-            <h3 className="label mb-2">History · {past.length}</h3>
+            <h3 className="label mb-2">{t('projectTeamsPanel.history')} {past.length}</h3>
 
             {past.length === 0 ? (
-              <p className="text-[13px] text-muted">No team has left this project yet.</p>
+              <p className="text-[13px] text-muted">{t('projectTeamsPanel.noTeamHasLeftThis')}</p>
             ) : (
-              <div className="border border-line bg-white">
+              <div className="overflow-hidden rounded-3xl border border-line bg-surface">
                 <table className="w-full border-collapse text-sm">
-                  <caption className="sr-only">Teams that worked on this project</caption>
+                  <caption className="sr-only">{t('projectTeamsPanel.teamsThatWorkedOnThis')}</caption>
                   <thead>
                     <tr className="border-b border-line bg-cream-soft text-left">
-                      <HeaderCell>Team</HeaderCell>
-                      <HeaderCell>Department</HeaderCell>
-                      <HeaderCell>Period</HeaderCell>
+                      <HeaderCell>{t('projectTeamsPanel.team')}</HeaderCell>
+                      <HeaderCell>{t('projectTeamsPanel.department')}</HeaderCell>
+                      <HeaderCell>{t('projectTeamsPanel.period')}</HeaderCell>
                     </tr>
                   </thead>
                   <tbody>
@@ -162,6 +163,7 @@ export function ProjectTeamsPanel({ projectId }) {
 }
 
 function CurrentTeamCard({ projectId, allocation, canManage, ending, onStartEnding, onCancelEnding, onEnded }) {
+  const t = useT()
   const endButton = useRef(null)
 
   const cancel = () => {
@@ -170,12 +172,12 @@ function CurrentTeamCard({ projectId, allocation, canManage, ending, onStartEndi
   }
 
   return (
-    <article className="border border-line bg-white">
+    <article className="overflow-hidden rounded-3xl border border-line bg-surface">
       <header className="flex flex-wrap items-center gap-3 border-b border-line-soft px-4 py-3">
         <div className="min-w-0">
           <h4 className="font-semibold">{allocation.teamName}</h4>
           <p className="text-[12.5px] text-muted">
-            {allocation.departmentName} · on the project since {formatDate(allocation.startDate)}
+            {allocation.departmentName} {t('projectTeamsPanel.onTheProjectSince')} {formatDate(allocation.startDate)}
           </p>
         </div>
 
@@ -184,10 +186,10 @@ function CurrentTeamCard({ projectId, allocation, canManage, ending, onStartEndi
             ref={endButton}
             variant="outline"
             className="ml-auto px-3 py-1.5"
-            aria-label={`End the period of ${allocation.teamName} on this project`}
+            aria-label={t('projectTeamsPanel.endThePeriodOfTeamname', { teamName: allocation.teamName })}
             onClick={onStartEnding}
           >
-            End period
+            {t('projectTeamsPanel.endPeriod')}
           </Button>
         )}
       </header>
@@ -199,14 +201,14 @@ function CurrentTeamCard({ projectId, allocation, canManage, ending, onStartEndi
       )}
 
       {allocation.members.length === 0 ? (
-        <p className="px-4 py-4 text-[13px] text-muted">Nobody on this team right now.</p>
+        <p className="px-4 py-4 text-[13px] text-muted">{t('projectTeamsPanel.nobodyOnThisTeamRight')}</p>
       ) : (
         <table className="w-full border-collapse text-sm">
-          <caption className="sr-only">Members of {allocation.teamName}</caption>
+          <caption className="sr-only">{t('projectTeamsPanel.membersOf')} {allocation.teamName}</caption>
           <thead>
             <tr className="border-b border-line text-left">
-              <HeaderCell>Employee</HeaderCell>
-              <HeaderCell>Trainings needing attention</HeaderCell>
+              <HeaderCell>{t('projectTeamsPanel.employee')}</HeaderCell>
+              <HeaderCell>{t('projectTeamsPanel.trainingsNeedingAttention')}</HeaderCell>
             </tr>
           </thead>
           <tbody>
@@ -220,7 +222,7 @@ function CurrentTeamCard({ projectId, allocation, canManage, ending, onStartEndi
                 </td>
                 <td className="px-4 py-3">
                   {member.trainingAlerts.length === 0 ? (
-                    <span className="text-muted">Up to date</span>
+                    <span className="text-muted">{t('projectTeamsPanel.upToDate')}</span>
                   ) : (
                     <div className="flex flex-wrap gap-1.5">
                       {member.trainingAlerts.map((alert) => (
@@ -228,7 +230,7 @@ function CurrentTeamCard({ projectId, allocation, canManage, ending, onStartEndi
                           key={alert.trainingTypeCode}
                           tone={alert.status === 'expired' ? 'inactive' : 'warning'}
                         >
-                          {alert.trainingTypeCode} {alert.status === 'expired' ? 'expired' : 'expires'}{' '}
+                          {alert.trainingTypeCode} {alert.status === 'expired' ? t('projectTeamsPanel.expired') : t('projectTeamsPanel.expires')}{' '}
                           {formatDate(alert.expiryDate)}
                         </Badge>
                       ))}
@@ -245,6 +247,7 @@ function CurrentTeamCard({ projectId, allocation, canManage, ending, onStartEndi
 }
 
 function AllocateTeamForm({ projectId, teams, onAllocated }) {
+  const t = useT()
   const { projectTeams } = useContainer()
 
   const [form, setForm] = useState(() => ({ teamId: '', startDate: todayIso() }))
@@ -272,30 +275,30 @@ function AllocateTeamForm({ projectId, teams, onAllocated }) {
       onAllocated()
     } catch (error) {
       if (error.isValidation) setFieldErrors(error.fieldErrors)
-      else setFormError(error.message ?? 'Could not allocate the team.')
+      else setFormError(error.message ?? t('projectTeamsPanel.couldNotAllocateTheTeam'))
     } finally {
       setBusy(false)
     }
   }
 
   return (
-    <form onSubmit={submit} noValidate aria-label="Allocate a team" className="border border-line bg-white p-4">
-      <p className="label mb-3">Allocate a team</p>
+    <form onSubmit={submit} noValidate aria-label={t('projectTeamsPanel.allocateATeam')} className="border border-line bg-surface p-4">
+      <p className="label mb-3">{t('projectTeamsPanel.allocateATeam')}</p>
 
       <div className="grid grid-cols-[minmax(0,1fr)_10.5rem_auto] items-start gap-3">
         <SelectField
-          label="Team"
+          label={t('projectTeamsPanel.team')}
           name="teamId"
           required
           value={form.teamId}
           onChange={update('teamId')}
           error={fieldErrors.teamId}
-          placeholder={teams.length > 0 ? 'Select a team…' : 'No team available'}
+          placeholder={teams.length > 0 ? t('projectTeamsPanel.selectATeam') : t('projectTeamsPanel.noTeamAvailable')}
           options={teams.map((team) => ({ value: team.id, label: `${team.name} · ${team.departmentName}` }))}
         />
 
         <TextField
-          label="Start date"
+          label={t('projectTeamsPanel.startDate')}
           name="startDate"
           type="date"
           required
@@ -305,14 +308,14 @@ function AllocateTeamForm({ projectId, teams, onAllocated }) {
         />
 
         <div className="pt-5">
-          <Button type="submit" busy={busy} busyLabel="Allocating…">
-            Allocate
+          <Button type="submit" busy={busy} busyLabel={t('projectTeamsPanel.allocating')}>
+            {t('projectTeamsPanel.allocate')}
           </Button>
         </div>
       </div>
 
       {formError && (
-        <p role="alert" className="mt-3 border border-danger-soft bg-[#faefea] px-3 py-2 text-[12.5px] text-danger">
+        <p role="alert" className="mt-3 rounded-2xl bg-danger-wash px-3 py-2 text-[12.5px] text-danger">
           {formError}
         </p>
       )}
@@ -321,6 +324,7 @@ function AllocateTeamForm({ projectId, teams, onAllocated }) {
 }
 
 function EndAllocationForm({ projectId, allocation, onEnded, onCancel }) {
+  const t = useT()
   const { projectTeams } = useContainer()
 
   const [endDate, setEndDate] = useState(() => {
@@ -345,7 +349,7 @@ function EndAllocationForm({ projectId, allocation, onEnded, onCancel }) {
       // No setBusy(false) on success: this form unmounts with the card.
       onEnded()
     } catch (failure) {
-      setError(failure.fieldErrors?.endDate ?? failure.message ?? 'Could not end the period.')
+      setError(failure.fieldErrors?.endDate ?? failure.message ?? t('projectTeamsPanel.couldNotEndThePeriod'))
       setBusy(false)
     }
   }
@@ -361,7 +365,7 @@ function EndAllocationForm({ projectId, allocation, onEnded, onCancel }) {
     >
       <TextField
         ref={input}
-        label="End date"
+        label={t('projectTeamsPanel.endDate')}
         name="endDate"
         type="date"
         required
@@ -372,16 +376,16 @@ function EndAllocationForm({ projectId, allocation, onEnded, onCancel }) {
           setError(null)
         }}
         error={error}
-        hint={`On the project since ${formatDate(allocation.startDate)}.`}
+        hint={t('projectTeamsPanel.onTheProjectSinceValue', { value: formatDate(allocation.startDate) })}
         className="w-48"
       />
 
       <div className="flex gap-2 pt-5">
-        <Button type="submit" busy={busy} busyLabel="Saving…" className="px-3 py-2">
-          End period
+        <Button type="submit" busy={busy} busyLabel={t('common.saving')} className="px-3 py-2">
+          {t('projectTeamsPanel.endPeriod')}
         </Button>
         <Button type="button" variant="outline" onClick={onCancel} disabled={busy} className="px-3 py-2">
-          Cancel
+          {t('common.cancel')}
         </Button>
       </div>
     </form>
@@ -393,10 +397,11 @@ function HeaderCell({ children }) {
 }
 
 function ListSkeleton() {
+  const t = useT()
   return (
-    <div className="border border-line bg-white p-4" role="status" aria-label="Loading teams">
+    <div className="border border-line bg-surface p-4" role="status" aria-label={t('projectTeamsPanel.loadingTeams')}>
       {Array.from({ length: 3 }).map((_, index) => (
-        <div key={index} className="mb-2 h-11 animate-pulse bg-cream last:mb-0" />
+        <div key={index} className="mb-2 h-11 animate-pulse rounded-xl bg-sunken last:mb-0" />
       ))}
     </div>
   )

@@ -3,8 +3,10 @@ import { useContainer } from '../../providers/containerContext';
 import { Dialog } from '../../ui/Dialog';
 import { Button } from '../../ui/Button';
 import { TextField } from '../../ui/TextField';
+import { useT } from '../../preferences/preferencesContext'
 
 export function DepartmentFormDialog({ department, onClose, onSave }) {
+    const t = useT()
     const { departments: departmentGateway } = useContainer();
     const [name, setName] = useState(department ? department.name : '');
     const [active, setActive] = useState(department ? department.active : true);
@@ -26,17 +28,17 @@ export function DepartmentFormDialog({ department, onClose, onSave }) {
             if (error.isValidation) {
                 setFieldErrors(error.fieldErrors);
             } else {
-                setFormError(error.message || 'An unexpected error occurred.');
+                setFormError(error.message || t('departmentFormDialog.anUnexpectedErrorOccurred'));
             }
         }
     };
 
     return (
-        <Dialog open={true} title={department ? "Edit Department" : "New Department"} onClose={onClose}>
+        <Dialog open={true} title={department ? t('departmentFormDialog.editDepartment') : t('departmentFormDialog.newDepartment')} onClose={onClose}>
             <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-6">
-                {formError && <div className="p-3 bg-red-100 text-red-700 rounded text-sm">{formError}</div>}
+                {formError && <div className="p-3 bg-danger-wash text-danger rounded text-sm">{formError}</div>}
                 <TextField
-                    label="Name"
+                    label={t('common.name')}
                     value={name}
                     onChange={e => setName(e.target.value)}
                     error={fieldErrors.name}
@@ -45,13 +47,13 @@ export function DepartmentFormDialog({ department, onClose, onSave }) {
                 {department && (
                     <label className="flex items-center gap-2">
                         <input type="checkbox" checked={active} onChange={e => setActive(e.target.checked)} />
-                        Active
+                        {t('common.active')}
                     </label>
                 )}
 
                 <div className="flex gap-2 mt-4 justify-end">
-                    <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-                    <Button type="submit">Save</Button>
+                    <Button type="button" variant="outline" onClick={onClose}>{t('common.cancel')}</Button>
+                    <Button type="submit">{t('common.save')}</Button>
                 </div>
             </form>
         </Dialog>

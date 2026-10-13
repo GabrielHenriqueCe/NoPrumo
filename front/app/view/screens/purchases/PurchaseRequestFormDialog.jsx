@@ -4,6 +4,7 @@ import { Button } from '../../ui/Button'
 import { Dialog } from '../../ui/Dialog'
 import { SelectField } from '../../ui/SelectField'
 import { TextField } from '../../ui/TextField'
+import { useT } from '../../preferences/preferencesContext'
 
 export function PurchaseRequestFormDialog({
   open,
@@ -12,6 +13,7 @@ export function PurchaseRequestFormDialog({
   onClose,
   onSubmitted,
 }) {
+  const t = useT()
   const { stockItems, purchaseRequests } = useContainer()
 
   const [availableItems, setAvailableItems] = useState([])
@@ -103,7 +105,7 @@ export function PurchaseRequestFormDialog({
       onSubmitted?.()
       onClose?.()
     } catch (err) {
-      setError(err.message || 'Could not create purchase request.')
+      setError(err.message || t('purchaseRequestFormDialog.couldNotCreatePurchaseRequest'))
     } finally {
       setBusy(false)
     }
@@ -113,12 +115,12 @@ export function PurchaseRequestFormDialog({
     <Dialog
       open={open}
       onClose={onClose}
-      title="New Purchase Request"
-      description="Request materials and supplies for the project (quantities only)."
+      title={t('purchaseRequestFormDialog.newPurchaseRequest')}
+      description={t('purchaseRequestFormDialog.requestMaterialsAndSuppliesFor')}
     >
       <form onSubmit={handleSubmit} className="p-6">
         {error && (
-          <div className="mb-4 border border-danger-soft bg-[#faefea] p-3 text-sm text-danger">
+          <div className="mb-4 rounded-2xl bg-danger-wash p-3 text-sm text-danger">
             {error}
           </div>
         )}
@@ -126,12 +128,12 @@ export function PurchaseRequestFormDialog({
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {!fixedProjectId && (
             <SelectField
-              label="Project"
+              label={t('purchaseRequestFormDialog.project')}
               value={selectedProjectId}
               onChange={(e) => setSelectedProjectId(e.target.value)}
               required
             >
-              <option value="">Select project...</option>
+              <option value="">{t('purchaseRequestFormDialog.selectProject')}</option>
               {projectOptions.map((proj) => (
                 <option key={proj.id} value={proj.id}>
                   {proj.name} ({proj.code})
@@ -141,7 +143,7 @@ export function PurchaseRequestFormDialog({
           )}
 
           <TextField
-            label="Needed by date"
+            label={t('purchaseRequestFormDialog.neededByDate')}
             type="date"
             value={neededByDate}
             onChange={(e) => setNeededByDate(e.target.value)}
@@ -149,8 +151,8 @@ export function PurchaseRequestFormDialog({
 
           <div className="sm:col-span-2">
             <TextField
-              label="Notes (optional)"
-              placeholder="Ex: Urgent for foundation casting"
+              label={t('purchaseRequestFormDialog.notesOptional')}
+              placeholder={t('purchaseRequestFormDialog.exUrgentForFoundationCasting')}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
             />
@@ -160,9 +162,9 @@ export function PurchaseRequestFormDialog({
         {/* Items Section */}
         <div className="mt-6 border-t border-line-soft pt-4">
           <div className="mb-2 flex items-center justify-between">
-            <span className="label">Requested Items</span>
+            <span className="label">{t('purchaseRequestFormDialog.requestedItems')}</span>
             <Button type="button" variant="outline" className="px-2.5 py-1 text-xs" onClick={addItemRow}>
-              + Add Item
+              {t('purchaseRequestFormDialog.addItem')}
             </Button>
           </div>
 
@@ -171,12 +173,12 @@ export function PurchaseRequestFormDialog({
               <div key={index} className="flex flex-col gap-2 rounded border border-line bg-cream-soft p-3 sm:flex-row sm:items-end">
                 <div className="flex-1">
                   <SelectField
-                    label="Item / Material"
+                    label={t('purchaseRequestFormDialog.itemMaterial')}
                     value={row.stockItemId}
                     onChange={(e) => handleItemChange(index, 'stockItemId', e.target.value)}
                     required
                   >
-                    <option value="">Select item...</option>
+                    <option value="">{t('purchaseRequestFormDialog.selectItem')}</option>
                     {availableItems.map((item) => (
                       <option key={item.id} value={item.id}>
                         {item.name} ({item.unit})
@@ -187,7 +189,7 @@ export function PurchaseRequestFormDialog({
 
                 <div className="w-full sm:w-28">
                   <TextField
-                    label="Quantity"
+                    label={t('purchaseRequestFormDialog.quantity')}
                     type="number"
                     step="0.01"
                     min="0.01"
@@ -199,7 +201,7 @@ export function PurchaseRequestFormDialog({
 
                 <div className="w-full sm:w-24">
                   <TextField
-                    label="Unit"
+                    label={t('purchaseRequestFormDialog.unit')}
                     value={row.unit}
                     onChange={(e) => handleItemChange(index, 'unit', e.target.value)}
                     required
@@ -213,7 +215,7 @@ export function PurchaseRequestFormDialog({
                     className="px-2.5 py-2 text-xs text-danger hover:border-danger"
                     onClick={() => removeItemRow(index)}
                   >
-                    Remove
+                    {t('purchaseRequestFormDialog.remove')}
                   </Button>
                 )}
               </div>
@@ -223,10 +225,10 @@ export function PurchaseRequestFormDialog({
 
         <div className="mt-6 flex justify-end gap-3 border-t border-line-soft pt-4">
           <Button type="button" variant="outline" onClick={onClose} disabled={busy}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button type="submit" variant="primary" disabled={busy}>
-            {busy ? 'Submitting...' : 'Submit request'}
+            {busy ? t('purchaseRequestFormDialog.submitting') : t('purchaseRequestFormDialog.submitRequest')}
           </Button>
         </div>
       </form>

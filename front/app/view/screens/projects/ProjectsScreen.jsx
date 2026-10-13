@@ -1,35 +1,34 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { usePreferences } from '../../preferences/preferencesContext'
 import { useContainer } from '../../providers/containerContext'
 import { useSession } from '../../providers/sessionContext'
 import { Badge } from '../../ui/Badge'
 import { Button } from '../../ui/Button'
 import { Pagination } from '../../ui/Pagination'
+import { ProgressTrack } from '../../ui/ProgressTrack'
+import { ScreenHeader } from '../../ui/ScreenHeader'
 import { ProjectFormDialog } from './ProjectFormDialog'
-import { ProjectLinksDialog } from './ProjectLinksDialog'
-import { projectStatusLabel } from './projectStatus'
+import { useProjectLookups } from './useProjectLookups'
 
-// Without view_finance the API sends a DTO with no contractAmount, so the column is not drawn.
+/*
+  The projects, as H cards: name, code and city, the progress in big numbers
+  and the late alarm. Progress and late both come calculated from the API.
+  Editing, the client portal and switching a project off live on the project
+  page; here a new project can be created.
+*/
 
-const PAGE_SIZE = 10
+const PAGE_SIZE = 12
 const SEARCH_DEBOUNCE_MS = 350
 const EMPTY_PAGE = { items: [], page: 1, totalPages: 1, total: 0 }
-// 100 is the API's page cap.
-const LOOKUP_SIZE = 100
-
-const money = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
-
-function formatDate(value) {
-  if (!value) return '—'
-  const [year, month, day] = value.split('-')
-  return `${day}/${month}/${year}`
-}
 
 export function ProjectsScreen() {
-  const { projects, clients, employees } = useContainer()
+  const { projects } = useContainer()
   const { can } = useSession()
+  const { t, format } = usePreferences()
   const canSeeAmount = can('view_finance')
   const canManage = can('manage_projects')
+  const { clientOptions, supervisorOptions } = useProjectLookups(canManage)
 
   const [data, setData] = useState(EMPTY_PAGE)
   const [page, setPage] = useState(1)
@@ -37,16 +36,8 @@ export function ProjectsScreen() {
   const [appliedSearch, setAppliedSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(null)
-  const [actionError, setActionError] = useState(null)
-  const [pendingId, setPendingId] = useState(null)
   const [reloadToken, setReloadToken] = useState(0)
-
-  const [clientOptions, setClientOptions] = useState([])
-  const [supervisorOptions, setSupervisorOptions] = useState([])
-
   const [formOpen, setFormOpen] = useState(false)
-  const [editingProject, setEditingProject] = useState(null)
-  const [linksProject, setLinksProject] = useState(null)
 
   const reload = useCallback(() => setReloadToken((value) => value + 1), [])
 
@@ -68,283 +59,159 @@ export function ProjectsScreen() {
       .list({ page, size: PAGE_SIZE, search: appliedSearch }, { signal: controller.signal })
       .then((result) => setData(result))
       .catch((error) => {
-        if (!controller.signal.aborted) setLoadError(error.message ?? 'Could not load projects.')
+        if (!controller.signal.aborted) setLoadError(error.message ?? t('common.couldNotLoad'))
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false)
       })
 
     return () => controller.abort()
-  }, [projects, page, appliedSearch, reloadToken])
+  }, [projects, page, appliedSearch, reloadToken, t])
 
-  // A failed lookup leaves its select empty; the list still works.
-  useEffect(() => {
-    // The lookups only feed the form, and their endpoints refuse whoever cannot open it.
-    if (!canManage) return undefined
-
-    const controller = new AbortController()
-    const options = { signal: controller.signal }
-
-    clients
-      .list({ page: 1, size: LOOKUP_SIZE }, options)
-      .then((result) =>
-        setClientOptions(
-          result.items.filter((client) => client.active).map((client) => ({ value: client.id, label: client.name })),
-        ),
-      )
-      .catch(() => {})
-
-    employees
-      .list({ page: 1, size: LOOKUP_SIZE }, options)
-      .then((result) =>
-        setSupervisorOptions(
-          result.items
-            .filter((employee) => employee.active)
-            .map((employee) => ({ value: employee.id, label: employee.name })),
-        ),
-      )
-      .catch(() => {})
-
-    return () => controller.abort()
-  }, [clients, employees, canManage])
-
-  const runAction = async (id, action) => {
-    setPendingId(id)
-    setActionError(null)
-
-    try {
-      await action()
-      reload()
-    } catch (error) {
-      setActionError(error.message ?? 'The action could not be completed.')
-    } finally {
-      setPendingId(null)
-    }
-  }
-
-  const saveProject = async (values) => {
-    if (editingProject) {
-      await projects.update(editingProject.id, values)
-    } else {
-      await projects.create(values)
-    }
-
+  const createProject = async (values) => {
+    await projects.create(values)
     setFormOpen(false)
-    setEditingProject(null)
     reload()
   }
 
+  const nothingYet = !loading && !loadError && data.total === 0 && !appliedSearch
+
   return (
     <>
-      <header className="flex flex-wrap items-center gap-4 border-b border-line bg-white px-8 py-5">
-        <div className="min-w-0">
-          <p className="label">Master data</p>
-          <h1 className="mt-1 text-xl font-semibold tracking-tight">Projects</h1>
-        </div>
+      <ScreenHeader title={t('projects.title')} count={loading ? null : data.total}>
+        <label className="sr-only" htmlFor="project-search">
+          {t('projects.search')}
+        </label>
+        <input
+          id="project-search"
+          type="search"
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder={t('projects.searchPlaceholder')}
+          className="h-12 w-64 max-w-full rounded-full border border-line bg-surface px-5 text-ink outline-none focus:border-accent"
+        />
+        {canManage && <Button onClick={() => setFormOpen(true)}>+ {t('projects.new')}</Button>}
+      </ScreenHeader>
 
-        <div className="ml-auto flex items-center gap-3">
-          <label className="sr-only" htmlFor="project-search">
-            Search projects
-          </label>
-          <input
-            id="project-search"
-            type="search"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search by code, name or city"
-            className="w-72 border border-line bg-white px-3 py-2 text-sm outline-none focus:border-gold"
-          />
+      <div className="flex flex-1 flex-col px-10 pt-6 pb-10">
+        {loading && (
+          <div className="grid gap-[18px] [grid-template-columns:repeat(auto-fill,minmax(340px,1fr))]" role="status" aria-label={t('common.loading')}>
+            {Array.from({ length: 3 }).map((_, index) => (
+              <div key={index} className="h-52 animate-pulse rounded-[22px] bg-surface" />
+            ))}
+          </div>
+        )}
 
-          {canManage && (
-            <Button
-              onClick={() => {
-                setEditingProject(null)
-                setFormOpen(true)
-              }}
-            >
-              New project
+        {!loading && loadError && (
+          <div className="rounded-3xl border border-line bg-surface px-6 py-10 text-center">
+            <p className="text-danger">{loadError}</p>
+            <Button variant="outline" onClick={reload} className="mt-4">
+              {t('common.tryAgain')}
             </Button>
-          )}
-        </div>
-      </header>
+          </div>
+        )}
 
-      <div className="p-8">
-        <p className="mb-6 max-w-[54em] text-sm leading-relaxed text-muted">
-          Each project is a construction site. A project is late when its forecast date has passed and
-          it is not completed. Projects are deactivated, never deleted: stock, time entries and costs
-          stay attached to them.
-        </p>
+        {nothingYet && <EmptyProjects canManage={canManage} onCreate={() => setFormOpen(true)} />}
 
-        {actionError && (
-          <p role="alert" className="mb-4 border border-danger-soft bg-[#faefea] px-4 py-2.5 text-[13px] text-danger">
-            {actionError}
+        {!loading && !loadError && data.total === 0 && appliedSearch && (
+          <p className="rounded-3xl border border-line bg-surface px-6 py-12 text-center text-muted">
+            {t('projects.noMatch', { search: appliedSearch })}
           </p>
         )}
 
-        <div className="border border-line bg-white">
-          {loading && <TableSkeleton />}
-
-          {!loading && loadError && (
-            <div className="px-6 py-10 text-center">
-              <p className="text-sm text-danger">{loadError}</p>
-              <Button variant="outline" onClick={reload} className="mt-4">
-                Try again
-              </Button>
+        {!loading && !loadError && data.items.length > 0 && (
+          <>
+            <div className="grid gap-[18px] [grid-template-columns:repeat(auto-fill,minmax(340px,1fr))]">
+              {data.items.map((project) => (
+                <ProjectCard key={project.id} project={project} t={t} format={format} />
+              ))}
             </div>
-          )}
 
-          {!loading && !loadError && data.items.length === 0 && (
-            <div className="px-6 py-12 text-center">
-              <p className="text-sm text-muted">
-                {appliedSearch ? `No project matches “${appliedSearch}”.` : 'No project registered yet.'}
-              </p>
-            </div>
-          )}
-
-          {!loading && !loadError && data.items.length > 0 && (
-            <table className="w-full border-collapse text-sm">
-              <caption className="sr-only">Registered projects</caption>
-              <thead>
-                <tr className="border-b border-line bg-cream-soft text-left">
-                  <HeaderCell>Project</HeaderCell>
-                  <HeaderCell>Client</HeaderCell>
-                  <HeaderCell>Supervisor</HeaderCell>
-                  <HeaderCell>Forecast</HeaderCell>
-                  {canSeeAmount && <HeaderCell>Contract</HeaderCell>}
-                  <HeaderCell>Status</HeaderCell>
-                  {canManage && <th className="px-4 py-3" />}
-                </tr>
-              </thead>
-
-              <tbody>
-                {data.items.map((project) => {
-                  const busy = pendingId === project.id
-
-                  return (
-                    <tr key={project.id} className="border-b border-line-soft last:border-0">
-                      <td className="px-4 py-3">
-                        <Link to={`/projects/${project.id}`} className="font-medium hover:text-bronze hover:underline">
-                          {project.name}
-                        </Link>
-                        <div className="font-mono text-[12.5px] text-muted">
-                          {project.code}
-                          {project.city ? ` · ${project.city}${project.state ? ` / ${project.state}` : ''}` : ''}
-                        </div>
-                      </td>
-
-                      <td className="px-4 py-3">{project.clientName || '—'}</td>
-
-                      <td className="px-4 py-3">{project.supervisorName || '—'}</td>
-
-                      <td className="px-4 py-3 whitespace-nowrap">{formatDate(project.forecastDate)}</td>
-
-                      {canSeeAmount && (
-                        <td className="px-4 py-3 whitespace-nowrap tabular-nums">
-                          {project.contractAmount != null ? money.format(project.contractAmount) : '—'}
-                        </td>
-                      )}
-
-                      <td className="px-4 py-3">
-                        <div className="flex flex-wrap gap-1.5">
-                          {project.active ? (
-                            <Badge tone="neutral">{projectStatusLabel(project.status)}</Badge>
-                          ) : (
-                            <Badge tone="inactive">Inactive</Badge>
-                          )}
-                          {project.active && project.late && <Badge tone="warning">Late</Badge>}
-                        </div>
-                      </td>
-
-                      {canManage && (
-                      <td className="px-4 py-3">
-                        <div className="flex flex-wrap items-center justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            className="px-3 py-1.5"
-                            disabled={busy}
-                            onClick={() => setLinksProject(project)}
-                          >
-                            Portal
-                          </Button>
-
-                          <Button
-                            variant="outline"
-                            className="px-3 py-1.5"
-                            disabled={busy}
-                            onClick={() => {
-                              setEditingProject(project)
-                              setFormOpen(true)
-                            }}
-                          >
-                            Edit
-                          </Button>
-
-                          <Button
-                            variant={project.active ? 'danger' : 'outline'}
-                            className="px-3 py-1.5"
-                            busy={busy}
-                            onClick={() =>
-                              runAction(project.id, () => projects.setActive(project.id, !project.active))
-                            }
-                          >
-                            {project.active ? 'Deactivate' : 'Activate'}
-                          </Button>
-                        </div>
-                      </td>
-                      )}
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          )}
-        </div>
-
-        {!loading && !loadError && (
-          <Pagination
-            noun="project"
-            page={data.page}
-            totalPages={data.totalPages}
-            total={data.total}
-            onChange={setPage}
-            busy={Boolean(pendingId)}
-          />
+            <Pagination noun="project" page={data.page} totalPages={data.totalPages} total={data.total} onChange={setPage} />
+          </>
         )}
       </div>
 
       <ProjectFormDialog
         open={formOpen}
-        project={editingProject}
+        project={null}
         clientOptions={clientOptions}
         supervisorOptions={supervisorOptions}
         canSeeAmount={canSeeAmount}
-        onClose={() => {
-          setFormOpen(false)
-          setEditingProject(null)
-        }}
-        onSubmit={saveProject}
-      />
-
-      <ProjectLinksDialog
-        open={!!linksProject}
-        projectId={linksProject?.id}
-        projectName={linksProject?.name}
-        onClose={() => setLinksProject(null)}
+        onClose={() => setFormOpen(false)}
+        onSubmit={createProject}
       />
     </>
   )
 }
 
-function HeaderCell({ children }) {
-  return <th className="label px-4 py-3 font-normal">{children}</th>
+function ProjectCard({ project, t, format }) {
+  const late = project.active && project.late
+  const place = [project.city, project.state].filter(Boolean).join(' / ')
+
+  return (
+    <Link
+      to={`/projects/${project.id}`}
+      className={[
+        'flex flex-col gap-3.5 rounded-[22px] border-[1.5px] bg-surface px-6 py-[22px] transition-colors hover:border-accent',
+        late ? 'border-late' : 'border-line',
+        project.active ? '' : 'opacity-60',
+      ].join(' ')}
+    >
+      <div className="flex items-start gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="display text-[26px]">{project.name}</div>
+          <div className="mt-1 font-mono text-[13px] text-muted">
+            {project.code}
+            {place && ` · ${place}`}
+          </div>
+        </div>
+        {late && <Badge tone="late">{t('common.late')}</Badge>}
+        {!project.active && <Badge tone="inactive">{t('common.inactive')}</Badge>}
+      </div>
+
+      <div className="flex items-baseline gap-3">
+        <span className={`display text-[48px] leading-none ${late ? 'text-late' : 'text-accent'}`}>
+          {format.percent(project.progress)}
+        </span>
+        <span className="font-medium text-muted">{t(`projectStatus.${project.status}`)}</span>
+      </div>
+
+      <ProgressTrack value={project.progress} late={late} label={t('projects.progress')} />
+
+      <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-[14.5px] text-muted">
+        {project.clientName && <span>{project.clientName}</span>}
+        <span>
+          {t('projects.forecast')} <span className="font-mono text-[13px]">{format.date(project.forecastDate)}</span>
+        </span>
+      </div>
+    </Link>
+  )
 }
 
-function TableSkeleton() {
+function EmptyProjects({ canManage, onCreate }) {
+  const { t } = usePreferences()
+
   return (
-    <div className="p-4" role="status" aria-label="Loading projects">
-      {Array.from({ length: 4 }).map((_, index) => (
-        <div key={index} className="mb-2 h-11 animate-pulse bg-cream last:mb-0" />
-      ))}
-    </div>
+    <section
+      aria-labelledby="empty-projects-title"
+      className="flex flex-1 flex-col items-center justify-center rounded-3xl border border-line bg-surface px-6 py-10 text-center"
+    >
+      <div aria-hidden="true" className="h-24 w-px bg-line" />
+      <svg width="24" height="32" viewBox="0 0 22 30" aria-hidden="true">
+        <path d="M7 0 H15 V4 H7 Z" fill="#808080" />
+        <path d="M7 4 L1 10 L11 30 L21 10 L15 4 Z" fill="#d9b451" />
+      </svg>
+      <p className="label mt-7">{t('nouns.project', { count: 0 })}</p>
+      <h2 id="empty-projects-title" className="display mt-2.5 max-w-[560px] text-[42px]">
+        {t('projects.emptyTitle')}
+      </h2>
+      <p className="mt-3 max-w-[440px] leading-relaxed text-muted">{t('projects.emptyText')}</p>
+      {canManage && (
+        <Button className="mt-6 min-h-14 px-8 text-[19px]" onClick={onCreate}>
+          + {t('projects.new')}
+        </Button>
+      )}
+    </section>
   )
 }

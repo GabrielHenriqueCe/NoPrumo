@@ -5,13 +5,15 @@ import { Badge } from '../../ui/Badge'
 import { Button } from '../../ui/Button'
 import { SelectField } from '../../ui/SelectField'
 import { AppointmentFormDialog } from './AppointmentFormDialog'
-import { appointmentTypeLabel, monthLabel, monthRange, weekdayOf } from './appointmentLabels'
+import { monthLabel, monthRange, weekdayOf } from './appointmentLabels'
+import { usePreferences } from '../../preferences/preferencesContext'
 
 // Training expiries come calculated by the API, mixed in by date: they are not appointments.
 const EMPTY_AGENDA = { appointments: [], trainingExpiries: [] }
 const EMPTY_OPTIONS = { projects: [], assignees: [] }
 
 export function AppointmentsScreen() {
+  const { t, format } = usePreferences()
   const { appointments } = useContainer()
 
   const [month, setMonth] = useState(() => {
@@ -41,14 +43,14 @@ export function AppointmentsScreen() {
       .agenda({ ...monthRange(month.year, month.index), projectId: projectFilter || null }, { signal: controller.signal })
       .then(setAgenda)
       .catch((error) => {
-        if (!controller.signal.aborted) setLoadError(error.message ?? 'Could not load the schedule.')
+        if (!controller.signal.aborted) setLoadError(error.message ?? t('appointmentsScreen.couldNotLoadTheSchedule'))
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false)
       })
 
     return () => controller.abort()
-  }, [appointments, month, projectFilter, reloadToken])
+  }, [appointments, month, projectFilter, reloadToken, t])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -99,7 +101,7 @@ export function AppointmentsScreen() {
       await appointments.setCompleted(appointment.id, !appointment.completed)
       reload()
     } catch (error) {
-      setActionError(error.message ?? 'The action could not be completed.')
+      setActionError(error.message ?? t('appointmentsScreen.theActionCouldNotBe'))
     } finally {
       setPendingId(null)
     }
@@ -110,48 +112,47 @@ export function AppointmentsScreen() {
 
   return (
     <>
-      <header className="flex flex-wrap items-center gap-4 border-b border-line bg-white px-8 py-5">
+      <header className="flex flex-wrap items-center gap-4 px-10 pt-7">
         <div className="min-w-0">
-          <p className="label">Planning</p>
-          <h1 className="mt-1 text-xl font-semibold tracking-tight">Schedule</h1>
+          <p className="label">{t('appointmentsScreen.planning')}</p>
+          <h1 className="display mt-1 text-[38px] leading-none">{t('appointmentsScreen.schedule')}</h1>
         </div>
 
         <div className="ml-auto flex flex-wrap items-center gap-3">
-          <nav className="flex items-center gap-2" aria-label="Month">
+          <nav className="flex items-center gap-2" aria-label={t('appointmentsScreen.month')}>
             <Button variant="outline" className="px-3 py-1.5" onClick={() => moveMonth(-1)}>
-              Previous
+              {t('common.previous')}
             </Button>
             <span aria-live="polite" className="w-36 text-center text-sm font-medium">
-              {monthLabel(month.year, month.index)}
+              {monthLabel(month.year, month.index, format.locale)}
             </span>
             <Button variant="outline" className="px-3 py-1.5" onClick={() => moveMonth(1)}>
-              Next
+              {t('common.next')}
             </Button>
           </nav>
 
           <div className="w-56">
             <SelectField
-              label="Project"
+              label={t('appointmentsScreen.project')}
               name="project-filter"
               value={projectFilter}
               onChange={(event) => setProjectFilter(event.target.value)}
-              placeholder="All projects"
+              placeholder={t('appointmentsScreen.allProjects')}
               options={options.projects.map((project) => ({ value: project.id, label: project.name }))}
             />
           </div>
 
-          <Button onClick={() => openForm(null)}>New appointment</Button>
+          <Button onClick={() => openForm(null)}>{t('appointmentsScreen.newAppointment')}</Button>
         </div>
       </header>
 
-      <div className="p-8">
+      <div className="px-10 pt-6 pb-10">
         <p className="mb-6 max-w-[54em] text-sm leading-relaxed text-muted">
-          Appointments of the month, together with the training certificates that expire in it. With a
-          project picked, the expiries are the ones of the people on its teams today.
+          {t('appointmentsScreen.appointmentsOfTheMonthTogether')}
         </p>
 
         {actionError && (
-          <p role="alert" className="mb-4 border border-danger-soft bg-[#faefea] px-4 py-2.5 text-[13px] text-danger">
+          <p role="alert" className="mb-4 rounded-2xl bg-danger-wash px-4 py-2.5 text-[13px] text-danger">
             {actionError}
           </p>
         )}
@@ -159,30 +160,30 @@ export function AppointmentsScreen() {
         {loading && <ListSkeleton />}
 
         {!loading && loadError && (
-          <div className="border border-line bg-white px-6 py-10 text-center">
+          <div className="border border-line bg-surface px-6 py-10 text-center">
             <p className="text-sm text-danger">{loadError}</p>
             <Button variant="outline" onClick={reload} className="mt-4">
-              Try again
+              {t('common.tryAgain')}
             </Button>
           </div>
         )}
 
         {!loading && !loadError && days.length === 0 && (
-          <div className="border border-line bg-white px-6 py-12 text-center">
-            <p className="text-sm text-muted">Nothing scheduled in {monthLabel(month.year, month.index)}.</p>
+          <div className="border border-line bg-surface px-6 py-12 text-center">
+            <p className="text-sm text-muted">{t('appointmentsScreen.nothingScheduledIn')} {monthLabel(month.year, month.index, format.locale)}.</p>
           </div>
         )}
 
         {!loading && !loadError && days.length > 0 && (
           <div className="flex flex-col gap-4">
             {days.map((day) => (
-              <section key={day.date} className="border border-line bg-white" aria-labelledby={`day-${day.date}`}>
+              <section key={day.date} className="overflow-hidden rounded-3xl border border-line bg-surface" aria-labelledby={`day-${day.date}`}>
                 <h2
                   id={`day-${day.date}`}
                   className="flex items-center gap-2 border-b border-line-soft bg-cream-soft px-4 py-2 text-sm font-semibold"
                 >
-                  {weekdayOf(day.date)} {formatDate(day.date)}
-                  {day.date === today && <Badge tone="warning">Today</Badge>}
+                  {weekdayOf(day.date, format.locale)} {formatDate(day.date)}
+                  {day.date === today && <Badge tone="warning">{t('appointmentsScreen.today')}</Badge>}
                 </h2>
 
                 <ul>
@@ -200,13 +201,13 @@ export function AppointmentsScreen() {
                           {appointment.title}
                         </div>
                         <div className="text-[12.5px] text-muted">
-                          {[appointmentTypeLabel(appointment.type), appointment.projectName, appointment.assignedToName]
+                          {[t(`labels.appointmentType.${appointment.type}`), appointment.projectName, appointment.assignedToName]
                             .filter(Boolean)
                             .join(' · ')}
                         </div>
                       </div>
 
-                      {appointment.completed && <Badge tone="active">Completed</Badge>}
+                      {appointment.completed && <Badge tone="active">{t('appointmentsScreen.completed')}</Badge>}
 
                       <div className="flex gap-2">
                         <Button
@@ -216,17 +217,17 @@ export function AppointmentsScreen() {
                           disabled={pendingId === appointment.id}
                           onClick={() => openForm(appointment)}
                         >
-                          Edit
+                          {t('common.edit')}
                         </Button>
                         <Button
                           variant="outline"
                           className="px-3 py-1.5"
                           aria-label={`${appointment.completed ? 'Reopen' : 'Complete'} ${appointment.title}`}
                           busy={pendingId === appointment.id}
-                          busyLabel="Saving…"
+                          busyLabel={t('common.saving')}
                           onClick={() => toggleCompleted(appointment)}
                         >
-                          {appointment.completed ? 'Reopen' : 'Complete'}
+                          {appointment.completed ? t('appointmentsScreen.reopen') : t('appointmentsScreen.complete')}
                         </Button>
                       </div>
                     </li>
@@ -241,13 +242,13 @@ export function AppointmentsScreen() {
 
                       <div className="min-w-0 flex-1">
                         <div className="font-medium">
-                          {expiry.trainingTypeCode} of {expiry.employeeName} expires
+                          {expiry.trainingTypeCode} {t('appointmentsScreen.of')} {expiry.employeeName} {t('appointmentsScreen.expires')}
                         </div>
-                        <div className="text-[12.5px] text-muted">{expiry.trainingTypeName} · training certificate</div>
+                        <div className="text-[12.5px] text-muted">{expiry.trainingTypeName} {t('appointmentsScreen.trainingCertificate')}</div>
                       </div>
 
                       <Badge tone={expiry.status === 'expired' ? 'inactive' : 'warning'}>
-                        {expiry.status === 'expired' ? 'Expired' : 'Expires soon'}
+                        {expiry.status === 'expired' ? t('appointmentsScreen.expired') : t('appointmentsScreen.expiresSoon')}
                       </Badge>
                     </li>
                   ))}
@@ -284,10 +285,11 @@ function groupByDay({ appointments, trainingExpiries }) {
 }
 
 function ListSkeleton() {
+  const { t } = usePreferences()
   return (
-    <div className="border border-line bg-white p-4" role="status" aria-label="Loading the schedule">
+    <div className="border border-line bg-surface p-4" role="status" aria-label={t('appointmentsScreen.loadingTheSchedule')}>
       {Array.from({ length: 4 }).map((_, index) => (
-        <div key={index} className="mb-2 h-11 animate-pulse bg-cream last:mb-0" />
+        <div key={index} className="mb-2 h-11 animate-pulse rounded-xl bg-sunken last:mb-0" />
       ))}
     </div>
   )

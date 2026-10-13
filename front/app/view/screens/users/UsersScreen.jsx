@@ -6,6 +6,7 @@ import { Button } from '../../ui/Button'
 import { Pagination } from '../../ui/Pagination'
 import { TemporaryPasswordDialog } from './TemporaryPasswordDialog'
 import { UserFormDialog } from './UserFormDialog'
+import { useT } from '../../preferences/preferencesContext'
 
 /*
   User administration: the list, plus create, edit, switch on/off and reset.
@@ -24,6 +25,7 @@ const EMPTY_PAGE = { items: [], page: 1, totalPages: 1, total: 0 }
 const EMPLOYEE_LOOKUP_SIZE = 100
 
 export function UsersScreen() {
+  const t = useT()
   const { users, employees } = useContainer()
   const { user: signedInUser } = useSession()
 
@@ -65,14 +67,14 @@ export function UsersScreen() {
       .then((result) => setData(result))
       .catch((error) => {
         // An aborted request is this effect being replaced, not a failure.
-        if (!controller.signal.aborted) setLoadError(error.message ?? 'Could not load users.')
+        if (!controller.signal.aborted) setLoadError(error.message ?? t('usersScreen.couldNotLoadUsers'))
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false)
       })
 
     return () => controller.abort()
-  }, [users, page, appliedSearch, reloadToken])
+  }, [users, page, appliedSearch, reloadToken, t])
 
   // Roles and employees fill fixed dropdowns; fetched once, not on every list refresh.
   useEffect(() => {
@@ -107,7 +109,7 @@ export function UsersScreen() {
       await action()
       reload()
     } catch (error) {
-      setActionError(error.message ?? 'The action could not be completed.')
+      setActionError(error.message ?? t('usersScreen.theActionCouldNotBe'))
     } finally {
       setPendingId(null)
     }
@@ -136,23 +138,23 @@ export function UsersScreen() {
 
   return (
     <>
-      <header className="flex flex-wrap items-center gap-4 border-b border-line bg-white px-8 py-5">
+      <header className="flex flex-wrap items-center gap-4 px-10 pt-7">
         <div className="min-w-0">
-          <p className="label">Administration</p>
-          <h1 className="mt-1 text-xl font-semibold tracking-tight">Users</h1>
+          <p className="label">{t('usersScreen.administration')}</p>
+          <h1 className="display mt-1 text-[38px] leading-none">{t('usersScreen.users')}</h1>
         </div>
 
         <div className="ml-auto flex items-center gap-3">
           <label className="sr-only" htmlFor="user-search">
-            Search users
+            {t('usersScreen.searchUsers')}
           </label>
           <input
             id="user-search"
             type="search"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search by name, username or email"
-            className="w-72 border border-line bg-white px-3 py-2 text-sm outline-none focus:border-gold"
+            placeholder={t('usersScreen.searchByNameUsernameOr')}
+            className="w-72 h-11 rounded-full border border-line bg-surface px-5 text-sm outline-none focus:border-accent"
           />
 
           <Button
@@ -161,32 +163,30 @@ export function UsersScreen() {
               setFormOpen(true)
             }}
           >
-            New user
+            {t('usersScreen.newUser')}
           </Button>
         </div>
       </header>
 
-      <div className="p-8">
+      <div className="px-10 pt-6 pb-10">
         <p className="mb-6 max-w-[54em] text-sm leading-relaxed text-muted">
-          Accounts are created here — there is no public sign-up. An account is switched off, never
-          deleted: the time entries, PPE records and purchases it signed have to keep pointing
-          somewhere.
+          {t('usersScreen.accountsAreCreatedHereThere')}
         </p>
 
         {actionError && (
-          <p role="alert" className="mb-4 border border-danger-soft bg-[#faefea] px-4 py-2.5 text-[13px] text-danger">
+          <p role="alert" className="mb-4 rounded-2xl bg-danger-wash px-4 py-2.5 text-[13px] text-danger">
             {actionError}
           </p>
         )}
 
-        <div className="border border-line bg-white">
+        <div className="overflow-hidden rounded-3xl border border-line bg-surface">
           {loading && <TableSkeleton />}
 
           {!loading && loadError && (
             <div className="px-6 py-10 text-center">
               <p className="text-sm text-danger">{loadError}</p>
               <Button variant="outline" onClick={reload} className="mt-4">
-                Try again
+                {t('common.tryAgain')}
               </Button>
             </div>
           )}
@@ -194,20 +194,20 @@ export function UsersScreen() {
           {!loading && !loadError && data.items.length === 0 && (
             <div className="px-6 py-12 text-center">
               <p className="text-sm text-muted">
-                {appliedSearch ? `No user matches “${appliedSearch}”.` : 'No user registered yet.'}
+                {appliedSearch ? t('usersScreen.noUserMatchesAppliedsearch', { appliedSearch: appliedSearch }) : t('usersScreen.noUserRegisteredYet')}
               </p>
             </div>
           )}
 
           {!loading && !loadError && data.items.length > 0 && (
             <table className="w-full border-collapse text-sm">
-              <caption className="sr-only">Registered users</caption>
+              <caption className="sr-only">{t('usersScreen.registeredUsers')}</caption>
               <thead>
                 <tr className="border-b border-line bg-cream-soft text-left">
-                  <Th>Name</Th>
-                  <Th>Username</Th>
-                  <Th>Role</Th>
-                  <Th>Status</Th>
+                  <Th>{t('common.name')}</Th>
+                  <Th>{t('usersScreen.username')}</Th>
+                  <Th>{t('usersScreen.role')}</Th>
+                  <Th>{t('common.status')}</Th>
                   <th className="px-4 py-3" />
                 </tr>
               </thead>
@@ -230,9 +230,9 @@ export function UsersScreen() {
                       <td className="px-4 py-3">
                         <div className="flex flex-wrap gap-1.5">
                           <Badge tone={user.active ? 'active' : 'inactive'}>
-                            {user.active ? 'Active' : 'Inactive'}
+                            {user.active ? t('common.active') : t('common.inactive')}
                           </Badge>
-                          {user.mustChangePassword && <Badge tone="warning">Temporary password</Badge>}
+                          {user.mustChangePassword && <Badge tone="warning">{t('usersScreen.temporaryPassword')}</Badge>}
                         </div>
                       </td>
 
@@ -247,7 +247,7 @@ export function UsersScreen() {
                               setFormOpen(true)
                             }}
                           >
-                            Edit
+                            {t('common.edit')}
                           </Button>
 
                           <Button
@@ -256,7 +256,7 @@ export function UsersScreen() {
                             disabled={busy}
                             onClick={() => resetPassword(user)}
                           >
-                            Reset password
+                            {t('usersScreen.resetPassword')}
                           </Button>
 
                           <Button
@@ -270,12 +270,12 @@ export function UsersScreen() {
                               round trip.
                             */
                             disabled={busy || (user.active && isSelf)}
-                            title={user.active && isSelf ? 'You cannot deactivate your own account' : undefined}
+                            title={user.active && isSelf ? t('usersScreen.youCannotDeactivateYourOwn') : undefined}
                             onClick={() =>
                               runAction(user.id, () => users.setActive(user.id, !user.active))
                             }
                           >
-                            {user.active ? 'Deactivate' : 'Activate'}
+                            {user.active ? t('common.deactivate') : t('common.activate')}
                           </Button>
                         </div>
                       </td>
@@ -330,10 +330,11 @@ function Th({ children }) {
   loads, so the page does not jump when the data lands.
 */
 function TableSkeleton() {
+  const t = useT()
   return (
-    <div className="p-4" role="status" aria-label="Loading users">
+    <div className="p-4" role="status" aria-label={t('usersScreen.loadingUsers')}>
       {Array.from({ length: 4 }).map((_, index) => (
-        <div key={index} className="mb-2 h-11 animate-pulse bg-cream last:mb-0" />
+        <div key={index} className="mb-2 h-11 animate-pulse rounded-xl bg-sunken last:mb-0" />
       ))}
     </div>
   )

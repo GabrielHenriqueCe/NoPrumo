@@ -4,6 +4,7 @@ import { Badge } from '../../ui/Badge'
 import { Button } from '../../ui/Button'
 import { Dialog } from '../../ui/Dialog'
 import { TextField } from '../../ui/TextField'
+import { useT } from '../../preferences/preferencesContext'
 
 function formatDate(isoString) {
   if (!isoString) return '—'
@@ -32,6 +33,7 @@ function formatDateTime(isoString) {
 }
 
 export function ProjectLinksDialog({ projectId, projectName, open, onClose }) {
+  const t = useT()
   const { projectLinks } = useContainer()
 
   const [links, setLinks] = useState([])
@@ -53,9 +55,9 @@ export function ProjectLinksDialog({ projectId, projectName, open, onClose }) {
     projectLinks
       .listByProject(projectId)
       .then((data) => setLinks(data))
-      .catch((err) => setError(err.message || 'Could not load project portal links.'))
+      .catch((err) => setError(err.message || t('projectLinksDialog.couldNotLoadProjectPortal')))
       .finally(() => setLoading(false))
-  }, [projectId, projectLinks])
+  }, [projectId, projectLinks, t])
 
   useEffect(() => {
     if (open && projectId) {
@@ -86,7 +88,7 @@ export function ProjectLinksDialog({ projectId, projectName, open, onClose }) {
       setLabel('')
       loadLinks()
     } catch (err) {
-      setError(err.message || 'Could not generate new link.')
+      setError(err.message || t('projectLinksDialog.couldNotGenerateNewLink'))
     } finally {
       setCreating(false)
     }
@@ -99,7 +101,7 @@ export function ProjectLinksDialog({ projectId, projectName, open, onClose }) {
       await projectLinks.revoke(linkId)
       loadLinks()
     } catch (err) {
-      setError(err.message || 'Could not revoke link.')
+      setError(err.message || t('projectLinksDialog.couldNotRevokeLink'))
     } finally {
       setRevokingId(null)
     }
@@ -117,12 +119,12 @@ export function ProjectLinksDialog({ projectId, projectName, open, onClose }) {
     <Dialog
       open={open}
       onClose={onClose}
-      title="Client Portal Links"
-      description={`External anonymous access management for project “${projectName || 'Project'}”.`}
+      title={t('projectLinksDialog.clientPortalLinks')}
+      description={t('extras.projectLinksHint', { project: projectName || t('extras.project') })}
     >
       <div className="p-6">
         {error && (
-          <div className="mb-4 border border-danger-soft bg-[#faefea] p-3 text-sm text-danger">
+          <div className="mb-4 rounded-2xl bg-danger-wash p-3 text-sm text-danger">
             {error}
           </div>
         )}
@@ -130,18 +132,18 @@ export function ProjectLinksDialog({ projectId, projectName, open, onClose }) {
         {/* Newly created link alert with copy button */}
         {newlyCreatedUrl && (
           <div className="mb-6 border border-bronze bg-gold-wash p-4">
-            <div className="label mb-1 text-bronze">Link successfully created!</div>
+            <div className="label mb-1 text-bronze">{t('projectLinksDialog.linkSuccessfullyCreated')}</div>
             <p className="mb-2 text-xs text-muted">
-              For security reasons, this token will never be displayed again. Copy and share it with the client now.
+              {t('projectLinksDialog.forSecurityReasonsThisToken')}
             </p>
             <div className="flex items-center gap-2">
               <input
                 readOnly
                 value={newlyCreatedUrl}
-                className="w-full border border-line bg-white px-2.5 py-1.5 font-mono text-xs text-graphite outline-none select-all"
+                className="w-full border border-line bg-surface px-2.5 py-1.5 font-mono text-xs text-graphite outline-none select-all"
               />
               <Button type="button" variant="primary" className="px-3 py-1.5 text-xs whitespace-nowrap" onClick={handleCopy}>
-                {copied ? 'Copied!' : 'Copy'}
+                {copied ? t('projectLinksDialog.copied') : t('projectLinksDialog.copy')}
               </Button>
             </div>
           </div>
@@ -149,19 +151,19 @@ export function ProjectLinksDialog({ projectId, projectName, open, onClose }) {
 
         {/* Form to generate new link */}
         <form onSubmit={handleCreateLink} className="mb-6 border border-line bg-cream-soft p-4">
-          <div className="label mb-3">Generate New Access Link</div>
+          <div className="label mb-3">{t('projectLinksDialog.generateNewAccessLink')}</div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="sm:col-span-2">
               <TextField
-                label="Label (optional)"
-                placeholder="Ex: Client Family Access"
+                label={t('projectLinksDialog.labelOptional')}
+                placeholder={t('projectLinksDialog.exClientFamilyAccess')}
                 value={label}
                 onChange={(e) => setLabel(e.target.value)}
               />
             </div>
             <div>
               <TextField
-                label="Validity (days)"
+                label={t('projectLinksDialog.validityDays')}
                 type="number"
                 min="1"
                 max="365"
@@ -172,18 +174,18 @@ export function ProjectLinksDialog({ projectId, projectName, open, onClose }) {
           </div>
           <div className="mt-3 flex justify-end">
             <Button type="submit" variant="primary" disabled={creating}>
-              {creating ? 'Generating...' : 'Generate link'}
+              {creating ? t('projectLinksDialog.generating') : t('projectLinksDialog.generateLink')}
             </Button>
           </div>
         </form>
 
         {/* Links list */}
         <div>
-          <div className="label mb-2">Active Links & History</div>
+          <div className="label mb-2">{t('projectLinksDialog.activeLinksHistory')}</div>
           {loading ? (
-            <p className="py-4 text-center text-xs text-muted">Loading links...</p>
+            <p className="py-4 text-center text-xs text-muted">{t('projectLinksDialog.loadingLinks')}</p>
           ) : links.length === 0 ? (
-            <p className="py-4 text-center text-xs text-muted">No portal link generated for this project yet.</p>
+            <p className="py-4 text-center text-xs text-muted">{t('projectLinksDialog.noPortalLinkGeneratedFor')}</p>
           ) : (
             <div className="divide-y divide-line-soft border border-line">
               {links.map((link) => {
@@ -195,17 +197,17 @@ export function ProjectLinksDialog({ projectId, projectName, open, onClose }) {
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium text-graphite">
-                          {link.label || 'Unlabeled link'}
+                          {link.label || t('projectLinksDialog.unlabeledLink')}
                         </span>
-                        {link.isActive && <Badge tone="active">Active</Badge>}
-                        {isRevoked && <Badge tone="inactive">Revoked</Badge>}
-                        {isExpired && <Badge tone="warning">Expired</Badge>}
+                        {link.isActive && <Badge tone="active">{t('common.active')}</Badge>}
+                        {isRevoked && <Badge tone="inactive">{t('projectLinksDialog.revoked')}</Badge>}
+                        {isExpired && <Badge tone="warning">{t('projectLinksDialog.expired')}</Badge>}
                       </div>
                       <div className="mt-1 flex flex-wrap gap-x-3 text-xs text-muted">
-                        <span>Created: {formatDate(link.createdAt)}</span>
-                        <span>Expires: {formatDate(link.expiresAt)}</span>
-                        <span>Accesses: {link.accessCount}</span>
-                        <span>Last access: {formatDateTime(link.lastAccessAt)}</span>
+                        <span>{t('projectLinksDialog.created')} {formatDate(link.createdAt)}</span>
+                        <span>{t('projectLinksDialog.expires')} {formatDate(link.expiresAt)}</span>
+                        <span>{t('projectLinksDialog.accesses')} {link.accessCount}</span>
+                        <span>{t('projectLinksDialog.lastAccess')} {formatDateTime(link.lastAccessAt)}</span>
                       </div>
                     </div>
 
@@ -217,7 +219,7 @@ export function ProjectLinksDialog({ projectId, projectName, open, onClose }) {
                           disabled={revokingId === link.id}
                           onClick={() => handleRevoke(link.id)}
                         >
-                          {revokingId === link.id ? 'Revoking...' : 'Revoke'}
+                          {revokingId === link.id ? t('projectLinksDialog.revoking') : t('projectLinksDialog.revoke')}
                         </Button>
                       </div>
                     )}
@@ -230,7 +232,7 @@ export function ProjectLinksDialog({ projectId, projectName, open, onClose }) {
 
         <div className="mt-6 flex justify-end border-t border-line-soft pt-4">
           <Button type="button" variant="outline" onClick={onClose}>
-            Close
+            {t('common.close')}
           </Button>
         </div>
       </div>

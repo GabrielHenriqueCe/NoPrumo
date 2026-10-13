@@ -1,54 +1,69 @@
 import { SETTINGS_PERMISSIONS } from './settings'
 
 /*
-  The sidebar, as data. AppShell draws it; the routes read it to decide where
+  The rail, as data. AppShell draws it; the routes read it to decide where
   someone lands after signing in.
 
-  The sidebar is the company's: projects first, then what goes around them
-  (people, materials, commercial). Everything about one project lives inside
-  the project page, in its tabs, not here. What is registered once and only
-  picked from a list goes to Settings (settings.js).
+  Each group is one icon on the rail. Clicking it opens the first item this
+  person can reach, and the group's items show as tabs above the screen. The
+  rail is the company's: one project lives inside its own page, in its tabs,
+  not here. What is registered once and only picked from a list goes to
+  Settings (settings.js), pinned to the bottom of the rail.
 
-  Every item declares the permission it needs. A group whose items are all out
-  of reach does not render its heading either — an empty section would only
-  advertise what the person cannot open.
+  Every item declares the permission it needs; null means anyone signed in. A
+  group whose items are all out of reach does not show at all.
 */
 
 export const SCHEDULE_PERMISSIONS = ['manage_projects', 'manage_safety']
 
 export const MENU = [
   {
-    heading: null,
-    items: [{ to: '/projects', label: 'Projects', permission: 'view_projects' }],
+    key: 'home',
+    icon: 'home',
+    items: [{ to: '/home', labelKey: 'menu.home', permission: null }],
   },
   {
-    heading: 'People',
+    key: 'projects',
+    icon: 'projects',
+    items: [{ to: '/projects', labelKey: 'menu.projects', permission: 'view_projects' }],
+  },
+  {
+    key: 'people',
+    icon: 'people',
     items: [
-      { to: '/employees', label: 'Employees', permission: 'manage_employees' },
-      { to: '/teams', label: 'Teams', permission: 'manage_employees' },
-      { to: '/trainings', label: 'Trainings', permission: 'manage_safety' },
+      { to: '/employees', labelKey: 'menu.employees', permission: 'manage_employees' },
+      { to: '/teams', labelKey: 'menu.teams', permission: 'manage_employees' },
+      { to: '/trainings', labelKey: 'menu.trainings', permission: 'manage_safety' },
     ],
   },
   {
-    heading: 'Planning',
-    items: [{ to: '/schedule', label: 'Schedule', permission: SCHEDULE_PERMISSIONS }],
+    key: 'planning',
+    icon: 'planning',
+    items: [{ to: '/schedule', labelKey: 'menu.schedule', permission: SCHEDULE_PERMISSIONS }],
   },
   {
-    heading: 'Materials',
-    items: [{ to: '/stock-items', label: 'Stock items', permission: 'manage_stock' }],
+    key: 'materials',
+    icon: 'materials',
+    items: [{ to: '/stock-items', labelKey: 'menu.stockItems', permission: 'manage_stock' }],
   },
   {
-    heading: 'Commercial',
+    key: 'commercial',
+    icon: 'commercial',
     items: [
-      { to: '/clients', label: 'Clients', permission: 'manage_projects' },
-      { to: '/suppliers', label: 'Suppliers', permission: 'manage_purchases' },
-      { to: '/purchases', label: 'Purchases', permission: 'manage_purchases' },
+      { to: '/clients', labelKey: 'menu.clients', permission: 'manage_projects' },
+      { to: '/suppliers', labelKey: 'menu.suppliers', permission: 'manage_purchases' },
+      { to: '/purchases', labelKey: 'menu.purchases', permission: 'manage_purchases' },
     ],
   },
   {
-    heading: 'Company',
-    items: [
-      { to: '/settings', label: 'Settings', permission: SETTINGS_PERMISSIONS },
-    ],
+    key: 'reports',
+    icon: 'reports',
+    items: [{ to: '/reports', labelKey: 'menu.reports', permission: 'view_finance' }],
   },
 ]
+
+export const SETTINGS_GROUP = {
+  key: 'settings',
+  icon: 'settings',
+  items: [{ to: '/settings', labelKey: 'menu.settings', permission: SETTINGS_PERMISSIONS }],
+}

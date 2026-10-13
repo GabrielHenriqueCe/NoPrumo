@@ -3,6 +3,7 @@ import { Button } from '../../ui/Button'
 import { Dialog } from '../../ui/Dialog'
 import { SelectField } from '../../ui/SelectField'
 import { TextField } from '../../ui/TextField'
+import { useT } from '../../preferences/preferencesContext'
 
 /*
   Create or edit a stock category.
@@ -15,14 +16,10 @@ import { TextField } from '../../ui/TextField'
   prevents editing them, but the team should agree before anyone does).
 */
 
-const YES_NO_OPTIONS = [
-    { value: 'true', label: 'Yes' },
-    { value: 'false', label: 'No' },
-]
-
 const EMPTY = { name: '', tracksProjectBalance: 'false', requiresReturn: 'false' }
 
 export function StockCategoryFormDialog({ open, category, onClose, onSubmit }) {
+    const t = useT()
     const editing = Boolean(category)
 
     const [form, setForm] = useState(EMPTY)
@@ -65,7 +62,7 @@ export function StockCategoryFormDialog({ open, category, onClose, onSubmit }) {
         } catch (error) {
             // The API is the one that validates. The form only shows where it hurt.
             if (error.isValidation) setFieldErrors(error.fieldErrors)
-            else setFormError(error.message ?? 'Could not save the category.')
+            else setFormError(error.message ?? t('stockCategoryFormDialog.couldNotSaveTheCategory'))
         } finally {
             setBusy(false)
         }
@@ -75,14 +72,14 @@ export function StockCategoryFormDialog({ open, category, onClose, onSubmit }) {
         <Dialog
             open={open}
             onClose={busy ? undefined : onClose}
-            title={editing ? 'Edit stock category' : 'New stock category'}
-            description="Consumable material, PPE and tool are the three flows the system is built around."
+            title={editing ? t('stockCategoryFormDialog.editStockCategory') : t('stockCategoryFormDialog.newStockCategory')}
+            description={t('stockCategoryFormDialog.consumableMaterialPpeAndTool')}
         >
             <form onSubmit={submit} noValidate className="flex flex-col gap-4 p-6">
                 <TextField
-                    label="Name"
+                    label={t('common.name')}
                     name="name"
-                    placeholder="e.g. Consumable material"
+                    placeholder={t('stockCategoryFormDialog.eGConsumableMaterial')}
                     required
                     value={form.name}
                     onChange={update('name')}
@@ -90,37 +87,37 @@ export function StockCategoryFormDialog({ open, category, onClose, onSubmit }) {
                 />
 
                 <SelectField
-                    label="Tracks project balance"
+                    label={t('stockCategoryFormDialog.tracksProjectBalance')}
                     name="tracksProjectBalance"
                     required
                     value={form.tracksProjectBalance}
                     onChange={update('tracksProjectBalance')}
                     error={fieldErrors.tracksProjectBalance}
-                    options={YES_NO_OPTIONS}
+                    options={[{ value: 'true', label: t('labels.yes') }, { value: 'false', label: t('labels.no') }]}
                 />
 
                 <SelectField
-                    label="Requires return"
+                    label={t('stockCategoryFormDialog.requiresReturn')}
                     name="requiresReturn"
                     required
                     value={form.requiresReturn}
                     onChange={update('requiresReturn')}
                     error={fieldErrors.requiresReturn}
-                    options={YES_NO_OPTIONS}
+                    options={[{ value: 'true', label: t('labels.yes') }, { value: 'false', label: t('labels.no') }]}
                 />
 
                 {formError && (
-                    <p role="alert" className="border border-danger-soft bg-[#faefea] px-3 py-2 text-[12.5px] text-danger">
+                    <p role="alert" className="rounded-2xl bg-danger-wash px-3 py-2 text-[12.5px] text-danger">
                         {formError}
                     </p>
                 )}
 
                 <div className="mt-2 flex items-center gap-2.5">
-                    <Button type="submit" busy={busy} busyLabel="Saving…">
-                        {editing ? 'Save changes' : 'Create category'}
+                    <Button type="submit" busy={busy} busyLabel={t('common.saving')}>
+                        {editing ? t('common.saveChanges') : t('stockCategoryFormDialog.createCategory')}
                     </Button>
                     <Button type="button" variant="outline" onClick={onClose} disabled={busy}>
-                        Cancel
+                        {t('common.cancel')}
                     </Button>
                 </div>
             </form>

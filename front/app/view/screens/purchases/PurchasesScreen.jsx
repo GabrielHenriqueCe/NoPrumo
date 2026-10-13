@@ -6,8 +6,9 @@ import { Pagination } from '../../ui/Pagination'
 import { SelectField } from '../../ui/SelectField'
 import { DecidePurchaseDialog } from './DecidePurchaseDialog'
 import { PurchaseRequestFormDialog } from './PurchaseRequestFormDialog'
-import { purchaseStatusLabel, purchaseStatusTone } from './purchaseStatus'
+import { purchaseStatusKey, purchaseStatusTone } from './purchaseStatus'
 import { RegisterPurchaseDialog } from './RegisterPurchaseDialog'
+import { useT } from '../../preferences/preferencesContext'
 
 const PAGE_SIZE = 10
 const EMPTY_PAGE = { items: [], page: 1, totalPages: 1, total: 0 }
@@ -19,6 +20,7 @@ function formatDate(value) {
 }
 
 export function PurchasesScreen() {
+  const t = useT()
   const { purchaseRequests, projects } = useContainer()
 
   const [data, setData] = useState(EMPTY_PAGE)
@@ -58,7 +60,7 @@ export function PurchasesScreen() {
       .then((res) => setData(res))
       .catch((err) => {
         if (!controller.signal.aborted) {
-          setLoadError(err.message || 'Could not load purchase requests.')
+          setLoadError(err.message || t('purchasesScreen.couldNotLoadPurchaseRequests'))
         }
       })
       .finally(() => {
@@ -66,7 +68,7 @@ export function PurchasesScreen() {
       })
 
     return () => controller.abort()
-  }, [purchaseRequests, page, selectedStatus, reloadToken])
+  }, [purchaseRequests, page, selectedStatus, reloadToken, t])
 
   const handleDecide = async (decision) => {
     if (!decidingRequest) return
@@ -84,70 +86,69 @@ export function PurchasesScreen() {
     <>
       <header className="flex flex-wrap items-end justify-between gap-4 border-b border-line bg-cream-soft px-8 py-6">
         <div>
-          <span className="label">Materials & Supplies</span>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight">Purchases</h1>
+          <span className="label">{t('purchasesScreen.materialsSupplies')}</span>
+          <h1 className="mt-1 text-2xl font-bold tracking-tight">{t('purchasesScreen.purchases')}</h1>
         </div>
 
         <div className="flex items-center gap-3">
           <Button onClick={() => setFormOpen(true)}>
-            New request
+            {t('purchasesScreen.newRequest')}
           </Button>
         </div>
       </header>
 
-      <div className="p-8">
+      <div className="px-10 pt-6 pb-10">
         <p className="mb-6 max-w-[54em] text-sm leading-relaxed text-muted">
-          Manage material purchase requests submitted by foremen across projects. Purchasing reviews,
-          approves or rejects requests and records supplier purchases directly to stock.
+          {t('purchasesScreen.manageMaterialPurchaseRequestsSubmitted')}
         </p>
 
         <div className="mb-6 flex flex-wrap items-center gap-4 border border-line bg-cream-soft p-4">
           <div className="w-56">
             <SelectField
-              label="Filter by status"
+              label={t('purchasesScreen.filterByStatus')}
               value={selectedStatus}
               onChange={(e) => {
                 setSelectedStatus(e.target.value)
                 setPage(1)
               }}
             >
-              <option value="">All statuses</option>
-              <option value="pending">Pending</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
-              <option value="purchased">Purchased</option>
+              <option value="">{t('purchasesScreen.allStatuses')}</option>
+              <option value="pending">{t('purchasesScreen.pending')}</option>
+              <option value="approved">{t('purchasesScreen.approved')}</option>
+              <option value="rejected">{t('purchasesScreen.rejected')}</option>
+              <option value="purchased">{t('purchasesScreen.purchased')}</option>
             </SelectField>
           </div>
         </div>
 
-        <div className="border border-line bg-white">
+        <div className="overflow-hidden rounded-3xl border border-line bg-surface">
           {loading && <TableSkeleton />}
 
           {!loading && loadError && (
             <div className="px-6 py-10 text-center">
               <p className="text-sm text-danger">{loadError}</p>
               <Button variant="outline" onClick={reload} className="mt-4">
-                Try again
+                {t('common.tryAgain')}
               </Button>
             </div>
           )}
 
           {!loading && !loadError && data.items.length === 0 && (
             <div className="px-6 py-12 text-center">
-              <p className="text-sm text-muted">No purchase request registered yet.</p>
+              <p className="text-sm text-muted">{t('purchasesScreen.noPurchaseRequestRegisteredYet')}</p>
             </div>
           )}
 
           {!loading && !loadError && data.items.length > 0 && (
             <table className="w-full border-collapse text-sm">
-              <caption className="sr-only">Purchase requests</caption>
+              <caption className="sr-only">{t('purchasesScreen.purchaseRequests')}</caption>
               <thead>
                 <tr className="border-b border-line bg-cream-soft text-left">
-                  <HeaderCell>Project</HeaderCell>
-                  <HeaderCell>Date</HeaderCell>
-                  <HeaderCell>Items / Quantities</HeaderCell>
-                  <HeaderCell>Needed by</HeaderCell>
-                  <HeaderCell>Status</HeaderCell>
+                  <HeaderCell>{t('purchasesScreen.project')}</HeaderCell>
+                  <HeaderCell>{t('purchasesScreen.date')}</HeaderCell>
+                  <HeaderCell>{t('purchasesScreen.itemsQuantities')}</HeaderCell>
+                  <HeaderCell>{t('purchasesScreen.neededBy')}</HeaderCell>
+                  <HeaderCell>{t('common.status')}</HeaderCell>
                   <th className="px-4 py-3" />
                 </tr>
               </thead>
@@ -156,7 +157,7 @@ export function PurchasesScreen() {
                   <tr key={req.id} className="border-b border-line-soft last:border-0">
                     <td className="px-4 py-3">
                       <div className="font-medium text-graphite">{req.projectName}</div>
-                      <div className="font-mono text-[12.5px] text-muted">Request #{req.id}</div>
+                      <div className="font-mono text-[12.5px] text-muted">{t('purchasesScreen.request')}{req.id}</div>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">{formatDate(req.date)}</td>
                     <td className="px-4 py-3">
@@ -169,7 +170,7 @@ export function PurchasesScreen() {
                             </span>
                             {item.fulfilledQuantity > 0 && (
                               <span className="ml-1 text-success">
-                                (Fulfilled: {item.fulfilledQuantity} {item.unit})
+                                {t('purchasesScreen.fulfilled')} {item.fulfilledQuantity} {item.unit})
                               </span>
                             )}
                           </div>
@@ -179,11 +180,11 @@ export function PurchasesScreen() {
                     <td className="px-4 py-3 whitespace-nowrap">{formatDate(req.neededByDate)}</td>
                     <td className="px-4 py-3">
                       <Badge tone={purchaseStatusTone(req.status)}>
-                        {purchaseStatusLabel(req.status)}
+                        {t(purchaseStatusKey(req.status))}
                       </Badge>
                       {req.rejectionReason && (
                         <div className="mt-1 text-[11px] text-danger">
-                          Reason: {req.rejectionReason}
+                          {t('purchasesScreen.reason')} {req.rejectionReason}
                         </div>
                       )}
                     </td>
@@ -195,7 +196,7 @@ export function PurchasesScreen() {
                             className="px-2.5 py-1 text-xs"
                             onClick={() => setDecidingRequest(req)}
                           >
-                            Decide
+                            {t('purchasesScreen.decide')}
                           </Button>
                         )}
 
@@ -205,7 +206,7 @@ export function PurchasesScreen() {
                             className="px-2.5 py-1 text-xs"
                             onClick={() => setPurchasingRequest(req)}
                           >
-                            Register purchase
+                            {t('purchasesScreen.registerPurchase')}
                           </Button>
                         )}
                       </div>
@@ -259,10 +260,11 @@ function HeaderCell({ children }) {
 }
 
 function TableSkeleton() {
+  const t = useT()
   return (
-    <div className="p-4" role="status" aria-label="Loading purchase requests">
+    <div className="p-4" role="status" aria-label={t('purchasesScreen.loadingPurchaseRequests')}>
       {Array.from({ length: 4 }).map((_, index) => (
-        <div key={index} className="mb-2 h-11 animate-pulse bg-cream last:mb-0" />
+        <div key={index} className="mb-2 h-11 animate-pulse rounded-xl bg-sunken last:mb-0" />
       ))}
     </div>
   )

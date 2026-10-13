@@ -27,6 +27,7 @@ public class ProjectRepository(AppDbContext appDbContext) : IProjectRepository
         var projects = await query
             .Include(project => project.Client)
             .Include(project => project.Supervisor)
+            .Include(project => project.Stages)
             .OrderBy(project => project.Name)
             .Skip((page - 1) * size)
             .Take(size)
@@ -41,6 +42,7 @@ public class ProjectRepository(AppDbContext appDbContext) : IProjectRepository
         VisibleTo(appDbContext.Project.AsNoTracking(), access)
             .Include(project => project.Client)
             .Include(project => project.Supervisor)
+            .Include(project => project.Stages)
             .FirstOrDefaultAsync(project => project.Id == id, cancellationToken);
 
     public Task<Project?> GetByIdAsync(long id, CancellationToken cancellationToken) =>

@@ -4,8 +4,10 @@ import { useContainer } from '../../providers/containerContext';
 import { Dialog } from '../../ui/Dialog';
 import { Button } from '../../ui/Button';
 import { TextField } from '../../ui/TextField';
+import { useT } from '../../preferences/preferencesContext'
 
 export function EmployeeFormDialog({ employee, onClose, onSave, canViewFinance }) {
+    const t = useT()
     const { employees, jobRoles, employmentRegimes } = useContainer();
 
     const [name, setName] = useState(employee ? employee.name : '');
@@ -79,19 +81,19 @@ export function EmployeeFormDialog({ employee, onClose, onSave, canViewFinance }
             if (error.isValidation) {
                 setFieldErrors(error.fieldErrors);
             } else {
-                setFormError(error.message || 'An unexpected error occurred.');
+                setFormError(error.message || t('employeeFormDialog.anUnexpectedErrorOccurred'));
             }
         }
     };
 
     return (
-        <Dialog open={true} title={employee ? "Edit Employee" : "New Employee"} onClose={onClose}>
+        <Dialog open={true} title={employee ? t('employeeFormDialog.editEmployee') : t('employeeFormDialog.newEmployee')} onClose={onClose}>
             <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-6">
-                {formError && <div className="p-3 bg-red-100 text-red-700 rounded text-sm">{formError}</div>}
+                {formError && <div className="p-3 bg-danger-wash text-danger rounded text-sm">{formError}</div>}
                 <div className="grid grid-cols-2 gap-4">
-                    <TextField label="Name" value={name} onChange={e => setName(e.target.value)} error={fieldErrors.name} />
+                    <TextField label={t('common.name')} value={name} onChange={e => setName(e.target.value)} error={fieldErrors.name} />
                     <TextField
-                        label="Registration Number"
+                        label={t('employeeFormDialog.registrationNumber')}
                         value={registrationNumber}
                         onChange={e => setRegistrationNumber(e.target.value)}
                         error={fieldErrors.registrationNumber}
@@ -100,23 +102,23 @@ export function EmployeeFormDialog({ employee, onClose, onSave, canViewFinance }
 
                 <div className="grid grid-cols-2 gap-4">
                     <SelectField
-                        label="Job Role"
+                        label={t('employeeFormDialog.jobRole')}
                         value={jobRoleId}
                         onChange={e => setJobRoleId(e.target.value)}
                         error={fieldErrors.jobRoleId}
                         options={[
-                            { value: '', label: 'Select a Role' },
+                            { value: '', label: t('employeeFormDialog.selectARole') },
                             ...rolesList.map(r => ({ value: r.id, label: r.name }))
                         ]}
                     />
 
                     <SelectField
-                        label="Employment Regime"
+                        label={t('employeeFormDialog.employmentRegime')}
                         value={employmentRegimeId}
                         onChange={e => setEmploymentRegimeId(e.target.value)}
                         error={fieldErrors.employmentRegimeId}
                         options={[
-                            { value: '', label: 'Select a Regime' },
+                            { value: '', label: t('employeeFormDialog.selectARegime') },
                             ...regimesList.map(r => ({ value: r.id, label: r.label }))
                         ]}
                     />
@@ -124,16 +126,16 @@ export function EmployeeFormDialog({ employee, onClose, onSave, canViewFinance }
 
                 {canViewFinance && (
                     <div className="grid grid-cols-2 gap-4">
-                        <TextField label="Pay Rate" type="number" step="0.01" value={payRate} onChange={e => setPayRate(e.target.value)} />
-                        <TextField label="Additional % (e.g. 30 for hazard)" type="number" step="0.01" value={additionalPercentage} onChange={e => setAdditionalPercentage(e.target.value)} />
+                        <TextField label={t('employeeFormDialog.payRate')} type="number" step="0.01" value={payRate} onChange={e => setPayRate(e.target.value)} />
+                        <TextField label={t('employeeFormDialog.additionalEG30For')} type="number" step="0.01" value={additionalPercentage} onChange={e => setAdditionalPercentage(e.target.value)} />
                     </div>
                 )}
 
                 <div className="grid grid-cols-3 gap-4">
-                    <TextField label="Hire Date" type="date" value={hireDate} onChange={e => setHireDate(e.target.value)} />
-                    <TextField label="Phone" value={phone} onChange={e => setPhone(e.target.value)} />
+                    <TextField label={t('employeeFormDialog.hireDate')} type="date" value={hireDate} onChange={e => setHireDate(e.target.value)} />
+                    <TextField label={t('employeeFormDialog.phone')} value={phone} onChange={e => setPhone(e.target.value)} />
                     <TextField
-                        label="Document (CPF/RG)"
+                        label={t('employeeFormDialog.documentCpfRg')}
                         value={document}
                         onChange={e => setDocument(e.target.value)}
                         placeholder={employee?.documentMasked || ''}
@@ -144,13 +146,13 @@ export function EmployeeFormDialog({ employee, onClose, onSave, canViewFinance }
                 {employee && (
                     <label className="flex items-center gap-2">
                         <input type="checkbox" checked={active} onChange={e => setActive(e.target.checked)} />
-                        Active
+                        {t('common.active')}
                     </label>
                 )}
 
                 <div className="flex gap-2 mt-4 justify-end">
-                    <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-                    <Button type="submit">Save</Button>
+                    <Button type="button" variant="outline" onClick={onClose}>{t('common.cancel')}</Button>
+                    <Button type="submit">{t('common.save')}</Button>
                 </div>
             </form>
         </Dialog>

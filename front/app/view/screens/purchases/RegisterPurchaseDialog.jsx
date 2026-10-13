@@ -4,8 +4,10 @@ import { Button } from '../../ui/Button'
 import { Dialog } from '../../ui/Dialog'
 import { SelectField } from '../../ui/SelectField'
 import { TextField } from '../../ui/TextField'
+import { useT } from '../../preferences/preferencesContext'
 
 export function RegisterPurchaseDialog({ open, request, onClose, onPurchased }) {
+  const t = useT()
   const { suppliers } = useContainer()
 
   const [supplierList, setSupplierList] = useState([])
@@ -91,7 +93,7 @@ export function RegisterPurchaseDialog({ open, request, onClose, onPurchased }) 
       })
       onClose()
     } catch (err) {
-      setError(err.message || 'Could not register purchase.')
+      setError(err.message || t('registerPurchaseDialog.couldNotRegisterPurchase'))
     } finally {
       setBusy(false)
     }
@@ -101,23 +103,23 @@ export function RegisterPurchaseDialog({ open, request, onClose, onPurchased }) 
     <Dialog
       open={open}
       onClose={onClose}
-      title="Register Purchase"
-      description={`Request #${request.id} · Project: ${request.projectName}`}
+      title={t('registerPurchaseDialog.registerPurchase')}
+      description={t('registerPurchaseDialog.requestIdProjectProjectname', { id: request.id, projectName: request.projectName })}
     >
       <form onSubmit={handleSubmit} className="p-6">
         {error && (
-          <div className="mb-4 border border-danger-soft bg-[#faefea] p-3 text-sm text-danger">
+          <div className="mb-4 rounded-2xl bg-danger-wash p-3 text-sm text-danger">
             {error}
           </div>
         )}
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <SelectField
-            label="Supplier"
+            label={t('registerPurchaseDialog.supplier')}
             value={supplierId}
             onChange={(e) => setSupplierId(e.target.value)}
           >
-            <option value="">Select supplier (optional)...</option>
+            <option value="">{t('registerPurchaseDialog.selectSupplierOptional')}</option>
             {supplierList.map((sup) => (
               <option key={sup.id} value={sup.id}>
                 {sup.name}
@@ -126,24 +128,24 @@ export function RegisterPurchaseDialog({ open, request, onClose, onPurchased }) 
           </SelectField>
 
           <TextField
-            label="Invoice number"
-            placeholder="Ex: NF-e 12345"
+            label={t('registerPurchaseDialog.invoiceNumber')}
+            placeholder={t('registerPurchaseDialog.exNfE12345')}
             value={invoiceNumber}
             onChange={(e) => setInvoiceNumber(e.target.value)}
           />
         </div>
 
         <div className="mt-6 border-t border-line-soft pt-4">
-          <div className="label mb-3">Purchased Items & Unit Costs</div>
+          <div className="label mb-3">{t('registerPurchaseDialog.purchasedItemsUnitCosts')}</div>
           <div className="space-y-3">
             {itemPurchases.map((item, index) => (
               <div key={item.purchaseRequestItemId} className="rounded border border-line bg-cream-soft p-3">
                 <div className="mb-2 font-medium text-graphite">
-                  {item.stockItemName} (Pending: {item.remaining} {item.unit})
+                  {item.stockItemName} {t('registerPurchaseDialog.pending')} {item.remaining} {item.unit})
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <TextField
-                    label={`Quantity (${item.unit})`}
+                    label={t('registerPurchaseDialog.quantityUnit', { unit: item.unit })}
                     type="number"
                     step="0.01"
                     min="0.01"
@@ -152,7 +154,7 @@ export function RegisterPurchaseDialog({ open, request, onClose, onPurchased }) 
                     required
                   />
                   <TextField
-                    label="Unit cost (R$)"
+                    label={t('registerPurchaseDialog.unitCostR')}
                     type="number"
                     step="0.01"
                     min="0"
@@ -169,10 +171,10 @@ export function RegisterPurchaseDialog({ open, request, onClose, onPurchased }) 
 
         <div className="mt-6 flex justify-end gap-3 border-t border-line-soft pt-4">
           <Button type="button" variant="outline" onClick={onClose} disabled={busy}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button type="submit" variant="primary" disabled={busy}>
-            {busy ? 'Saving...' : 'Confirm & register to stock'}
+            {busy ? t('registerPurchaseDialog.saving') : t('registerPurchaseDialog.confirmRegisterToStock')}
           </Button>
         </div>
       </form>

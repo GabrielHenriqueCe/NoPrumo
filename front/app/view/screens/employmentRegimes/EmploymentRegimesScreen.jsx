@@ -4,8 +4,10 @@ import { Pagination } from '../../ui/Pagination';
 import { Button } from '../../ui/Button';
 import { TextField } from '../../ui/TextField';
 import { EmploymentRegimeFormDialog } from './EmploymentRegimeFormDialog';
+import { useT } from '../../preferences/preferencesContext'
 
 export function EmploymentRegimesScreen() {
+    const t = useT()
     const { employmentRegimes } = useContainer();
     const [regimes, setRegimes] = useState([]);
     const [page, setPage] = useState(1);
@@ -59,31 +61,31 @@ export function EmploymentRegimesScreen() {
 
     return (
         <div className="p-6">
-            <h1 className="text-2xl font-bold mb-4">Employment Regimes</h1>
+            <h1 className="text-2xl font-bold mb-4">{t('employmentRegimesScreen.employmentRegimes')}</h1>
             {error && (
-                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                <div className="bg-danger-wash border border-late text-danger px-4 py-3 rounded mb-4">
                     {error}
                 </div>
             )}
             <div className="flex gap-4 mb-4">
                 <TextField 
-                    placeholder="Search regimes..." 
+                    placeholder={t('employmentRegimesScreen.searchRegimes')} 
                     value={search} 
                     onChange={(e) => { setSearch(e.target.value); setPage(1); }} 
                 />
                 <Button onClick={() => { setEditingRegime(null); setIsDialogOpen(true); }}>
-                    New Regime
+                    {t('employmentRegimesScreen.newRegime')}
                 </Button>
             </div>
 
             <table className="w-full text-left border-collapse mb-4">
                 <thead>
                     <tr className="border-b">
-                        <th className="py-2">Label</th>
-                        <th className="py-2">Unit</th>
-                        <th className="py-2">Monthly Hours</th>
-                        <th className="py-2">Status</th>
-                        <th className="py-2">Actions</th>
+                        <th className="py-2">{t('employmentRegimesScreen.label')}</th>
+                        <th className="py-2">{t('employmentRegimesScreen.unit')}</th>
+                        <th className="py-2">{t('employmentRegimesScreen.monthlyHours')}</th>
+                        <th className="py-2">{t('common.status')}</th>
+                        <th className="py-2">{t('common.actions')}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -92,11 +94,11 @@ export function EmploymentRegimesScreen() {
                             <td className="py-2">{regime.label}</td>
                             <td className="py-2">{regime.unit}</td>
                             <td className="py-2">{regime.monthlyHours || '-'}</td>
-                            <td className="py-2">{regime.active ? 'Active' : 'Inactive'}</td>
+                            <td className="py-2">{regime.active ? t('common.active') : t('common.inactive')}</td>
                             <td className="py-2 flex gap-2">
-                                <Button variant="outline" onClick={() => { setEditingRegime(regime); setIsDialogOpen(true); }}>Edit</Button>
+                                <Button variant="outline" onClick={() => { setEditingRegime(regime); setIsDialogOpen(true); }}>{t('common.edit')}</Button>
                                 <Button variant="outline" onClick={() => handleToggleActive(regime)}>
-                                    {regime.active ? "Deactivate" : "Activate"}
+                                    {regime.active ? t('common.deactivate') : t('common.activate')}
                                 </Button>
                             </td>
                         </tr>

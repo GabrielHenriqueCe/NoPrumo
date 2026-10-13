@@ -2,8 +2,10 @@ import { useState } from 'react'
 import { Button } from '../../ui/Button'
 import { Dialog } from '../../ui/Dialog'
 import { TextField } from '../../ui/TextField'
+import { useT } from '../../preferences/preferencesContext'
 
 export function DecidePurchaseDialog({ open, request, onClose, onDecided }) {
+  const t = useT()
   const [approved, setApproved] = useState(true)
   const [rejectionReason, setRejectionReason] = useState('')
   const [busy, setBusy] = useState(false)
@@ -29,7 +31,7 @@ export function DecidePurchaseDialog({ open, request, onClose, onDecided }) {
       })
       onClose()
     } catch (err) {
-      setError(err.message || 'Could not process decision.')
+      setError(err.message || t('decidePurchaseDialog.couldNotProcessDecision'))
     } finally {
       setBusy(false)
     }
@@ -39,12 +41,12 @@ export function DecidePurchaseDialog({ open, request, onClose, onDecided }) {
     <Dialog
       open={open}
       onClose={onClose}
-      title="Decide Purchase Request"
-      description={`Request #${request.id} · Project: ${request.projectName}`}
+      title={t('decidePurchaseDialog.decidePurchaseRequest')}
+      description={t('decidePurchaseDialog.requestIdProjectProjectname', { id: request.id, projectName: request.projectName })}
     >
       <form onSubmit={handleSubmit} className="p-6">
         {error && (
-          <div className="mb-4 border border-danger-soft bg-[#faefea] p-3 text-sm text-danger">
+          <div className="mb-4 rounded-2xl bg-danger-wash p-3 text-sm text-danger">
             {error}
           </div>
         )}
@@ -57,7 +59,7 @@ export function DecidePurchaseDialog({ open, request, onClose, onDecided }) {
               checked={approved}
               onChange={() => setApproved(true)}
             />
-            Approve request
+            {t('decidePurchaseDialog.approveRequest')}
           </label>
           <label className="flex items-center gap-2 text-sm font-medium text-danger">
             <input
@@ -66,15 +68,15 @@ export function DecidePurchaseDialog({ open, request, onClose, onDecided }) {
               checked={!approved}
               onChange={() => setApproved(false)}
             />
-            Reject request
+            {t('decidePurchaseDialog.rejectRequest')}
           </label>
         </div>
 
         {!approved && (
           <div className="mb-4">
             <TextField
-              label="Rejection reason"
-              placeholder="Ex: Item out of specification or budget unavailable"
+              label={t('decidePurchaseDialog.rejectionReason')}
+              placeholder={t('decidePurchaseDialog.exItemOutOfSpecification')}
               value={rejectionReason}
               onChange={(e) => setRejectionReason(e.target.value)}
               required
@@ -84,14 +86,14 @@ export function DecidePurchaseDialog({ open, request, onClose, onDecided }) {
 
         <div className="mt-6 flex justify-end gap-3 border-t border-line-soft pt-4">
           <Button type="button" variant="outline" onClick={onClose} disabled={busy}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             type="submit"
             variant={approved ? 'primary' : 'danger'}
             disabled={busy}
           >
-            {busy ? 'Processing...' : approved ? 'Confirm approval' : 'Confirm rejection'}
+            {busy ? t('decidePurchaseDialog.processing') : approved ? t('decidePurchaseDialog.confirmApproval') : t('decidePurchaseDialog.confirmRejection')}
           </Button>
         </div>
       </form>

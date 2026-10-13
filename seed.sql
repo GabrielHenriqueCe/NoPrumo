@@ -17,8 +17,8 @@
 --   - ponto, movimentação e aditivo marcados como 'demo' são apagados e gerados
 --     de novo, com as datas contadas a partir de hoje.
 --
--- Não cria usuários: o admin cria pela tela Users, e liga o mestre ao
--- funcionário dele (Valdir Kühn ou Osni Bortolini) para ver só as obras dele.
+-- Cria um usuário de demonstração por perfil (demo.admin, demo.engenheiro,
+-- demo.mestre...), todos com a senha demo1234. Veja a seção 9.
 -- =============================================================================
 
 SET NAMES utf8mb4;
@@ -497,6 +497,27 @@ INSERT INTO project_amendment (project_id, type, number, date, amount, extra_day
 SELECT project.id, 'value', 'DEMO-001', @today - INTERVAL 30 DAY, 85000.00, 20,
        'Troca do revestimento da fachada por porcelanato, a pedido do cliente.'
 FROM project WHERE project.code = 'OB-2026-01' AND project.deleted_at IS NULL;
+
+
+-- -----------------------------------------------------------------------------
+-- 9. Um usuário por perfil, para testar o que cada um enxerga
+--    Senha de todos: demo1234 (hash BCrypt, o mesmo algoritmo da API). Sem troca
+--    obrigatória, porque é demonstração. Nunca use estes usuários em produção.
+-- -----------------------------------------------------------------------------
+SET @demo_password = '$2a$12$09H6YSns9V1R49K/T2C4E.YZDAOoJpzmqkIn4n4ztdjSLyLlJUXfe';
+
+INSERT INTO user (username, password_hash, name, role_id, employee_id, active, failed_attempts, must_change_password)
+SELECT source.username, @demo_password, source.name, role.id, employee.id, 1, 0, 0
+FROM (SELECT 'demo.admin' AS username, 'Demonstração · Administrador' AS name, 'admin' AS role, NULL AS registration
+      UNION ALL SELECT 'demo.engenheiro', 'Patrícia Koch',     'engineer',          'MAT-1015'
+      UNION ALL SELECT 'demo.mestre',     'Valdir Kühn',       'foreman',           'MAT-1001'
+      UNION ALL SELECT 'demo.mestre2',    'Osni Bortolini',    'foreman',           'MAT-1002'
+      UNION ALL SELECT 'demo.seguranca',  'Marta Vieira',      'safety_technician', 'MAT-1014'
+      UNION ALL SELECT 'demo.almoxarife', 'Ivo Rengel',        'warehouse_keeper',  'MAT-1019'
+      UNION ALL SELECT 'demo.compras',    'Débora Müller',     'purchasing',        'MAT-1018') AS source
+JOIN role ON role.name = source.role
+LEFT JOIN seed_employee_id AS employee ON employee.registration = source.registration
+WHERE NOT EXISTS (SELECT 1 FROM user WHERE user.username = source.username);
 
 
 -- -----------------------------------------------------------------------------

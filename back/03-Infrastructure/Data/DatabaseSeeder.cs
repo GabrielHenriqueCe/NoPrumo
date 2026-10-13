@@ -149,9 +149,9 @@ public sealed class DatabaseSeeder(AppDbContext appDbContext)
         {
             Username = "admin",
             Name = "Administrador",
-            // Senha de instalação. MustChangePassword obriga a troca no
+            // Senha de instalação, a mesma do README. MustChangePassword obriga a troca no
             // primeiro acesso, então ela não sobrevive ao primeiro login.
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin", workFactor: 12),
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123", workFactor: 12),
             RoleId = adminRole.Id,
             Active = true,
             MustChangePassword = true,

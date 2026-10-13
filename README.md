@@ -234,7 +234,19 @@ As datas são contadas a partir do dia em que o script roda. Por isso os gráfic
 
 **Pode rodar de novo quantas vezes quiser.** O cadastro (setor, funcionário, obra...) só entra se ainda não existir, procurado pelo nome ou pelo código, e nada do que você cadastrou é apagado ou alterado. Só o movimento marcado como demonstração (ponto, entradas e saídas de material e o aditivo `DEMO-001`) é apagado e gerado de novo, com as datas de hoje.
 
-**Para testar os perfis:** o script não cria usuários, porque a senha precisa passar pelo BCrypt da API. Entre como `admin`, crie um usuário por perfil na tela Users e, para o mestre de obras, escolha o funcionário **Valdir Kühn** (supervisor do Residencial Aurora) ou **Osni Bortolini** (Galpão Itoupava e Bela Vista). O mestre só enxerga as obras que supervisiona.
+**Para testar os perfis,** o script cria um usuário de demonstração por perfil, todos com a senha `demo1234` e sem troca obrigatória:
+
+| Usuário | Perfil | O que ver |
+|---|---|---|
+| `demo.admin` | Administrador | tudo, inclusive o financeiro e os relatórios |
+| `demo.engenheiro` | Engenheiro | obras, etapas, equipe e o financeiro |
+| `demo.mestre` | Mestre de obras | só o Residencial Aurora, sem nenhum valor em dinheiro |
+| `demo.mestre2` | Mestre de obras | só o Galpão Itoupava e a Bela Vista |
+| `demo.seguranca` | Técnico de segurança | treinamentos vencendo e fichas de EPI |
+| `demo.almoxarife` | Almoxarife | material das obras e estoque abaixo do mínimo |
+| `demo.compras` | Compras | solicitações de compra e preço de material, sem contrato nem salário |
+
+São usuários de demonstração: nunca rode o `seed.sql` num banco de produção.
 
 ## Comandos úteis
 
@@ -269,3 +281,5 @@ dotnet test back/05-Tests/05-Tests.csproj
 ---
 
 Desenvolvido como Projeto Integrador do Entra21 (Blumenau, 2026) por Adrian Gazzani, Eduardo Adão Locks, Everson Oliveira, Gabriel Henrique Cé e José Rodrigues.
+
+Todos os direitos reservados: o código é público para portfólio e avaliação, não para reuso. Veja a [licença](LICENSE.md).

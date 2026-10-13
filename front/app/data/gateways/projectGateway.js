@@ -5,8 +5,7 @@
   `view_finance` — separate DTO per profile. "Late" is not a status: it is
   calculated by comparing `forecastDate` with today, never stored.
 
-  Proposed contract — the controller does not exist yet. Whoever writes it
-  may change this; if so, update this comment together.
+  Contract confirmed against ProjectsController.cs.
 
     GET    /projects?page&size&search
       200 { items, page, size, total, totalPages }
@@ -15,11 +14,12 @@
              street, number, complement, district, city, state, postalCode,
              status, supervisorId, supervisorName, technicalManager, creaRt,
              startDate, forecastDate, completionDate, notes,
-             late, active,
+             late, active, progress,
              contractAmount* }                  * only with view_finance
 
-    status planning · in_progress · on_hold · completed · cancelled
-    late   calculated by the API: forecastDate < today and not completed/cancelled
+    status   planning · in_progress · on_hold · completed · cancelled
+    late     calculated by the API: forecastDate < today and not completed/cancelled
+    progress average of the stages, 0 to 100, calculated by the API
 
     GET    /projects/{id}
       200 item
@@ -34,6 +34,13 @@
                                    status, supervisorId, technicalManager, creaRt,
                                    startDate, forecastDate }   * only with view_finance
       200 item
+
+    GET    /projects/{id}/finance           policy view_finance
+      200 { projectId, contractAmount, amendmentsAmount, revisedContractAmount,
+            materialCost, laborCost, totalCost, spentPercentage, progressPercentage,
+            costAheadOfProgress, margin,
+            costByDay: [ { date, material, labor, cumulativeCost } ] }
+      every number comes ready from the API; the screen only draws it
 
     PATCH  /projects/{id}/activate
     PATCH  /projects/{id}/deactivate
@@ -58,6 +65,9 @@ export function createProjectGateway(http) {
       return http.put(`/projects/${id}`, item, { signal })
     },
 
+    finance(id, { signal } = {}) {
+      return http.get(`/projects/${id}/finance`, { signal })
+    },
     /** Switched off, never deleted: the history has to stay. */
     setActive(id, active, { signal } = {}) {
       return http.patch(`/projects/${id}/${active ? 'activate' : 'deactivate'}`, null, { signal })

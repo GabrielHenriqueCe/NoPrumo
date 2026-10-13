@@ -1,4 +1,5 @@
 import { Navigate, useLocation } from 'react-router-dom'
+import { useT } from '../preferences/preferencesContext'
 import { useSession } from '../providers/sessionContext'
 
 /*
@@ -17,14 +18,15 @@ const CHANGE_PASSWORD_PATH = '/change-password'
 export function RequireSession({ permission, children }) {
   const { isRestoring, isAuthenticated, can, mustChangePassword } = useSession()
   const location = useLocation()
+  const t = useT()
 
   if (isRestoring) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-cream">
         <div
           role="status"
-          aria-label="Loading"
-          className="h-10 w-10 animate-spin rounded-full border-4 border-gold border-t-transparent"
+          aria-label={t('common.loading')}
+          className="h-10 w-10 animate-spin rounded-full border-4 border-accent border-t-transparent"
         />
       </div>
     )
@@ -47,14 +49,10 @@ export function RequireSession({ permission, children }) {
   if (permission && !can(permission)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-cream p-8">
-        <div className="max-w-md border border-line bg-white p-8">
-          <p className="label">No access</p>
-          <h1 className="mt-2 text-xl font-semibold tracking-tight">
-            This account has no screen available yet
-          </h1>
-          <p className="mt-3 text-sm leading-relaxed text-muted">
-            Ask an administrator to review your role.
-          </p>
+        <div className="max-w-md rounded-3xl border border-line bg-surface p-8">
+          <p className="label">{t('shell.noAccessLabel')}</p>
+          <h1 className="display mt-2 text-3xl">{t('shell.noAccessTitle')}</h1>
+          <p className="mt-3 leading-relaxed text-muted">{t('shell.noAccessText')}</p>
         </div>
       </div>
     )

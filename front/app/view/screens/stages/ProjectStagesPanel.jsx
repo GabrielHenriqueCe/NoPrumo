@@ -5,7 +5,7 @@ import { Badge } from '../../ui/Badge'
 import { Button } from '../../ui/Button'
 import { Pagination } from '../../ui/Pagination'
 import { StageFormDialog } from './StageFormDialog'
-import { stageStatusLabel } from './stageStatus'
+import { useT } from '../../preferences/preferencesContext'
 
 const PAGE_SIZE = 10
 const SEARCH_DEBOUNCE_MS = 350
@@ -23,6 +23,7 @@ function formatDate(value) {
 
 // The "Stages" tab of a project.
 export function ProjectStagesPanel({ projectId }) {
+  const t = useT()
   const { stages, teams, employees } = useContainer()
   const { can } = useSession()
   const canManage = can('manage_projects')
@@ -61,14 +62,14 @@ export function ProjectStagesPanel({ projectId }) {
       .list({ page, size: PAGE_SIZE, search: appliedSearch, projectId }, { signal: controller.signal })
       .then((result) => setData(result))
       .catch((error) => {
-        if (!controller.signal.aborted) setLoadError(error.message ?? 'Could not load stages.')
+        if (!controller.signal.aborted) setLoadError(error.message ?? t('projectStagesPanel.couldNotLoadStages'))
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false)
       })
 
     return () => controller.abort()
-  }, [stages, page, appliedSearch, projectId, reloadToken])
+  }, [stages, page, appliedSearch, projectId, reloadToken, t])
 
   useEffect(() => {
     // The lookups only feed the form, and their endpoints refuse whoever cannot open it.
@@ -115,37 +116,37 @@ export function ProjectStagesPanel({ projectId }) {
 
   return (
     <>
-      <div className="p-8">
+      <div className="px-10 pt-6 pb-10">
         <div className="mb-6 flex flex-wrap items-center gap-4">
           <p className="max-w-[54em] text-sm leading-relaxed text-muted">
-            In building order. A stage is late when its planned date has passed and it is not completed.
+            {t('projectStagesPanel.inBuildingOrderAStage')}
           </p>
 
           <div className="ml-auto flex items-center gap-3">
             <label className="sr-only" htmlFor="stage-search">
-              Search stages
+              {t('projectStagesPanel.searchStages')}
             </label>
             <input
               id="stage-search"
               type="search"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search by stage"
-              className="w-72 border border-line bg-white px-3 py-2 text-sm outline-none focus:border-gold"
+              placeholder={t('projectStagesPanel.searchByStage')}
+              className="w-72 h-11 rounded-full border border-line bg-surface px-5 text-sm outline-none focus:border-accent"
             />
 
-            {canManage && <Button onClick={() => openForm(null)}>New stage</Button>}
+            {canManage && <Button onClick={() => openForm(null)}>{t('projectStagesPanel.newStage')}</Button>}
           </div>
         </div>
 
-        <div className="border border-line bg-white">
+        <div className="overflow-hidden rounded-3xl border border-line bg-surface">
           {loading && <TableSkeleton />}
 
           {!loading && loadError && (
             <div className="px-6 py-10 text-center">
               <p className="text-sm text-danger">{loadError}</p>
               <Button variant="outline" onClick={reload} className="mt-4">
-                Try again
+                {t('common.tryAgain')}
               </Button>
             </div>
           )}
@@ -153,22 +154,22 @@ export function ProjectStagesPanel({ projectId }) {
           {!loading && !loadError && data.items.length === 0 && (
             <div className="px-6 py-12 text-center">
               <p className="text-sm text-muted">
-                {appliedSearch ? `No stage matches “${appliedSearch}”.` : 'No stage registered yet.'}
+                {appliedSearch ? t('projectStagesPanel.noStageMatchesAppliedsearch', { appliedSearch: appliedSearch }) : t('projectStagesPanel.noStageRegisteredYet')}
               </p>
             </div>
           )}
 
           {!loading && !loadError && data.items.length > 0 && (
             <table className="w-full border-collapse text-sm">
-              <caption className="sr-only">Stages of this project</caption>
+              <caption className="sr-only">{t('projectStagesPanel.stagesOfThisProject')}</caption>
               <thead>
                 <tr className="border-b border-line bg-cream-soft text-left">
-                  <HeaderCell>Stage</HeaderCell>
-                  <HeaderCell>Team</HeaderCell>
-                  <HeaderCell>Supervisor</HeaderCell>
-                  <HeaderCell>Planned</HeaderCell>
-                  <HeaderCell>Progress</HeaderCell>
-                  <HeaderCell>Status</HeaderCell>
+                  <HeaderCell>{t('projectStagesPanel.stage')}</HeaderCell>
+                  <HeaderCell>{t('projectStagesPanel.team')}</HeaderCell>
+                  <HeaderCell>{t('projectStagesPanel.supervisor')}</HeaderCell>
+                  <HeaderCell>{t('projectStagesPanel.planned')}</HeaderCell>
+                  <HeaderCell>{t('projectStagesPanel.progress')}</HeaderCell>
+                  <HeaderCell>{t('common.status')}</HeaderCell>
                   {canManage && <th className="px-4 py-3" />}
                 </tr>
               </thead>
@@ -191,8 +192,8 @@ export function ProjectStagesPanel({ projectId }) {
 
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1.5">
-                        <Badge tone="neutral">{stageStatusLabel(stage.status)}</Badge>
-                        {stage.late && <Badge tone="warning">Late</Badge>}
+                        <Badge tone="neutral">{t(`stageStatus.${stage.status}`)}</Badge>
+                        {stage.late && <Badge tone="warning">{t('common.late')}</Badge>}
                       </div>
                     </td>
 
@@ -200,7 +201,7 @@ export function ProjectStagesPanel({ projectId }) {
                       <td className="px-4 py-3">
                         <div className="flex justify-end">
                           <Button variant="outline" className="px-3 py-1.5" onClick={() => openForm(stage)}>
-                            Edit
+                            {t('common.edit')}
                           </Button>
                         </div>
                       </td>
@@ -235,10 +236,11 @@ function HeaderCell({ children }) {
 }
 
 function TableSkeleton() {
+  const t = useT()
   return (
-    <div className="p-4" role="status" aria-label="Loading stages">
+    <div className="p-4" role="status" aria-label={t('projectStagesPanel.loadingStages')}>
       {Array.from({ length: 4 }).map((_, index) => (
-        <div key={index} className="mb-2 h-11 animate-pulse bg-cream last:mb-0" />
+        <div key={index} className="mb-2 h-11 animate-pulse rounded-xl bg-sunken last:mb-0" />
       ))}
     </div>
   )

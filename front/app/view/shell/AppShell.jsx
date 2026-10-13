@@ -1,89 +1,90 @@
-import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { useT } from '../preferences/preferencesContext'
 import { useSession } from '../providers/sessionContext'
-import { Brand } from './Brand'
-import { MENU } from './menu'
+import { PillTabs } from '../ui/PillTabs'
+import { PlumbMark } from './Brand'
+import { MENU, SETTINGS_GROUP } from './menu'
+import { RailIcon } from './RailIcon'
+import { SETTINGS_ITEMS } from './settings'
+import { UserMenu } from './UserMenu'
 
 /*
-  The frame every internal screen sits in: dark sidebar, light working area.
+  The frame every internal screen sits in: a dark icon rail on the left, the
+  working area on the right.
 
-  It is a layout route — the screen renders through <Outlet /> — so the menu
-  and the header exist once instead of being rebuilt by each page. What goes
-  in the menu, and why it is grouped the way it is, lives in menu.js.
+  It is a layout route — the screen renders through <Outlet /> — so the rail
+  exists once instead of being rebuilt by each page. A group with more than
+  one screen shows them as tabs above the screen. What goes in each group lives
+  in menu.js.
 */
 
+const startsWith = (pathname, to) => pathname === to || pathname.startsWith(`${to}/`)
+
 export function AppShell() {
-  const { user, signOut, can } = useSession()
-  const navigate = useNavigate()
+  const { can } = useSession()
+  const t = useT()
+  const { pathname } = useLocation()
 
-  const leave = () => {
-    signOut()
-    navigate('/login', { replace: true })
-  }
-
-  const groups = MENU.map((group) => ({
+  const reachable = (group) => ({
     ...group,
     items: group.items.filter((item) => !item.permission || can(item.permission)),
-  })).filter((group) => group.items.length > 0)
+  })
+
+  const groups = MENU.map(reachable).filter((group) => group.items.length > 0)
+  const settings = reachable(SETTINGS_GROUP)
+
+  // The registers inside Settings are screens of their own, but they belong to the Settings icon.
+  const inSettings = SETTINGS_ITEMS.some((item) => startsWith(pathname, item.to)) || startsWith(pathname, '/settings')
+  const activeGroup = inSettings
+    ? settings
+    : groups.find((group) => group.items.some((item) => startsWith(pathname, item.to)))
 
   return (
-    <div className="grid min-h-screen" style={{ gridTemplateColumns: '236px minmax(0,1fr)' }}>
-      <aside className="flex flex-col bg-graphite">
-        <div className="px-5 py-6">
-          <Brand tone="dark" size={38} />
-        </div>
+    <div className="flex min-h-screen bg-page text-ink">
+      <aside className="sticky top-0 flex h-screen w-[88px] flex-none flex-col items-center gap-1.5 bg-rail py-[18px] text-rail-text">
+        <PlumbMark size={38} tone="dark" className="mb-4" />
 
-        <nav className="flex flex-col">
+        <nav aria-label={t('shell.main')} className="flex flex-col items-center gap-1.5">
           {groups.map((group) => (
-            <div key={group.heading ?? group.items[0].to} className="mb-1">
-              {group.heading && <p className="label px-[18px] pt-3 pb-1.5 text-muted-dark">{group.heading}</p>}
-
-              {group.items.map((item) => (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  className={({ isActive }) =>
-                    [
-                      'flex items-center gap-2 border-l-2 py-2.5 pr-[18px] pl-[18px] text-sm transition-colors',
-                      isActive
-                        ? 'border-gold bg-white/8 text-cream'
-                        : 'border-transparent text-[#c6cdd4] hover:bg-white/5 hover:text-cream',
-                    ].join(' ')
-                  }
-                >
-                  <span aria-hidden="true" className="text-[11px] opacity-40">
-                    └
-                  </span>
-                  {item.label}
-                </NavLink>
-              ))}
-            </div>
+            <RailLink key={group.key} group={group} active={group === activeGroup} label={t(`menu.groups.${group.key}`)} />
           ))}
         </nav>
 
-        <div className="mt-auto border-t border-line-dark px-5 py-5">
-          <p className="label mb-1.5 text-muted-dark">Signed in</p>
-          <p className="text-[13.5px] text-[#c6cdd4]">{user?.name ?? '—'}</p>
-          <p className="text-[11.5px] text-muted-dark">{user?.roleLabel ?? ''}</p>
-
-          <div className="mt-3 flex flex-col items-start gap-2">
-            <Link to="/change-password" className="label text-muted-dark hover:text-cream">
-              Change password
-            </Link>
-
-            <button
-              type="button"
-              onClick={leave}
-              className="label cursor-pointer text-muted-dark hover:text-cream"
-            >
-              Sign out →
-            </button>
-          </div>
+        <div className="mt-auto flex flex-col items-center gap-3">
+          {settings.items.length > 0 && (
+            <RailLink group={settings} active={settings === activeGroup} label={t('menu.groups.settings')} />
+          )}
+          <UserMenu />
         </div>
       </aside>
 
-      <main className="min-w-0">
+      <main className="flex min-w-0 flex-1 flex-col">
+        {activeGroup && activeGroup.items.length > 1 && (
+          <div className="px-10 pt-6">
+            <PillTabs
+              label={t(`menu.groups.${activeGroup.key}`)}
+              tabs={activeGroup.items.map((item) => ({ to: item.to, label: t(item.labelKey), end: false }))}
+            />
+          </div>
+        )}
         <Outlet />
       </main>
     </div>
+  )
+}
+
+function RailLink({ group, active, label }) {
+  return (
+    <NavLink
+      to={group.items[0].to}
+      aria-current={active ? 'page' : undefined}
+      className={[
+        'flex min-h-[60px] w-[68px] flex-col items-center justify-center gap-1 rounded-xl text-[11.5px] transition-colors',
+        active ? 'bg-rail-active text-[#f3f1ec]' : 'hover:bg-rail-active/60 hover:text-[#f3f1ec]',
+      ].join(' ')}
+    >
+      <RailIcon name={group.icon} active={active} />
+      {label}
+    </NavLink>
   )
 }

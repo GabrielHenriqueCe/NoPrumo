@@ -1,16 +1,6 @@
-export function purchaseStatusLabel(status) {
-  switch (status?.toLowerCase()) {
-    case 'pending':
-      return 'Pending'
-    case 'approved':
-      return 'Approved'
-    case 'rejected':
-      return 'Rejected'
-    case 'purchased':
-      return 'Purchased'
-    default:
-      return status || '—'
-  }
+// The words live in the dictionaries (labels.purchaseStatus.*).
+export function purchaseStatusKey(status) {
+  return `labels.purchaseStatus.${String(status ?? '').toLowerCase()}`
 }
 
 export function purchaseStatusTone(status) {
@@ -21,8 +11,6 @@ export function purchaseStatusTone(status) {
       return 'active'
     case 'rejected':
       return 'inactive'
-    case 'purchased':
-      return 'neutral'
     default:
       return 'neutral'
   }

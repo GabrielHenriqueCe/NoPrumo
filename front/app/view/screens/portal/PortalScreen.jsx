@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useContainer } from '../../providers/containerContext'
 import { Badge } from '../../ui/Badge'
+import { usePreferences } from '../../preferences/preferencesContext'
 
 function formatDate(value) {
   if (!value) return 'A definir'
@@ -46,6 +47,16 @@ function statusLabel(status) {
 }
 
 export function PortalScreen() {
+  const { t, setLanguage } = usePreferences()
+
+  // The client has no account and never picked a language: the portal opens in Portuguese, like it always did.
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem('noprumo.language')) setLanguage('pt-BR')
+    } catch {
+      setLanguage('pt-BR')
+    }
+  }, [setLanguage])
   const { token } = useParams()
   const { projectLinks } = useContainer()
 
@@ -65,7 +76,7 @@ export function PortalScreen() {
       })
       .catch((err) => {
         if (!controller.signal.aborted) {
-          setError(err.message || 'Link inválido, expirado ou revogado.')
+          setError(err.message || t('portalScreen.linkInvLidoExpiradoOu'))
         }
       })
       .finally(() => {
@@ -75,14 +86,14 @@ export function PortalScreen() {
       })
 
     return () => controller.abort()
-  }, [projectLinks, token])
+  }, [projectLinks, token, t])
 
   if (loading) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-cream px-4">
         <div className="text-center">
-          <div className="label mb-2">NoPrumo · Portal do Cliente</div>
-          <p className="text-sm text-muted">Carregando os dados da sua obra...</p>
+          <div className="label mb-2">{t('portalScreen.noprumoPortalDoCliente')}</div>
+          <p className="text-sm text-muted">{t('portalScreen.carregandoOsDadosDaSua')}</p>
         </div>
       </div>
     )
@@ -92,14 +103,13 @@ export function PortalScreen() {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-cream px-4">
         <div className="w-full max-w-md border border-line bg-cream-soft p-8 text-center shadow-sm">
-          <div className="label mb-2 text-bronze">Acesso Indisponível</div>
-          <h1 className="mb-3 text-lg font-semibold text-graphite">Link expirado ou não encontrado</h1>
+          <div className="label mb-2 text-bronze">{t('portalScreen.acessoIndisponVel')}</div>
+          <h1 className="mb-3 text-lg font-semibold text-graphite">{t('portalScreen.linkExpiradoOuNO')}</h1>
           <p className="mb-6 text-sm leading-relaxed text-muted">
-            Este link de acompanhamento não é válido, expirou ou foi revogado.
-            Por favor, entre em contato com a construtora responsável pela obra para solicitar um novo link de acesso.
+           {t('portalScreen.esteLinkDeAcompanhamentoN')}
           </p>
           <div className="border-t border-line-soft pt-4 text-[12px] text-muted">
-            NoPrumo Gestão de Obras
+           {t('portalScreen.noprumoGestODeObras')}
           </div>
         </div>
       </div>
@@ -112,8 +122,8 @@ export function PortalScreen() {
       <header className="border-b border-line bg-cream-soft">
         <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
           <div>
-            <div className="label text-bronze">Acompanhamento de Obra</div>
-            <div className="text-base font-semibold tracking-tight text-graphite">NoPrumo</div>
+            <div className="label text-bronze">{t('portalScreen.acompanhamentoDeObra')}</div>
+            <div className="text-base font-semibold tracking-tight text-graphite">{t('portalScreen.noprumo')}</div>
           </div>
           <Badge tone={statusBadgeTone(project.status)}>
             {statusLabel(project.status)}
@@ -127,19 +137,19 @@ export function PortalScreen() {
         <section className="mb-8 border border-line bg-cream-soft p-6 shadow-sm md:p-8">
           <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
             <div>
-              <div className="label">Empreendimento</div>
+              <div className="label">{t('portalScreen.empreendimento')}</div>
               <h1 className="text-2xl font-bold tracking-tight text-graphite md:text-3xl">
                 {project.name}
               </h1>
               {project.city && (
                 <div className="mt-1 text-sm text-muted">
-                  Localização: {project.city}
+                 {t('portalScreen.localizaO')} {project.city}
                 </div>
               )}
             </div>
 
             <div className="mt-2 text-left md:mt-0 md:text-right">
-              <div className="label">Previsão de Conclusão</div>
+              <div className="label">{t('portalScreen.previsODeConclusO')}</div>
               <div className="text-base font-medium tabular-nums text-graphite">
                 {formatDate(project.forecastDate)}
               </div>
@@ -149,7 +159,7 @@ export function PortalScreen() {
           {/* Overall Progress */}
           <div className="mt-6 border-t border-line-soft pt-6">
             <div className="mb-2 flex items-baseline justify-between">
-              <span className="text-sm font-medium text-graphite">Andamento Geral da Obra</span>
+              <span className="text-sm font-medium text-graphite">{t('portalScreen.andamentoGeralDaObra')}</span>
               <span className="font-mono text-xl font-bold tabular-nums text-bronze">
                 {project.progressPercentage}%
               </span>
@@ -167,17 +177,17 @@ export function PortalScreen() {
         <section>
           <div className="mb-4 flex items-center justify-between">
             <div>
-              <div className="label">Cronograma</div>
-              <h2 className="text-lg font-semibold text-graphite">Etapas da Construção</h2>
+              <div className="label">{t('portalScreen.cronograma')}</div>
+              <h2 className="text-lg font-semibold text-graphite">{t('portalScreen.etapasDaConstruO')}</h2>
             </div>
             <div className="text-xs text-muted">
-              {project.stages.length} {project.stages.length === 1 ? 'etapa' : 'etapas'}
+              {project.stages.length} {project.stages.length === 1 ? t('portalScreen.etapa') : t('portalScreen.etapas')}
             </div>
           </div>
 
           {project.stages.length === 0 ? (
             <div className="border border-line bg-cream-soft p-8 text-center text-sm text-muted">
-              Nenhuma etapa cadastrada no momento.
+             {t('portalScreen.nenhumaEtapaCadastradaNoMomento')}
             </div>
           ) : (
             <div className="space-y-3">
@@ -194,7 +204,7 @@ export function PortalScreen() {
                           {statusLabel(stage.Status || stage.status)}
                         </Badge>
                         {(stage.Late || stage.late) && (
-                          <Badge tone="warning">Atrasada</Badge>
+                          <Badge tone="warning">{t('portalScreen.atrasada')}</Badge>
                         )}
                       </div>
                     </div>
@@ -222,7 +232,7 @@ export function PortalScreen() {
       </main>
 
       <footer className="mt-12 border-t border-line py-6 text-center text-xs text-muted">
-        Acompanhamento oficial fornecido por NoPrumo Gestão de Obras · Atualizado em tempo real
+       {t('portalScreen.acompanhamentoOficialFornecidoPorNoprumo')}
       </footer>
     </div>
   )

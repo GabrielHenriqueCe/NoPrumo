@@ -3,6 +3,7 @@ import { Button } from '../../ui/Button'
 import { Dialog } from '../../ui/Dialog'
 import { SelectField } from '../../ui/SelectField'
 import { TextField } from '../../ui/TextField'
+import { useT } from '../../preferences/preferencesContext'
 
 /*
   Create or edit a user.
@@ -19,6 +20,7 @@ import { TextField } from '../../ui/TextField'
 const EMPTY = { name: '', username: '', email: '', roleId: '', employeeId: '' }
 
 export function UserFormDialog({ open, user, roles, employeeOptions, onClose, onSubmit }) {
+  const t = useT()
   const editing = Boolean(user)
 
   const [form, setForm] = useState(EMPTY)
@@ -65,7 +67,7 @@ export function UserFormDialog({ open, user, roles, employeeOptions, onClose, on
     } catch (error) {
       // The API is the one that validates. The form only shows where it hurt.
       if (error.isValidation) setFieldErrors(error.fieldErrors)
-      else setFormError(error.message ?? 'Could not save the user.')
+      else setFormError(error.message ?? t('userFormDialog.couldNotSaveTheUser'))
     } finally {
       setBusy(false)
     }
@@ -75,18 +77,18 @@ export function UserFormDialog({ open, user, roles, employeeOptions, onClose, on
     <Dialog
       open={open}
       onClose={busy ? undefined : onClose}
-      title={editing ? 'Edit user' : 'New user'}
+      title={editing ? t('userFormDialog.editUser') : t('userFormDialog.newUser')}
       description={
         editing
-          ? 'Changes take effect on the next sign-in.'
-          : 'The system generates a temporary password to hand over.'
+          ? t('userFormDialog.changesTakeEffectOnThe')
+          : t('userFormDialog.theSystemGeneratesATemporary')
       }
     >
       <form onSubmit={submit} noValidate className="flex flex-col gap-4 p-6">
         <TextField
-          label="Full name"
+          label={t('userFormDialog.fullName')}
           name="name"
-          placeholder="e.g. João da Silva"
+          placeholder={t('userFormDialog.eGJoODa')}
           required
           value={form.name}
           onChange={update('name')}
@@ -94,63 +96,63 @@ export function UserFormDialog({ open, user, roles, employeeOptions, onClose, on
         />
 
         <TextField
-          label="Username"
+          label={t('userFormDialog.username')}
           name="username"
-          placeholder="e.g. j.silva"
+          placeholder={t('userFormDialog.eGJSilva')}
           required
           disabled={editing}
           value={form.username}
           onChange={update('username')}
           error={fieldErrors.username}
-          hint={editing ? 'The username cannot be changed.' : 'How this person signs in.'}
+          hint={editing ? t('userFormDialog.theUsernameCannotBeChanged') : t('userFormDialog.howThisPersonSignsIn')}
         />
 
         <TextField
-          label="Email"
+          label={t('userFormDialog.email')}
           name="email"
           type="email"
-          placeholder="name@company.com"
+          placeholder={t('userFormDialog.nameCompanyCom')}
           value={form.email}
           onChange={update('email')}
           error={fieldErrors.email}
         />
 
         <SelectField
-          label="Role"
+          label={t('userFormDialog.role')}
           name="roleId"
           required
           value={form.roleId}
           onChange={update('roleId')}
           error={fieldErrors.roleId}
-          placeholder="Select a role…"
+          placeholder={t('userFormDialog.selectARole')}
           options={roles.map((role) => ({ value: role.id, label: role.label }))}
         />
 
         <SelectField
-          label="Employee"
+          label={t('userFormDialog.employee')}
           name="employeeId"
           value={form.employeeId}
           onChange={update('employeeId')}
           error={fieldErrors.employeeId}
-          placeholder={employeeOptions.length ? 'Not linked to an employee' : 'No active employee registered'}
+          placeholder={employeeOptions.length ? t('userFormDialog.notLinkedToAnEmployee') : t('userFormDialog.noActiveEmployeeRegistered')}
           options={employeeOptions}
         />
         <p className="-mt-2 text-[12.5px] text-muted">
-          A foreman sees only the projects where this employee is the supervisor.
+          {t('userFormDialog.aForemanSeesOnlyThe')}
         </p>
 
         {formError && (
-          <p role="alert" className="border border-danger-soft bg-[#faefea] px-3 py-2 text-[12.5px] text-danger">
+          <p role="alert" className="rounded-2xl bg-danger-wash px-3 py-2 text-[12.5px] text-danger">
             {formError}
           </p>
         )}
 
         <div className="mt-2 flex items-center gap-2.5">
-          <Button type="submit" busy={busy} busyLabel="Saving…">
-            {editing ? 'Save changes' : 'Create user'}
+          <Button type="submit" busy={busy} busyLabel={t('common.saving')}>
+            {editing ? t('common.saveChanges') : t('userFormDialog.createUser')}
           </Button>
           <Button type="button" variant="outline" onClick={onClose} disabled={busy}>
-            Cancel
+            {t('common.cancel')}
           </Button>
         </div>
       </form>

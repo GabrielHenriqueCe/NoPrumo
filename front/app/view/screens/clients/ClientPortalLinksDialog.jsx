@@ -3,8 +3,10 @@ import { useContainer } from '../../providers/containerContext'
 import { Button } from '../../ui/Button'
 import { Dialog } from '../../ui/Dialog'
 import { ProjectLinksDialog } from '../projects/ProjectLinksDialog'
+import { useT } from '../../preferences/preferencesContext'
 
 export function ClientPortalLinksDialog({ client, open, onClose }) {
+  const t = useT()
   const { projects } = useContainer()
   const [clientProjects, setClientProjects] = useState([])
   const [loading, setLoading] = useState(false)
@@ -26,7 +28,7 @@ export function ClientPortalLinksDialog({ client, open, onClose }) {
       })
       .catch((err) => {
         if (!controller.signal.aborted) {
-          setError(err.message || 'Could not load client projects.')
+          setError(err.message || t('clientPortalLinksDialog.couldNotLoadClientProjects'))
         }
       })
       .finally(() => {
@@ -36,28 +38,28 @@ export function ClientPortalLinksDialog({ client, open, onClose }) {
       })
 
     return () => controller.abort()
-  }, [open, client, projects])
+  }, [open, client, projects, t])
 
   return (
     <>
       <Dialog
         open={open && !selectedProject}
         onClose={onClose}
-        title="Client Portal · Projects"
-        description={`Select a project for “${client?.name || 'Client'}” to manage portal access links.`}
+        title={t('clientPortalLinksDialog.clientPortalProjects')}
+        description={t('extras.clientPortalHint', { client: client?.name || t('extras.client') })}
       >
         <div className="p-6">
           {error && (
-            <div className="mb-4 border border-danger-soft bg-[#faefea] p-3 text-sm text-danger">
+            <div className="mb-4 rounded-2xl bg-danger-wash p-3 text-sm text-danger">
               {error}
             </div>
           )}
 
           {loading ? (
-            <p className="py-4 text-center text-xs text-muted">Loading client projects...</p>
+            <p className="py-4 text-center text-xs text-muted">{t('clientPortalLinksDialog.loadingClientProjects')}</p>
           ) : clientProjects.length === 0 ? (
             <div className="border border-line bg-cream-soft p-6 text-center">
-              <p className="text-sm text-muted">This client has no linked projects yet.</p>
+              <p className="text-sm text-muted">{t('clientPortalLinksDialog.thisClientHasNoLinked')}</p>
             </div>
           ) : (
             <div className="divide-y divide-line-soft border border-line">
@@ -78,7 +80,7 @@ export function ClientPortalLinksDialog({ client, open, onClose }) {
                       className="px-3 py-1.5 text-xs"
                       onClick={() => setSelectedProject(proj)}
                     >
-                      Manage links
+                      {t('clientPortalLinksDialog.manageLinks')}
                     </Button>
                   </div>
                 </div>
@@ -88,7 +90,7 @@ export function ClientPortalLinksDialog({ client, open, onClose }) {
 
           <div className="mt-6 flex justify-end border-t border-line-soft pt-4">
             <Button type="button" variant="outline" onClick={onClose}>
-              Close
+              {t('common.close')}
             </Button>
           </div>
         </div>
